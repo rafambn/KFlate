@@ -2,11 +2,12 @@
 
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
+import com.vanniktech.maven.publish.SourcesJar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.multiplatform)
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.maven.publish)
 }
 
@@ -16,7 +17,12 @@ version = "0.1.0"
 kotlin {
     jvmToolchain(17)
 
-    androidTarget { publishLibraryVariants("release") }
+    androidLibrary {
+        namespace = "com.rafambn"
+        compileSdk = 36
+        minSdk = 24
+    }
+
     jvm()
     js(IR) {
         browser {
@@ -40,7 +46,6 @@ kotlin {
         }
         nodejs()
         binaries.executable()
-
     }
     listOf(
         iosX64(),
@@ -55,27 +60,18 @@ kotlin {
     }
 }
 
-android {
-    namespace = "com.rafambn.kflate"
-    compileSdk = 35
-
-    defaultConfig {
-        minSdk = 24
-    }
-}
-
 mavenPublishing {
     coordinates(
         groupId = "com.rafambn",
-        artifactId = "FrameBar",
-        version = "1.0.0"
+        artifactId = "KFlate",
+        version = "0.1.0"
     )
 
 // Configure POM metadata for the published artifact
     pom {
-        name.set("FrameBar")
+        name.set("KFlate")
         description.set("A customizable Compose Multiplatform seekbar component for frame-based navigation. Features configurable markers, pointers, and support for both continuous and discrete positioning - ideal for media players, video editors, and timeline controls.")
-        url.set("https://framebar.rafambn.com")
+        url.set("https://kflate.rafambn.com")
 
         licenses {
             license {
@@ -91,7 +87,7 @@ mavenPublishing {
             }
         }
         scm {
-            url.set("https://github.com/rafambn/FrameBar")
+            url.set("https://github.com/rafambn/KFlate")
         }
     }
 
@@ -104,7 +100,7 @@ mavenPublishing {
     configure(
         KotlinMultiplatform(
             javadocJar = JavadocJar.Empty(),
-            sourcesJar = true,
+            sourcesJar = SourcesJar.Sources(),
             androidVariantsToPublish = listOf("release"),
         )
     )
