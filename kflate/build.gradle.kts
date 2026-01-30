@@ -70,13 +70,13 @@ mavenPublishing {
 // Configure POM metadata for the published artifact
     pom {
         name.set("KFlate")
-        description.set("A customizable Compose Multiplatform seekbar component for frame-based navigation. Features configurable markers, pointers, and support for both continuous and discrete positioning - ideal for media players, video editors, and timeline controls.")
+        description.set("KFlate is a pure Kotlin implementation of DEFLATE, GZIP, and ZLIB compression algorithms. It provides multiplatform compression/decompression with configurable compression levels and dictionary support, working seamlessly across JVM, JavaScript, WebAssembly, iOS, and other Kotlin Multiplatform targets.")
         url.set("https://kflate.rafambn.com")
 
         licenses {
             license {
-                name.set("MIT")
-                url.set("https://opensource.org/licenses/MIT")
+                name.set("Apache License 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0")
             }
         }
         developers {
