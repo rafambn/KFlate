@@ -1,10 +1,13 @@
 @file:OptIn(ExperimentalWasmDsl::class)
 
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinMultiplatform
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.multiplatform)
     alias(libs.plugins.android.library)
+    alias(libs.plugins.maven.publish)
 }
 
 group = "com.rafambn"
@@ -13,7 +16,7 @@ version = "0.1.0"
 kotlin {
     jvmToolchain(17)
 
-    androidTarget()
+    androidTarget { publishLibraryVariants("release") }
     jvm()
     js(IR) {
         browser {
@@ -43,12 +46,7 @@ kotlin {
         iosX64(),
         iosArm64(),
         iosSimulatorArm64()
-    ).forEach {
-        it.binaries.framework {
-            baseName = "GzipUtils"
-            isStatic = true
-        }
-    }
+    )
 
     sourceSets {
         jvmTest.dependencies {
@@ -64,4 +62,50 @@ android {
     defaultConfig {
         minSdk = 24
     }
+}
+
+mavenPublishing {
+    coordinates(
+        groupId = "com.rafambn",
+        artifactId = "FrameBar",
+        version = "1.0.0"
+    )
+
+// Configure POM metadata for the published artifact
+    pom {
+        name.set("FrameBar")
+        description.set("A customizable Compose Multiplatform seekbar component for frame-based navigation. Features configurable markers, pointers, and support for both continuous and discrete positioning - ideal for media players, video editors, and timeline controls.")
+        url.set("https://framebar.rafambn.com")
+
+        licenses {
+            license {
+                name.set("MIT")
+                url.set("https://opensource.org/licenses/MIT")
+            }
+        }
+        developers {
+            developer {
+                id.set("rafambn")
+                name.set("Rafael Mendonca")
+                email.set("rafambn@gmail.com")
+            }
+        }
+        scm {
+            url.set("https://github.com/rafambn/FrameBar")
+        }
+    }
+
+// Configure publishing to Maven Central
+    publishToMavenCentral(automaticRelease = false)
+
+// Enable GPG signing for all publications
+    signAllPublications()
+
+    configure(
+        KotlinMultiplatform(
+            javadocJar = JavadocJar.Empty(),
+            sourcesJar = true,
+            androidVariantsToPublish = listOf("release"),
+        )
+    )
 }

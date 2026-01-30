@@ -1,4 +1,5 @@
 rootProject.name = "KFlate"
+include(":kflate")
 
 pluginManagement {
     repositories {
@@ -28,7 +29,4 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-include(":kflate")
-include(":sample:composeApp")
-include(":sample:terminalApp")
 
