@@ -14,8 +14,8 @@ internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
     output[1] = 139u
     output[2] = 8u
     output[8] = when {
-        options.level < 2 -> 4u
-        options.level == 9 -> 2u
+        options.level <= 1 -> 4u
+        options.level >= 9 -> 2u
         else -> 0u
     }
     output[9] = 3u

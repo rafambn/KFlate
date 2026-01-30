@@ -2,6 +2,7 @@
 
 package com.rafambn.kflate
 
+import com.rafambn.kflate.options.GzipOptions
 import com.rafambn.kflate.options.InflateOptions
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -141,6 +142,31 @@ class BlockingValidityTest {
 
             assertContentEquals(originalData, decompressedData.toByteArray(), "Failed on file: $fileName")
         }
+    }
+
+    @Test
+    fun testGzipXflFlags() {
+        // Use simpleText resource to ensure compressed data is large enough
+        val testData = readResourceFile("simpleText").toUByteArray()
+
+        // Test level 0-1: should set XFL = 4u (max speed)
+        val compressed0 = KFlate.Gzip.compress(testData, GzipOptions(level = 0))
+        assert(compressed0[8] == 4.toUByte()) { "Level 0 should set XFL = 4 (max speed)" }
+
+        val compressed1 = KFlate.Gzip.compress(testData, GzipOptions(level = 1))
+        assert(compressed1[8] == 4.toUByte()) { "Level 1 should set XFL = 4 (max speed)" }
+
+        // Test levels 2-8: should set XFL = 0u (default)
+        for (level in 2..8) {
+            val compressed = KFlate.Gzip.compress(testData, GzipOptions(level = level))
+            assert(compressed[8] == 0.toUByte()) {
+                "Level $level should set XFL = 0 (default), but got ${compressed[8]}"
+            }
+        }
+
+        // Test level 9: should set XFL = 2u (max compression)
+        val compressed9 = KFlate.Gzip.compress(testData, GzipOptions(level = 9))
+        assert(compressed9[8] == 2.toUByte()) { "Level 9 should set XFL = 2 (max compression)" }
     }
 
     // ZLIB TESTS
