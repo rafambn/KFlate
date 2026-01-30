@@ -6,5 +6,6 @@ enum class FlateErrorCode(val code: Int, val message: String) {
     INVALID_LENGTH_LITERAL(2, "invalid length/literal"),
     INVALID_DISTANCE(3, "invalid distance"),
     INVALID_HEADER(4, "invalid header data"),
+    CHECKSUM_MISMATCH(5, "ADLER32 checksum mismatch - data corruption detected"),
 }
 

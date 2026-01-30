@@ -59,14 +59,31 @@ object KFlate {
         }
 
         fun decompress(data: UByteArray, options: InflateOptions = InflateOptions()): UByteArray {
+            if (data.size < 6) {
+                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            }
+
             val start = writeZlibStart(data, options.dictionary != null)
+
+            val storedAdler32 = readFourBytes(data, data.size - 4).toInt()
+
             val inputData = data.copyOfRange(start, data.size - 4)
-            return inflate(
+            val decompressedData = inflate(
                 inputData,
                 InflateState(lastCheck = 2),
                 null,
                 options.dictionary
             )
+
+            val computedAdler32 = Adler32Checksum().apply {
+                update(decompressedData)
+            }.getChecksum()
+
+            if (computedAdler32 != storedAdler32) {
+                createFlateError(FlateErrorCode.CHECKSUM_MISMATCH)
+            }
+
+            return decompressedData
         }
     }
 }
