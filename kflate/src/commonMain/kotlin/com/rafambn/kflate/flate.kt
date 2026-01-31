@@ -143,8 +143,15 @@ internal fun inflate(
                             }
 
                             symbol == 16 -> {
+                                if (codeIndex == 0) {
+                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                }
                                 val repeatCount = 3 + readBits(inputData, currentBitPosition, 3)
                                 currentBitPosition += 2
+                                val remainingSlots = totalCodes - codeIndex
+                                if (repeatCount > remainingSlots) {
+                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                }
                                 val valueToRepeat = allCodeLengths[codeIndex - 1]
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = valueToRepeat }
                             }
@@ -152,12 +159,20 @@ internal fun inflate(
                             symbol == 17 -> {
                                 val repeatCount = 3 + readBits(inputData, currentBitPosition, 7)
                                 currentBitPosition += 3
+                                val remainingSlots = totalCodes - codeIndex
+                                if (repeatCount > remainingSlots) {
+                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                }
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = 0u }
                             }
 
                             symbol == 18 -> {
                                 val repeatCount = 11 + readBits(inputData, currentBitPosition, 127)
                                 currentBitPosition += 7
+                                val remainingSlots = totalCodes - codeIndex
+                                if (repeatCount > remainingSlots) {
+                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                }
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = 0u }
                             }
                         }
