@@ -94,6 +94,52 @@ internal fun createHuffmanTree(codeLengths: UByteArray, maxBits: Int, isReversed
     return codes
 }
 
+/**
+ * Validates Huffman code lengths form a complete, non-oversubscribed tree per RFC 1951.
+ * Uses code space tracking: sum of 2^(-L_i) must equal 1 where L_i is code length.
+ *
+ * @param codeLengths Array of code lengths for each symbol (0 = unused)
+ * @param maxBits Maximum code length
+ * @return true if valid, false if oversubscribed or incomplete
+ */
+internal fun validateHuffmanCodeLengths(codeLengths: UByteArray, maxBits: Int): Boolean {
+    if (maxBits <= 0) return true  // Empty tree
+
+    // Count symbols at each code length
+    val lengthCounts = IntArray(maxBits + 1)
+    var totalSymbols = 0
+
+    for (length in codeLengths) {
+        val len = length.toInt()
+        if (len > 0) {
+            if (len > maxBits) return false  // Invalid code length
+            lengthCounts[len]++
+            totalSymbols++
+        }
+    }
+
+    // Special cases per RFC 1951
+    if (totalSymbols == 0) return true   // Empty tree
+    if (totalSymbols == 1) return true   // Single symbol (special case)
+
+    // Validate using code space tracking (units = 2^maxBits)
+    var codeSpace = 1 shl maxBits
+
+    for (bitLength in 1..maxBits) {
+        val count = lengthCounts[bitLength]
+        if (count > 0) {
+            // Each code at this length uses 2^(maxBits - bitLength) units
+            val spacePerCode = 1 shl (maxBits - bitLength)
+            codeSpace -= count * spacePerCode
+
+            if (codeSpace < 0) return false  // Oversubscribed
+        }
+    }
+
+    // Valid only if all space used (complete tree)
+    return codeSpace == 0
+}
+
 internal data class HuffmanNode(
     val symbol: Int,
     val frequency: Int,

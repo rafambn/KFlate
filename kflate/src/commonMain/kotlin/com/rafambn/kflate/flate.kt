@@ -126,6 +126,14 @@ internal fun inflate(
                     currentBitPosition += numCodeLengthCodes * 3
 
                     val codeLengthMaxBits = findMaxValue(codeLengthTree).toInt()
+
+                    // Validate code-length tree
+                    if (codeLengthMaxBits > 0) {
+                        if (!validateHuffmanCodeLengths(codeLengthTree, codeLengthMaxBits)) {
+                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                        }
+                    }
+
                     val codeLengthBitMask = (1 shl codeLengthMaxBits) - 1
                     val codeLengthHuffmanMap = createHuffmanTree(codeLengthTree, codeLengthMaxBits, true)
 
@@ -184,7 +192,22 @@ internal fun inflate(
                     literalMaxBits = findMaxValue(literalLengthCodeLengths).toInt()
                     distanceMaxBits = findMaxValue(distanceCodeLengths).toInt()
 
+                    // Validate literal/length tree
+                    if (literalMaxBits > 0) {
+                        if (!validateHuffmanCodeLengths(literalLengthCodeLengths, literalMaxBits)) {
+                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                        }
+                    }
+
                     literalLengthMap = createHuffmanTree(literalLengthCodeLengths, literalMaxBits, true)
+
+                    // Validate distance tree
+                    if (distanceMaxBits > 0) {
+                        if (!validateHuffmanCodeLengths(distanceCodeLengths, distanceMaxBits)) {
+                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                        }
+                    }
+
                     distanceMap = createHuffmanTree(distanceCodeLengths, distanceMaxBits, true)
                 }
 

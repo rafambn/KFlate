@@ -10,5 +10,6 @@ enum class FlateErrorCode(val code: Int, val message: String) {
     ISIZE_MISMATCH(6, "ISIZE mismatch"),
     CRC_MISMATCH(7, "CRC32 checksum mismatch - data corruption detected"),
     TRAILING_GARBAGE(8, "trailing garbage after gzip member"),
+    INVALID_HUFFMAN_TREE(9, "invalid Huffman tree - oversubscribed or incomplete"),
 }
 
