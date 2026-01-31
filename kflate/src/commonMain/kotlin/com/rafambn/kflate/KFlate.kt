@@ -99,7 +99,7 @@ object KFlate {
                 createFlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
 
-            val start = writeZlibStart(data, options.dictionary != null)
+            val start = writeZlibStart(data, options.dictionary != null, options.dictionary)
 
             val storedAdler32 = readFourBytes(data, data.size - 4).toInt()
 

@@ -27,7 +27,7 @@ internal fun writeZlibHeader(output: UByteArray, options: DeflateOptions) {
     }
 }
 
-internal fun writeZlibStart(data: UByteArray, hasDictionary: Boolean): Int {
+internal fun writeZlibStart(data: UByteArray, hasDictionary: Boolean, dictionary: UByteArray? = null): Int {
     val cmf = data[0].toInt()
     val flg = data[1].toInt()
     if ((cmf and 15) != 8 || (cmf ushr 4) > 7 || ((cmf shl 8 or flg) % 31 != 0))
@@ -35,5 +35,28 @@ internal fun writeZlibStart(data: UByteArray, hasDictionary: Boolean): Int {
     val needsDictionary = (flg and 32) != 0
     if (needsDictionary != hasDictionary)
         createFlateError(FlateErrorCode.INVALID_HEADER)
-    return (if ((flg ushr 3 and 4) != 0) 4 else 0) + 2
+
+    val headerSize = (if ((flg ushr 3 and 4) != 0) 4 else 0) + 2
+
+    // Validate DICTID if FDICT is set
+    if (needsDictionary) {
+        if (data.size < headerSize) {
+            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        }
+
+        if (dictionary == null) {
+            createFlateError(FlateErrorCode.INVALID_HEADER)
+        }
+
+        val storedDictId = readFourBytes(data, 2).toInt()
+        val computedDictId = Adler32Checksum().apply {
+            update(dictionary)
+        }.getChecksum()
+
+        if (storedDictId != computedDictId) {
+            createFlateError(FlateErrorCode.CHECKSUM_MISMATCH)
+        }
+    }
+
+    return headerSize
 }
