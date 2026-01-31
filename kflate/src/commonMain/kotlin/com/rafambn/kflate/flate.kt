@@ -63,10 +63,24 @@ internal fun inflate(
 
             when (blockType) {
                 0 -> {
-                    val blockStartByte = shiftToNextByte(currentBitPosition) + 4
-                    val blockLength = (inputData[blockStartByte - 4].toInt() and 0xFF) or
-                            ((inputData[blockStartByte - 3].toInt() and 0xFF) shl 8)
-                    val blockEndByte = blockStartByte + blockLength
+                    val blockStartByte = shiftToNextByte(currentBitPosition)
+
+                    // Check if at least 4 bytes remain for LEN and NLEN
+                    if (blockStartByte + 4 > sourceLength) {
+                        if (hasNoStoredState != 0) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
+
+                    val blockLength = readTwoBytes(inputData, blockStartByte)
+                    val blockNlen = readTwoBytes(inputData, blockStartByte + 2)
+
+                    // Validate that NLEN is the one's complement of LEN
+                    if ((blockLength xor 0xFFFF) != blockNlen) {
+                        createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                    }
+
+                    val dataStartByte = blockStartByte + 4
+                    val blockEndByte = dataStartByte + blockLength
 
                     if (blockEndByte > sourceLength) {
                         if (hasNoStoredState != 0) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
@@ -78,7 +92,7 @@ internal fun inflate(
                     inputData.copyInto(
                         workingBuffer,
                         destinationOffset = bytesWrittenToOutput,
-                        startIndex = blockStartByte,
+                        startIndex = dataStartByte,
                         endIndex = blockEndByte
                     )
 
