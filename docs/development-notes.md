@@ -28,3 +28,13 @@ ZLIB supports optional preset dictionaries for better compression of specific da
 - Android: Library compilation for `release` variant (publishable to Maven)
 - JavaScript/WASM: Browser tests run in Firefox via Karma
 - iOS: Separate compilation tasks per architecture (arm64, x64, simulator arm64)
+
+## Publishing
+
+```bash
+# Publish to local Maven repository (for testing)
+./gradlew :kflate:publishToMavenLocal
+
+# Run a specific test class
+./gradlew jvmTest --tests ClassName
+```
