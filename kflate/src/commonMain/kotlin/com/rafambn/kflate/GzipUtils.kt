@@ -2,6 +2,7 @@
 
 package com.rafambn.kflate
 
+import com.rafambn.kflate.checksum.CRC32_TABLE
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
 import com.rafambn.kflate.options.GzipOptions
@@ -9,31 +10,13 @@ import kotlin.math.floor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-// Pre-computed CRC-16 table (polynomial 0x1021, CCITT standard)
-private fun buildCRC16Table(): IntArray {
-    return IntArray(256).apply {
-        for (i in 0 until 256) {
-            var c = (i shl 8)
-            repeat(8) {
-                c = if ((c and 0x8000) != 0) {
-                    ((c shl 1) xor 0x1021) and 0xFFFF
-                } else {
-                    (c shl 1) and 0xFFFF
-                }
-            }
-            this[i] = c
-        }
-    }
-}
-
-internal val CRC16_TABLE = buildCRC16Table()
-
 internal fun computeGzipHeaderCrc16(data: UByteArray, start: Int, end: Int): Int {
-    var crc = 0
+    // RFC 1952: CRC16 is the lower 16 bits of the CRC32 over the header bytes.
+    var crc = -1
     for (i in start until end) {
-        crc = crc shr 8 xor CRC16_TABLE[(crc xor data[i].toInt()) and 0xFF]
+        crc = CRC32_TABLE[(crc and 0xFF) xor data[i].toInt()] xor (crc ushr 8)
     }
-    return crc and 0xFFFF
+    return crc.inv() and 0xFFFF
 }
 
 internal fun buildExtraFields(extraFields: Map<String, UByteArray>): UByteArray {
@@ -120,6 +103,12 @@ internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
         val crc16 = computeGzipHeaderCrc16(output, 0, headerOffset)
         output[headerOffset] = (crc16 and 0xFF).toUByte()
         output[headerOffset + 1] = (crc16 shr 8).toUByte()
+        headerOffset += 2
+    }
+
+    val calculatedSize = getGzipHeaderSize(options)
+    require(headerOffset <= calculatedSize) {
+        "Header size mismatch: calculated=$calculatedSize, actual=$headerOffset"
     }
 }
 
@@ -147,5 +136,26 @@ internal fun getGzipUncompressedSize(data: UByteArray): Long {
 }
 
 internal fun getGzipHeaderSize(options: GzipOptions): Int {
-    return 10 + if (options.filename != null) options.filename.length + 1 else 0
+    var size = 10
+
+    options.extraFields?.let { fields ->
+        size += 2
+        for ((_, data) in fields) {
+            size += 4 + data.size
+        }
+    }
+
+    options.filename?.let {
+        size += it.length + 1
+    }
+
+    options.comment?.let {
+        size += it.length + 1
+    }
+
+    if (options.includeHeaderCrc) {
+        size += 2
+    }
+
+    return size
 }

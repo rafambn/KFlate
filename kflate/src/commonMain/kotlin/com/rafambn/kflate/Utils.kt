@@ -77,6 +77,16 @@ internal fun writeBlock(
     var currentBitPosition = bitPosition
     writeBits(output, currentBitPosition++, if (isFinal) 1 else 0)
     literalFrequencies[256]++
+    var hasDistance = false
+    for (frequency in distanceFrequencies) {
+        if (frequency > 0u) {
+            hasDistance = true
+            break
+        }
+    }
+    if (!hasDistance) {
+        distanceFrequencies[0] = 1u
+    }
 
     val (dynamicLiteralTree, maxLiteralBits) = buildHuffmanTreeFromFrequencies(literalFrequencies, 15)
     val (dynamicDistanceTree, maxDistanceBits) = buildHuffmanTreeFromFrequencies(distanceFrequencies, 15)
