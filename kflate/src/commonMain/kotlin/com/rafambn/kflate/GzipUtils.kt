@@ -64,7 +64,7 @@ internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
         options.level >= 9 -> 2u
         else -> 0u
     }
-    output[9] = 3u
+    output[9] = 255u  // RFC 1952: 255 = unknown OS (platform-agnostic)
 
     val mtime = options.mtime
     val timeInMillis = when (mtime) {

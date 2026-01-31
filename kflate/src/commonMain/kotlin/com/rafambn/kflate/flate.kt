@@ -116,6 +116,12 @@ internal fun inflate(
                     val numLiteralCodes = readBits(inputData, currentBitPosition, 31) + 257
                     val numDistanceCodes = readBits(inputData, currentBitPosition + 5, 31) + 1
                     val numCodeLengthCodes = readBits(inputData, currentBitPosition + 10, 15) + 4
+
+                    // RFC 1951: HLIT max is 29 (286 codes), HDIST max is 29 (30 codes)
+                    if (numLiteralCodes > 286 || numDistanceCodes > 30) {
+                        createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                    }
+
                     val totalCodes = numLiteralCodes + numDistanceCodes
                     currentBitPosition += 14
 
@@ -263,6 +269,8 @@ internal fun inflate(
                     val distanceCode = distanceMap!![readBits16(inputData, currentBitPosition) and distanceBitMask]
                     val distanceSymbol = distanceCode.toInt() shr 4
                     if (distanceCode.toInt() == 0) createFlateError(FlateErrorCode.INVALID_DISTANCE)
+                    // RFC 1951: Distance codes 30-31 will never occur in valid compressed data
+                    if (distanceSymbol >= 30) createFlateError(FlateErrorCode.INVALID_DISTANCE)
                     currentBitPosition += (distanceCode.toInt() and 15)
 
                     var matchDistance = FIXED_DISTANCE_BASE[distanceSymbol].toInt()
