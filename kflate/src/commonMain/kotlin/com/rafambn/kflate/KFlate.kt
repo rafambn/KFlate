@@ -39,12 +39,28 @@ object KFlate {
             if (start + 8 > data.size) {
                 createFlateError(FlateErrorCode.INVALID_HEADER)
             }
-            return inflate(
+            
+            val storedCrc32 = readFourBytes(data, data.size - 8).toInt()
+            val storedISize = readFourBytes(data, data.size - 4)
+
+            val decompressed = inflate(
                 data.copyOfRange(start, data.size - 8),
                 InflateState(lastCheck = 2),
-                UByteArray(getGzipUncompressedSize(data).toInt()),
+                null,
                 options.dictionary
             )
+
+            val crc = Crc32Checksum()
+            crc.update(decompressed)
+            if (crc.getChecksum() != storedCrc32) {
+                createFlateError(FlateErrorCode.CRC_MISMATCH)
+            }
+
+            if ((decompressed.size.toLong() and 0xFFFFFFFFL) != storedISize) {
+                createFlateError(FlateErrorCode.ISIZE_MISMATCH)
+            }
+
+            return decompressed
         }
     }
 

@@ -7,5 +7,7 @@ enum class FlateErrorCode(val code: Int, val message: String) {
     INVALID_DISTANCE(3, "invalid distance"),
     INVALID_HEADER(4, "invalid header data"),
     CHECKSUM_MISMATCH(5, "ADLER32 checksum mismatch - data corruption detected"),
+    ISIZE_MISMATCH(6, "ISIZE mismatch"),
+    CRC_MISMATCH(7, "CRC32 checksum mismatch - data corruption detected"),
 }
 
