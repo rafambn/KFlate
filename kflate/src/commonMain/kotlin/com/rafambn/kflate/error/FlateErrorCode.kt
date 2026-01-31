@@ -9,5 +9,6 @@ enum class FlateErrorCode(val code: Int, val message: String) {
     CHECKSUM_MISMATCH(5, "ADLER32 checksum mismatch - data corruption detected"),
     ISIZE_MISMATCH(6, "ISIZE mismatch"),
     CRC_MISMATCH(7, "CRC32 checksum mismatch - data corruption detected"),
+    TRAILING_GARBAGE(8, "trailing garbage after gzip member"),
 }
 

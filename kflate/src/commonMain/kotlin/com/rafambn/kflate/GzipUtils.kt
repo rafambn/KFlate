@@ -3,8 +3,10 @@
 package com.rafambn.kflate
 
 import com.rafambn.kflate.checksum.CRC32_TABLE
+import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.options.DeflateOptions
 import com.rafambn.kflate.options.GzipOptions
 import kotlin.math.floor
 import kotlin.time.Clock
@@ -211,4 +213,67 @@ internal fun getGzipHeaderSize(options: GzipOptions): Int {
     }
 
     return size
+}
+
+internal data class GzipMemberResult(
+    val decompressed: UByteArray,
+    val bytesConsumed: Int
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is GzipMemberResult) return false
+        if (!decompressed.contentEquals(other.decompressed)) return false
+        return bytesConsumed == other.bytesConsumed
+    }
+
+    override fun hashCode(): Int {
+        return 31 * decompressed.contentHashCode() + bytesConsumed
+    }
+}
+
+internal fun processSingleGzipMember(
+    data: UByteArray,
+    startOffset: Int,
+    dictionary: UByteArray? = null
+): GzipMemberResult {
+    // Validate minimum size: 10 bytes header + at least 8 bytes trailer (CRC32 + ISIZE)
+    if (startOffset + 18 > data.size) {
+        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+    }
+
+    // Parse header
+    val headerEndPos = writeGzipStart(data.copyOfRange(startOffset, data.size))
+    val compressedDataStart = startOffset + headerEndPos
+
+    // Inflate with state tracking
+    val inflateState = InflateState(lastCheck = 2)
+    val inputForInflate = data.copyOfRange(compressedDataStart, data.size)
+    val decompressed = inflate(inputForInflate, inflateState, null, dictionary)
+
+    // Calculate bytes consumed by inflate
+    val bitsConsumed = inflateState.position ?: 0
+    val bytesConsumedByInflate = (bitsConsumed + 7) / 8
+
+    // Validate trailer
+    val trailerStart = compressedDataStart + bytesConsumedByInflate
+    if (trailerStart + 8 > data.size) {
+        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+    }
+
+    // Validate CRC32
+    val storedCrc32 = readFourBytes(data, trailerStart).toInt()
+    val crc = Crc32Checksum()
+    crc.update(decompressed)
+    if (crc.getChecksum() != storedCrc32) {
+        createFlateError(FlateErrorCode.CRC_MISMATCH)
+    }
+
+    // Validate ISIZE
+    val storedISize = readFourBytes(data, trailerStart + 4)
+    if ((decompressed.size.toLong() and 0xFFFFFFFFL) != storedISize) {
+        createFlateError(FlateErrorCode.ISIZE_MISMATCH)
+    }
+
+    val totalBytesConsumed = headerEndPos + bytesConsumedByInflate + 8
+    return GzipMemberResult(decompressed, totalBytesConsumed)
 }

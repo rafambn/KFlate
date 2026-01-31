@@ -35,32 +35,52 @@ object KFlate {
         }
 
         fun decompress(data: UByteArray, options: DeflateOptions = DeflateOptions()): UByteArray {
-            val start = writeGzipStart(data)
-            if (start + 8 > data.size) {
+            if (data.size < 18) {
+                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            }
+
+            val decompressedChunks = mutableListOf<UByteArray>()
+            var currentPosition = 0
+
+            while (currentPosition < data.size) {
+                // Check if enough bytes for header
+                if (currentPosition + 10 > data.size) {
+                    createFlateError(FlateErrorCode.TRAILING_GARBAGE)
+                }
+
+                // Validate gzip magic bytes
+                if (data[currentPosition].toInt() != 31 ||
+                    data[currentPosition + 1].toInt() != 139 ||
+                    data[currentPosition + 2].toInt() != 8) {
+                    createFlateError(FlateErrorCode.TRAILING_GARBAGE)
+                }
+
+                // Process member
+                val result = processSingleGzipMember(data, currentPosition, options.dictionary)
+                decompressedChunks.add(result.decompressed)
+                currentPosition += result.bytesConsumed
+            }
+
+            // Validate at least one member processed
+            if (decompressedChunks.isEmpty()) {
                 createFlateError(FlateErrorCode.INVALID_HEADER)
             }
-            
-            val storedCrc32 = readFourBytes(data, data.size - 8).toInt()
-            val storedISize = readFourBytes(data, data.size - 4)
 
-            val decompressed = inflate(
-                data.copyOfRange(start, data.size - 8),
-                InflateState(lastCheck = 2),
-                null,
-                options.dictionary
-            )
-
-            val crc = Crc32Checksum()
-            crc.update(decompressed)
-            if (crc.getChecksum() != storedCrc32) {
-                createFlateError(FlateErrorCode.CRC_MISMATCH)
+            // Return single member as-is
+            if (decompressedChunks.size == 1) {
+                return decompressedChunks[0]
             }
 
-            if ((decompressed.size.toLong() and 0xFFFFFFFFL) != storedISize) {
-                createFlateError(FlateErrorCode.ISIZE_MISMATCH)
+            // Concatenate multiple members
+            val totalSize = decompressedChunks.sumOf { it.size }
+            val result = UByteArray(totalSize)
+            var offset = 0
+            for (chunk in decompressedChunks) {
+                chunk.copyInto(result, destinationOffset = offset)
+                offset += chunk.size
             }
 
-            return decompressed
+            return result
         }
     }
 
