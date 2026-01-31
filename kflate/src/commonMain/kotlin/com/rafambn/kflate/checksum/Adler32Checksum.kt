@@ -24,9 +24,6 @@ internal class Adler32Checksum : ChecksumGenerator {
     override fun getChecksum(): Int {
         a %= 65521
         b %= 65521
-        return ((a and 0xFF) shl 24) or
-                ((a and 0xFF00) shl 8) or
-                ((b and 0xFF) shl 8) or
-                (b ushr 8)
+        return (b shl 16) or a
     }
 }

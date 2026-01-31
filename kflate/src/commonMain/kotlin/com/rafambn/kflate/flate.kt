@@ -117,8 +117,9 @@ internal fun inflate(
                     val numDistanceCodes = readBits(inputData, currentBitPosition + 5, 31) + 1
                     val numCodeLengthCodes = readBits(inputData, currentBitPosition + 10, 15) + 4
 
-                    // RFC 1951: HLIT max is 29 (286 codes), HDIST max is 29 (30 codes)
-                    if (numLiteralCodes > 286 || numDistanceCodes > 30) {
+                    // RFC 1951: HLIT max is 29 (286 codes), HDIST max is 31 (32 codes)
+                    // Distance codes 30-31 are never used in valid data but may appear in the tree
+                    if (numLiteralCodes > 286 || numDistanceCodes > 32) {
                         createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                     }
 

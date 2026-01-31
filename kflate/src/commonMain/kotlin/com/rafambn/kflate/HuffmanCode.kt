@@ -98,6 +98,10 @@ internal fun createHuffmanTree(codeLengths: UByteArray, maxBits: Int, isReversed
  * Validates Huffman code lengths form a complete, non-oversubscribed tree per RFC 1951.
  * Uses code space tracking: sum of 2^(-L_i) must equal 1 where L_i is code length.
  *
+ * Per Mark Adler (zlib maintainer): RFC 1951 requires complete codes since they are
+ * referred to as "Huffman codes" - by definition, a Huffman code is complete.
+ * The only exception is single-symbol trees, explicitly allowed by the RFC.
+ *
  * @param codeLengths Array of code lengths for each symbol (0 = unused)
  * @param maxBits Maximum code length
  * @return true if valid, false if oversubscribed or incomplete
@@ -120,7 +124,7 @@ internal fun validateHuffmanCodeLengths(codeLengths: UByteArray, maxBits: Int): 
 
     // Special cases per RFC 1951
     if (totalSymbols == 0) return true   // Empty tree
-    if (totalSymbols == 1) return true   // Single symbol (special case)
+    if (totalSymbols == 1) return true   // Single symbol (explicit RFC exception)
 
     // Validate using code space tracking (units = 2^maxBits)
     var codeSpace = 1 shl maxBits

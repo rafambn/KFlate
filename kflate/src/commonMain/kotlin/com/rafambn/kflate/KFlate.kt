@@ -90,7 +90,7 @@ object KFlate {
             adler.update(data)
             val deflatedData = deflateWithOptions(data, options, if (options.dictionary != null) 6 else 2, 4)
             writeZlibHeader(deflatedData, options)
-            writeBytes(deflatedData, deflatedData.size - 4, adler.getChecksum().toLong())
+            writeBytesBE(deflatedData, deflatedData.size - 4, adler.getChecksum())
             return deflatedData
         }
 
@@ -101,7 +101,7 @@ object KFlate {
 
             val start = writeZlibStart(data, options.dictionary != null, options.dictionary)
 
-            val storedAdler32 = readFourBytes(data, data.size - 4).toInt()
+            val storedAdler32 = readFourBytesBE(data, data.size - 4)
 
             val inputData = data.copyOfRange(start, data.size - 4)
             val decompressedData = inflate(

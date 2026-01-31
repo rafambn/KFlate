@@ -210,15 +210,28 @@ internal fun readFourBytes(data: UByteArray, offset: Int): Long {
             ((data[offset + 3].toLong() and 0xFF) shl 24)
 }
 
+internal fun readFourBytesBE(data: UByteArray, offset: Int): Int {
+    return ((data[offset].toInt() and 0xFF) shl 24) or
+            ((data[offset + 1].toInt() and 0xFF) shl 16) or
+            ((data[offset + 2].toInt() and 0xFF) shl 8) or
+            (data[offset + 3].toInt() and 0xFF)
+}
+
 internal fun readEightBytes(data: UByteArray, offset: Int): Long {
     return readFourBytes(data, offset) + (readFourBytes(data, offset + 4) * 4294967296L)
 }
 
 internal fun writeBytes(data: UByteArray, offset: Int, value: Long) {
-    var v = value.toUInt()
-    var i = offset
-    while (v != 0u) {
-        data[i++] = (v and 0xFFu).toUByte()
-        v = v shr 8
-    }
+    val v = value.toUInt()
+    data[offset] = (v and 0xFFu).toUByte()
+    data[offset + 1] = ((v shr 8) and 0xFFu).toUByte()
+    data[offset + 2] = ((v shr 16) and 0xFFu).toUByte()
+    data[offset + 3] = ((v shr 24) and 0xFFu).toUByte()
+}
+
+internal fun writeBytesBE(data: UByteArray, offset: Int, value: Int) {
+    data[offset] = ((value shr 24) and 0xFF).toUByte()
+    data[offset + 1] = ((value shr 16) and 0xFF).toUByte()
+    data[offset + 2] = ((value shr 8) and 0xFF).toUByte()
+    data[offset + 3] = (value and 0xFF).toUByte()
 }
