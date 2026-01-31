@@ -97,20 +97,6 @@ val zWithDict = KFlate.Zlib.compress(input, options)
   - `mtime`: optional modification time
   - `includeHeaderCrc`: include FHCRC in the header
 
-## Development
-
-Run JVM tests:
-
-```bash
-./gradlew :kflate:jvmTest
-```
-
-Publish to Maven Local:
-
-```bash
-./gradlew :kflate:publishToMavenLocal
-```
-
 ## Project Notes
 
 - API uses `UByteArray` for binary data. Convert with `toUByteArray()` and `toByteArray()` as needed.

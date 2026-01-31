@@ -127,7 +127,18 @@ internal fun writeGzipStart(data: UByteArray): Int {
             remainingFlags--
         }
     }
-    return headerSize + (flags and 2)
+    if ((flags and 2) != 0) {
+        if (headerSize + 2 > data.size) {
+            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        }
+        val computedCrc = computeGzipHeaderCrc16(data, 0, headerSize)
+        val storedCrc = (data[headerSize].toInt() or (data[headerSize + 1].toInt() shl 8))
+        if (computedCrc != storedCrc) {
+            createFlateError(FlateErrorCode.INVALID_HEADER)
+        }
+        headerSize += 2
+    }
+    return headerSize
 }
 
 internal fun getGzipUncompressedSize(data: UByteArray): Long {
