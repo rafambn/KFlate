@@ -22,6 +22,10 @@ internal fun computeGzipHeaderCrc16(data: UByteArray, start: Int, end: Int): Int
 internal fun buildExtraFields(extraFields: Map<String, UByteArray>): UByteArray {
     // Each subfield: SI1 (1 byte) + SI2 (1 byte) + LEN (2 bytes LE) + data
     val totalSize = extraFields.values.sumOf { it.size + 4 }
+    // RFC 1952: XLEN is a 2-byte little-endian value, so total extra field size must fit in 16 bits
+    require(totalSize <= 65535) {
+        "Total extra field size ($totalSize bytes) exceeds maximum XLEN of 65535 bytes"
+    }
     val output = UByteArray(totalSize)
     var offset = 0
 
