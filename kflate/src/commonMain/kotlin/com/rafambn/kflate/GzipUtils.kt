@@ -113,26 +113,62 @@ internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
 }
 
 internal fun writeGzipStart(data: UByteArray): Int {
+    if (data.size < 10) {
+        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+    }
     if (data[0].toInt() != 31 || data[1].toInt() != 139 || data[2].toInt() != 8) {
         createFlateError(FlateErrorCode.INVALID_HEADER)
     }
     val flags = data[3].toInt()
-    var headerSize = 10
-    if ((flags and 4) != 0) {
-        headerSize += (data[10].toInt() or (data[11].toInt() shl 8)) + 2
+    if ((flags and 0xE0) != 0) { // Check reserved bits 5, 6, 7
+        createFlateError(FlateErrorCode.INVALID_HEADER)
     }
-    var remainingFlags = (flags ushr 3 and 1) + (flags ushr 4 and 1)
-    while (remainingFlags > 0) {
-        if (data[headerSize++].toInt() == 0) {
-            remainingFlags--
+
+    var headerSize = 10
+    // FEXTRA
+    if ((flags and 4) != 0) {
+        if (headerSize + 2 > data.size) {
+            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        }
+        val xlen = (data[headerSize].toInt() and 0xFF) or ((data[headerSize + 1].toInt() and 0xFF) shl 8)
+        headerSize += 2
+        if (headerSize + xlen > data.size) {
+            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        }
+        headerSize += xlen
+    }
+
+    // FNAME
+    if ((flags and 8) != 0) {
+        while (true) {
+            if (headerSize >= data.size) {
+                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            }
+            if (data[headerSize++].toInt() == 0) {
+                break
+            }
         }
     }
+
+    // FCOMMENT
+    if ((flags and 16) != 0) {
+        while (true) {
+            if (headerSize >= data.size) {
+                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            }
+            if (data[headerSize++].toInt() == 0) {
+                break
+            }
+        }
+    }
+
+    // FHCRC
     if ((flags and 2) != 0) {
         if (headerSize + 2 > data.size) {
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         val computedCrc = computeGzipHeaderCrc16(data, 0, headerSize)
-        val storedCrc = (data[headerSize].toInt() or (data[headerSize + 1].toInt() shl 8))
+        val storedCrc = (data[headerSize].toInt() and 0xFF) or ((data[headerSize + 1].toInt() and 0xFF) shl 8)
         if (computedCrc != storedCrc) {
             createFlateError(FlateErrorCode.INVALID_HEADER)
         }
