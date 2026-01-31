@@ -84,16 +84,18 @@ internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
 
     // FNAME: Write filename (null-terminated)
     options.filename?.let {
-        for (i in it.indices) {
-            output[headerOffset++] = it[i].code.toUByte()
+        val bytes = it.toIsoStringBytes()
+        for (b in bytes) {
+            output[headerOffset++] = b.toUByte()
         }
         output[headerOffset++] = 0u
     }
 
     // FCOMMENT: Write comment (null-terminated)
     options.comment?.let {
-        for (i in it.indices) {
-            output[headerOffset++] = it[i].code.toUByte()
+        val bytes = it.toIsoStringBytes()
+        for (b in bytes) {
+            output[headerOffset++] = b.toUByte()
         }
         output[headerOffset++] = 0u
     }
@@ -193,11 +195,11 @@ internal fun getGzipHeaderSize(options: GzipOptions): Int {
     }
 
     options.filename?.let {
-        size += it.length + 1
+        size += it.toIsoStringBytes().size + 1
     }
 
     options.comment?.let {
-        size += it.length + 1
+        size += it.toIsoStringBytes().size + 1
     }
 
     if (options.includeHeaderCrc) {

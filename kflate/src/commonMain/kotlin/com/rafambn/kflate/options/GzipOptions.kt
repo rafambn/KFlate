@@ -2,6 +2,8 @@
 
 package com.rafambn.kflate.options
 
+import com.rafambn.kflate.toIsoStringBytes
+
 class GzipOptions(
     level: Int = 6,
     mem: Int? = null,
@@ -14,8 +16,13 @@ class GzipOptions(
 ) : DeflateOptions(level, mem, dictionary) {
 
     init {
+        filename?.let {
+            require(it.length <= 65535) { "Filename cannot exceed 65535 bytes" }
+            it.toIsoStringBytes()
+        }
         comment?.let {
             require(it.length <= 65535) { "Comment cannot exceed 65535 bytes" }
+            it.toIsoStringBytes()
         }
         extraFields?.let { fields ->
             for ((key, data) in fields) {

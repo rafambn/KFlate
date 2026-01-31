@@ -10,6 +10,16 @@ internal fun findMaxValue(array: UByteArray): UByte {
     return maxValue
 }
 
+internal fun String.toIsoStringBytes(): ByteArray {
+    val bytes = ByteArray(length)
+    for (i in indices) {
+        val code = this[i].code
+        require(code <= 255) { "Non-ISO-8859-1 character found: '${this[i]}' (code: $code)" }
+        bytes[i] = code.toByte()
+    }
+    return bytes
+}
+
 internal fun readBits(data: UByteArray, bitPosition: Int, bitMask: Int): Int {
     val byteOffset = bitPosition / 8
 
