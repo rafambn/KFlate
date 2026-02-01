@@ -196,6 +196,11 @@ internal fun inflate(
                     val literalLengthCodeLengths = allCodeLengths.copyOfRange(0, numLiteralCodes)
                     val distanceCodeLengths = allCodeLengths.copyOfRange(numLiteralCodes, totalCodes)
 
+                    // Validate that end-of-block symbol (256) has a non-zero code length
+                    if (numLiteralCodes > 256 && literalLengthCodeLengths[256].toInt() == 0) {
+                        createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                    }
+
                     literalMaxBits = findMaxValue(literalLengthCodeLengths).toInt()
                     distanceMaxBits = findMaxValue(distanceCodeLengths).toInt()
 

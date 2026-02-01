@@ -37,7 +37,7 @@ internal fun writeZlibStart(data: UByteArray, hasDictionary: Boolean, dictionary
     if (needsDictionary != hasDictionary)
         createFlateError(FlateErrorCode.INVALID_HEADER)
 
-    val headerSize = (if ((flg ushr 3 and 4) != 0) 4 else 0) + 2
+    val headerSize = (if (needsDictionary) 4 else 0) + 2
 
     // Validate DICTID if FDICT is set
     if (needsDictionary) {

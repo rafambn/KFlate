@@ -236,8 +236,8 @@ internal fun processSingleGzipMember(
     startOffset: Int,
     dictionary: UByteArray? = null
 ): GzipMemberResult {
-    // Validate minimum size: 10 bytes header + at least 8 bytes trailer (CRC32 + ISIZE)
-    if (startOffset + 18 > data.size) {
+    // Validate minimum size: 10 bytes header + at least 2 bytes compressed data + 8 bytes trailer (CRC32 + ISIZE)
+    if (startOffset + 20 > data.size) {
         createFlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
 

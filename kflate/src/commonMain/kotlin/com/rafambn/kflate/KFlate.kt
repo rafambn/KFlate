@@ -35,7 +35,7 @@ object KFlate {
         }
 
         fun decompress(data: UByteArray, options: DeflateOptions = DeflateOptions()): UByteArray {
-            if (data.size < 18) {
+            if (data.size < 20) {
                 createFlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
 
