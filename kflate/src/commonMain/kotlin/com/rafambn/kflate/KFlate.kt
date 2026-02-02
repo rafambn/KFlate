@@ -40,7 +40,7 @@ object KFlate {
     }
 
     private fun decompressRaw(data: ByteArray, type: Raw): ByteArray {
-        return inflate(data.asUByteArray(), InflateState(lastCheck = 2), null, type.dictionary?.asUByteArray()).asByteArray()
+        return inflate(data, InflateState(lastCheck = 2), null, type.dictionary)
     }
 
     private fun compressGzip(data: ByteArray, type: GZIP): ByteArray {
@@ -50,8 +50,8 @@ object KFlate {
         val deflatedData = deflateWithOptions(data, type, getGzipHeaderSize(type), 8)
         val deflatedDataLength = deflatedData.size
         writeGzipHeader(deflatedData, type)
-        writeBytes(deflatedData.asUByteArray(), deflatedDataLength - 8, crc.getChecksum().toLong())
-        writeBytes(deflatedData.asUByteArray(), deflatedDataLength - 4, dataLength.toLong())
+        writeBytes(deflatedData, deflatedDataLength - 8, crc.getChecksum().toLong())
+        writeBytes(deflatedData, deflatedDataLength - 4, dataLength.toLong())
         return deflatedData
     }
 
@@ -110,7 +110,7 @@ object KFlate {
         val deflatedData = deflateWithOptions(data, type, if (type.dictionary != null) 6 else 2, 4)
 
         writeZlibHeader(deflatedData, type)
-        writeBytesBE(deflatedData.asUByteArray(), deflatedData.size - 4, adler.getChecksum())
+        writeBytesBE(deflatedData, deflatedData.size - 4, adler.getChecksum())
         return deflatedData
     }
 
@@ -121,15 +121,15 @@ object KFlate {
 
         val start = writeZlibStart(data, type.dictionary != null, type.dictionary)
 
-        val storedAdler32 = readFourBytesBE(data.asUByteArray(), data.size - 4)
+        val storedAdler32 = readFourBytesBE(data, data.size - 4)
 
         val inputData = data.copyOfRange(start, data.size - 4)
         val decompressedData = inflate(
-            inputData.asUByteArray(),
+            inputData,
             InflateState(lastCheck = 2),
             null,
-            type.dictionary?.asUByteArray()
-        ).asByteArray()
+            type.dictionary
+        )
 
         val computedAdler32 = Adler32Checksum().apply {
             update(decompressedData)

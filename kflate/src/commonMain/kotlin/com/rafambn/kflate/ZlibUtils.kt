@@ -23,7 +23,7 @@ internal fun writeZlibHeader(output: ByteArray, options: ZLIB) {
     options.dictionary?.let {
         val checksum = Adler32Checksum()
         checksum.update(it)
-        writeBytesBE(output.asUByteArray(), 2, checksum.getChecksum())
+        writeBytesBE(output, 2, checksum.getChecksum())
     }
 }
 
@@ -48,7 +48,7 @@ internal fun writeZlibStart(data: ByteArray, hasDictionary: Boolean, dictionary:
             createFlateError(FlateErrorCode.INVALID_HEADER)
         }
 
-        val storedDictId = readFourBytesBE(data.asUByteArray(), 2)
+        val storedDictId = readFourBytesBE(data, 2)
         val computedDictId = Adler32Checksum().apply {
             update(dictionary)
         }.getChecksum()

@@ -41,63 +41,64 @@ dependencies {
 
 ```kotlin
 import com.rafambn.kflate.KFlate
+import com.rafambn.kflate.RAW
+import com.rafambn.kflate.Raw
 
-val input = "hello".encodeToByteArray().toUByteArray()
+val input = "hello".encodeToByteArray()
 
-val deflated = KFlate.Raw.deflate(input)
-val inflated = KFlate.Raw.inflate(deflated).toByteArray()
+val deflated = KFlate.compress(input, RAW())
+val inflated = KFlate.decompress(deflated, Raw())
 ```
 
 ### GZIP
 
 ```kotlin
 import com.rafambn.kflate.KFlate
-import com.rafambn.kflate.options.GzipOptions
+import com.rafambn.kflate.GZIP
+import com.rafambn.kflate.Gzip
 
-val input = "hello".encodeToByteArray().toUByteArray()
+val input = "hello".encodeToByteArray()
 
-val options = GzipOptions(
+val options = GZIP(
     filename = "hello.txt",
     comment = "example",
-    extraFields = mapOf("AB" to ubyteArrayOf(1u, 2u)),
+    extraFields = mapOf("AB" to byteArrayOf(1, 2)),
     includeHeaderCrc = true
 )
 
-val gz = KFlate.Gzip.compress(input, options)
-val roundTrip = KFlate.Gzip.decompress(gz).toByteArray()
+val gz = KFlate.compress(input, options)
+val roundTrip = KFlate.decompress(gz, Gzip())
 ```
 
 ### ZLIB
 
 ```kotlin
 import com.rafambn.kflate.KFlate
-import com.rafambn.kflate.options.DeflateOptions
+import com.rafambn.kflate.ZLIB
+import com.rafambn.kflate.Zlib
 
-val input = "hello".encodeToByteArray().toUByteArray()
+val input = "hello".encodeToByteArray()
 
-val z = KFlate.Zlib.compress(input)
-val out = KFlate.Zlib.decompress(z).toByteArray()
+val z = KFlate.compress(input, ZLIB())
+val out = KFlate.decompress(z, Zlib())
 
 // With a preset dictionary
-val dict = "common".encodeToByteArray().toUByteArray()
-val options = DeflateOptions(dictionary = dict)
-val zWithDict = KFlate.Zlib.compress(input, options)
+val dict = "common".encodeToByteArray()
+val options = ZLIB(dictionary = dict)
+val zWithDict = KFlate.compress(input, options)
 ```
 
 ## Options
 
-- `DeflateOptions`
+- `CompressionType` (`RAW`, `GZIP`, `ZLIB`)
   - `level`: 0..9 compression level
   - `bufferSize`: optional internal buffer size (for hash table)
   - `dictionary`: optional preset dictionary (max 32 KB)
-- `GzipOptions` (extends `DeflateOptions`)
-  - `filename`: optional file name
-  - `comment`: optional comment
-  - `extraFields`: optional map of 2-byte IDs to raw data
-  - `mtime`: optional modification time
-  - `includeHeaderCrc`: include FHCRC in the header
+  - `GZIP` specific: `filename`, `comment`, `extraFields`, `mtime`, `includeHeaderCrc`
+- `DecompressionType` (`Raw`, `Gzip`, `Zlib`)
+  - All support optional `dictionary` (max 32 KB)
 
 ## Project Notes
 
-- API uses `UByteArray` for binary data. Convert with `toUByteArray()` and `toByteArray()` as needed.
+- API uses standard `ByteArray` for binary data.
 - This project focuses on compatibility with standard gzip/zlib tools and the DEFLATE spec.

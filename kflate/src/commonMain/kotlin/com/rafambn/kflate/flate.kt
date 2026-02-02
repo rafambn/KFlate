@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalUnsignedTypes::class, ExperimentalTime::class)
+@file:OptIn(ExperimentalTime::class)
 
 package com.rafambn.kflate
 
@@ -11,18 +11,18 @@ import kotlin.math.min
 import kotlin.time.ExperimentalTime
 
 internal fun inflate(
-    inputData: UByteArray,
+    inputData: ByteArray,
     inflateState: InflateState,
-    outputBuffer: UByteArray? = null,
-    dictionary: UByteArray? = null
-): UByteArray {
+    outputBuffer: ByteArray? = null,
+    dictionary: ByteArray? = null
+): ByteArray {
     val sourceLength = inputData.size
     val dictionaryLength = dictionary?.size ?: 0
 
     if (sourceLength == 0 || (inflateState.finalFlag != null &&
                 inflateState.finalFlag != 0 && inflateState.literalMap == null)
     ) {
-        return outputBuffer ?: UByteArray(0)
+        return outputBuffer ?: ByteArray(0)
     }
 
     var workingBuffer = outputBuffer
@@ -32,13 +32,13 @@ internal fun inflate(
     val hasNoStoredState = inflateState.lastCheck
 
     if (!isBufferProvided)
-        workingBuffer = UByteArray(sourceLength * 3)
+        workingBuffer = ByteArray(sourceLength * 3)
 
     val ensureBufferCapacity = { requiredSize: Int ->
         val currentSize = workingBuffer!!.size
         if (requiredSize > currentSize) {
             val newSize = maxOf(currentSize * 2, requiredSize)
-            val newBuffer = UByteArray(newSize)
+            val newBuffer = ByteArray(newSize)
             workingBuffer!!.copyInto(newBuffer)
             workingBuffer = newBuffer
         }
@@ -89,7 +89,7 @@ internal fun inflate(
                     if (needsResize) ensureBufferCapacity(bytesWrittenToOutput + blockLength)
 
                     inputData.copyInto(
-                        workingBuffer,
+                        workingBuffer!!,
                         destinationOffset = bytesWrittenToOutput,
                         startIndex = dataStartByte,
                         endIndex = blockEndByte
@@ -125,13 +125,13 @@ internal fun inflate(
                     val totalCodes = numLiteralCodes + numDistanceCodes
                     currentBitPosition += 14
 
-                    val codeLengthTree = UByteArray(19)
+                    val codeLengthTree = ByteArray(19)
                     for (i in 0 until numCodeLengthCodes) {
-                        codeLengthTree[CODE_LENGTH_INDEX_MAP[i].toInt()] = readBits(inputData, currentBitPosition + i * 3, 7).toUByte()
+                        codeLengthTree[CODE_LENGTH_INDEX_MAP[i].toInt()] = readBits(inputData, currentBitPosition + i * 3, 7).toByte()
                     }
                     currentBitPosition += numCodeLengthCodes * 3
 
-                    val codeLengthMaxBits = findMaxValue(codeLengthTree).toInt()
+                    val codeLengthMaxBits = findMaxValue(codeLengthTree)
 
                     // Validate code-length tree
                     if (codeLengthMaxBits > 0) {
@@ -143,7 +143,7 @@ internal fun inflate(
                     val codeLengthBitMask = (1 shl codeLengthMaxBits) - 1
                     val codeLengthHuffmanMap = createHuffmanTree(codeLengthTree, codeLengthMaxBits, true)
 
-                    val allCodeLengths = UByteArray(totalCodes)
+                    val allCodeLengths = ByteArray(totalCodes)
                     var codeIndex = 0
 
                     while (codeIndex < totalCodes) {
@@ -153,7 +153,7 @@ internal fun inflate(
 
                         when {
                             symbol < 16 -> {
-                                allCodeLengths[codeIndex++] = symbol.toUByte()
+                                allCodeLengths[codeIndex++] = symbol.toByte()
                             }
 
                             symbol == 16 -> {
@@ -177,7 +177,7 @@ internal fun inflate(
                                 if (repeatCount > remainingSlots) {
                                     createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                                 }
-                                repeat(repeatCount) { allCodeLengths[codeIndex++] = 0u }
+                                repeat(repeatCount) { allCodeLengths[codeIndex++] = 0 }
                             }
 
                             symbol == 18 -> {
@@ -187,7 +187,7 @@ internal fun inflate(
                                 if (repeatCount > remainingSlots) {
                                     createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                                 }
-                                repeat(repeatCount) { allCodeLengths[codeIndex++] = 0u }
+                                repeat(repeatCount) { allCodeLengths[codeIndex++] = 0 }
                             }
                         }
                     }
@@ -200,8 +200,8 @@ internal fun inflate(
                         createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
                     }
 
-                    literalMaxBits = findMaxValue(literalLengthCodeLengths).toInt()
-                    distanceMaxBits = findMaxValue(distanceCodeLengths).toInt()
+                    literalMaxBits = findMaxValue(literalLengthCodeLengths)
+                    distanceMaxBits = findMaxValue(distanceCodeLengths)
 
                     // Validate literal/length tree
                     if (literalMaxBits > 0) {
@@ -251,7 +251,7 @@ internal fun inflate(
 
             when {
                 symbol < 256 -> {
-                    workingBuffer[bytesWrittenToOutput++] = symbol.toUByte()
+                    workingBuffer!![bytesWrittenToOutput++] = symbol.toByte()
                 }
 
                 symbol == 256 -> {
@@ -265,10 +265,10 @@ internal fun inflate(
 
                     if (symbol > 264) {
                         val lengthIndex = symbol - 257
-                        val extraBits = FIXED_LENGTH_EXTRA_BITS[lengthIndex]
+                        val extraBits = FIXED_LENGTH_EXTRA_BITS[lengthIndex].toInt() and 0xFF
                         matchLength =
-                            readBits(inputData, currentBitPosition, (1 shl extraBits.toInt()) - 1) + FIXED_LENGTH_BASE[lengthIndex].toInt()
-                        currentBitPosition += extraBits.toInt()
+                            readBits(inputData, currentBitPosition, (1 shl extraBits) - 1) + FIXED_LENGTH_BASE[lengthIndex].toInt()
+                        currentBitPosition += extraBits
                     }
 
                     val distanceCode = distanceMap!![readBits16(inputData, currentBitPosition) and distanceBitMask]
@@ -280,7 +280,7 @@ internal fun inflate(
 
                     var matchDistance = FIXED_DISTANCE_BASE[distanceSymbol].toInt()
                     if (distanceSymbol > 3) {
-                        val extraBits = FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt()
+                        val extraBits = FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF
                         matchDistance += readBits16(inputData, currentBitPosition) and ((1 shl extraBits) - 1)
                         currentBitPosition += extraBits
                     }
@@ -300,13 +300,13 @@ internal fun inflate(
                         }
 
                         while (bytesWrittenToOutput < dictionaryEndIndex) {
-                            workingBuffer[bytesWrittenToOutput] = dictionary!![dictionaryOffset + bytesWrittenToOutput]
+                            workingBuffer!![bytesWrittenToOutput] = dictionary!![dictionaryOffset + bytesWrittenToOutput]
                             bytesWrittenToOutput++
                         }
                     }
 
                     while (bytesWrittenToOutput < copyEndIndex) {
-                        workingBuffer[bytesWrittenToOutput] = workingBuffer[bytesWrittenToOutput - matchDistance]
+                        workingBuffer!![bytesWrittenToOutput] = workingBuffer!![bytesWrittenToOutput - matchDistance]
                         bytesWrittenToOutput++
                     }
                 }
@@ -327,26 +327,26 @@ internal fun inflate(
 
     } while (isFinalBlock == 0)
 
-    return workingBuffer.copyOfRange(0, bytesWrittenToOutput)
+    return workingBuffer!!.copyOfRange(0, bytesWrittenToOutput)
 }
 
 internal fun deflate(
-    data: UByteArray,
+    data: ByteArray,
     level: Int,
     compressionLevel: Int,
     prefixSize: Int,
     postfixSize: Int,
     state: DeflateState
-): UByteArray {
+): ByteArray {
     val dataSize = state.endIndex.takeIf { it != 0 } ?: data.size
-    val output = UByteArray(prefixSize + dataSize + 5 * (1 + ceil((dataSize / 7000.0)).toInt()) + postfixSize)
-    val writeBuffer = output.sliceArray(prefixSize until output.size - postfixSize)
+    val output = ByteArray(prefixSize + dataSize + 5 * (1 + ceil((dataSize / 7000.0)).toInt()) + postfixSize)
+    val writeBuffer = ByteArray(output.size - prefixSize - postfixSize)
     val isLastBlock = state.isLastChunk
     var bitPosition = state.remainderByteInfo and 7
 
     if (level > 0) {
         if (bitPosition != 0) {
-            writeBuffer[0] = (state.remainderByteInfo shr 3).toUByte()
+            writeBuffer[0] = (state.remainderByteInfo shr 3).toByte()
         }
         val option = DEFLATE_OPTIONS[level - 1]
         val niceLength = option shr 13
@@ -356,7 +356,7 @@ internal fun deflate(
         val head = state.head ?: UShortArray(mask + 1)
         val baseShift1 = ceil(compressionLevel / 3.0).toInt()
         val baseShift2 = 2 * baseShift1
-        val hash = { i: Int -> (data[i].toInt() xor (data[i + 1].toInt() shl baseShift1) xor (data[i + 2].toInt() shl baseShift2)) and mask }
+        val hash = { i: Int -> ((data[i].toInt() and 0xFF) xor ((data[i + 1].toInt() and 0xFF) shl baseShift1) xor ((data[i + 2].toInt() and 0xFF) shl baseShift2)) and mask }
 
         val symbols = IntArray(25000)
         val literalFrequencies = UShortArray(288)
@@ -434,14 +434,14 @@ internal fun deflate(
                     symbols[symbolIndex++] = 268435456 or (FIXED_LENGTH_REVERSE_LOOKUP[length] shl 18) or FIXED_DISTANCE_REVERSE_LOOKUP[distance]
                     val lenIndex = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
                     val distIndex = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
-                    extraBits += FIXED_LENGTH_EXTRA_BITS[lenIndex].toInt() + FIXED_DISTANCE_EXTRA_BITS[distIndex].toInt()
+                    extraBits += (FIXED_LENGTH_EXTRA_BITS[lenIndex].toInt() and 0xFF) + (FIXED_DISTANCE_EXTRA_BITS[distIndex].toInt() and 0xFF)
                     ++literalFrequencies[257 + lenIndex]
                     ++distanceFrequencies[distIndex]
                     waitIndex = i + length
                     ++literalCount
                 } else {
-                    symbols[symbolIndex++] = data[i].toInt()
-                    ++literalFrequencies[data[i].toInt()]
+                    symbols[symbolIndex++] = data[i].toInt() and 0xFF
+                    ++literalFrequencies[data[i].toInt() and 0xFF]
                 }
             }
             i++
@@ -449,8 +449,8 @@ internal fun deflate(
 
         i = maxOf(i, waitIndex)
         while (i < dataSize) {
-            symbols[symbolIndex++] = data[i].toInt()
-            literalFrequencies[data[i].toInt()]++
+            symbols[symbolIndex++] = data[i].toInt() and 0xFF
+            literalFrequencies[data[i].toInt() and 0xFF]++
             i++
         }
 
@@ -460,7 +460,7 @@ internal fun deflate(
         )
 
         if (isLastBlock == 0) {
-            state.remainderByteInfo = (bitPosition and 7) or (writeBuffer[bitPosition / 8].toInt() shl 3)
+            state.remainderByteInfo = (bitPosition and 7) or ((writeBuffer[bitPosition / 8].toInt() and 0xFF) shl 3)
             bitPosition -= 7
             state.head = head
             state.prev = prev
@@ -472,7 +472,7 @@ internal fun deflate(
         while (i < dataSize + isLastBlock) {
             var end = i + 65535
             if (end >= dataSize) {
-                writeBuffer[bitPosition / 8] = isLastBlock.toUByte()
+                writeBuffer[bitPosition / 8] = isLastBlock.toByte()
                 end = dataSize
             }
             bitPosition = writeFixedBlock(writeBuffer, bitPosition + 1, data.sliceArray(i until end))
@@ -540,11 +540,11 @@ internal fun deflateWithOptions(
         }
 
     return deflate(
-        workingData.asUByteArray(),
+        workingData,
         compressionLevel,
         memoryUsage,
         prefixSize,
         suffixSize,
         workingState
-    ).asByteArray()
+    )
 }

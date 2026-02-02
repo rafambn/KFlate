@@ -18,11 +18,11 @@ fun testGzipRoundTrip() {
     val original = readResourceFile("simpleText")
 
     // Act
-    val compressed = KFlate.Gzip.compress(original.toUByteArray())
-    val decompressed = KFlate.Gzip.decompress(compressed)
+    val compressed = KFlate.compress(original, GZIP())
+    val decompressed = KFlate.decompress(compressed, Gzip())
 
     // Assert
-    assertContentEquals(original, decompressed.toByteArray(), "Round-trip failed")
+    assertContentEquals(original, decompressed, "Round-trip failed")
 }
 ```
 
@@ -40,11 +40,11 @@ Create malformed data manually rather than relying on corruption:
 ```kotlin
 @Test
 fun testInvalidBlockType() {
-    val malformed = UByteArray(5)
-    malformed[0] = 0x07u  // BFINAL=1, BTYPE=11 (reserved)
+    val malformed = ByteArray(5)
+    malformed[0] = 0x07.toByte()  // BFINAL=1, BTYPE=11 (reserved)
 
     assertFailsWith<FlateError> {
-        KFlate.Raw.inflate(malformed)
+        KFlate.decompress(malformed, Raw())
     }
 }
 ```
@@ -57,12 +57,6 @@ Define these in your test class:
 private fun readResourceFile(fileName: String): ByteArray =
     javaClass.classLoader.getResourceAsStream(fileName)?.readBytes()
         ?: throw IllegalArgumentException("Resource not found: $fileName")
-
-private fun ByteArray.toUByteArray(): UByteArray =
-    UByteArray(size) { this[it].toUByte() }
-
-private fun UByteArray.toByteArray(): ByteArray =
-    ByteArray(size) { this[it].toByte() }
 ```
 
 ## Test Resources

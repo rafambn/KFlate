@@ -2,10 +2,12 @@
 
 package com.rafambn.kflate
 
-internal fun findMaxValue(array: UByteArray): UByte {
-    var maxValue = array[0]
+internal fun findMaxValue(array: ByteArray): Int {
+    if (array.isEmpty()) return 0
+    var maxValue = array[0].toInt() and 0xFF
     for (index in 1 until array.size) {
-        if (array[index] > maxValue) maxValue = array[index]
+        val value = array[index].toInt() and 0xFF
+        if (value > maxValue) maxValue = value
     }
     return maxValue
 }
@@ -20,7 +22,7 @@ internal fun String.toIsoStringBytes(): ByteArray {
     return bytes
 }
 
-internal fun readBits(data: UByteArray, bitPosition: Int, bitMask: Int): Int {
+internal fun readBits(data: ByteArray, bitPosition: Int, bitMask: Int): Int {
     val byteOffset = bitPosition / 8
 
     fun safe(index: Int): Int = if (index < data.size) data[index].toInt() and 0xFF else 0
@@ -28,7 +30,7 @@ internal fun readBits(data: UByteArray, bitPosition: Int, bitMask: Int): Int {
     return ((safe(byteOffset) or (safe(byteOffset + 1) shl 8)) shr (bitPosition and 7)) and bitMask
 }
 
-internal fun readBits16(data: UByteArray, bitPosition: Int): Int {
+internal fun readBits16(data: ByteArray, bitPosition: Int): Int {
     val byteOffset = bitPosition / 8
 
     fun safe(index: Int): Int =
@@ -43,28 +45,28 @@ internal fun shiftToNextByte(bitPosition: Int): Int {
     return (bitPosition + 7) / 8
 }
 
-internal fun writeBits(data: UByteArray, bitPosition: Int, value: Int) {
+internal fun writeBits(data: ByteArray, bitPosition: Int, value: Int) {
     val shiftedValue = value shl (bitPosition and 7)
     val byteIndex = bitPosition / 8
-    data[byteIndex] = data[byteIndex] or shiftedValue.toUByte()
-    data[byteIndex + 1] = data[byteIndex + 1] or (shiftedValue shr 8).toUByte()
+    data[byteIndex] = (data[byteIndex].toInt() or shiftedValue).toByte()
+    data[byteIndex + 1] = (data[byteIndex + 1].toInt() or (shiftedValue shr 8)).toByte()
 }
 
-internal fun writeBits16(data: UByteArray, bitPosition: Int, value: Int) {
+internal fun writeBits16(data: ByteArray, bitPosition: Int, value: Int) {
     val shiftedValue = value shl (bitPosition and 7)
     val byteIndex = bitPosition / 8
-    data[byteIndex] = data[byteIndex] or shiftedValue.toUByte()
-    data[byteIndex + 1] = data[byteIndex + 1] or (shiftedValue shr 8).toUByte()
-    data[byteIndex + 2] = data[byteIndex + 2] or (shiftedValue shr 16).toUByte()
+    data[byteIndex] = (data[byteIndex].toInt() or shiftedValue).toByte()
+    data[byteIndex + 1] = (data[byteIndex + 1].toInt() or (shiftedValue shr 8)).toByte()
+    data[byteIndex + 2] = (data[byteIndex + 2].toInt() or (shiftedValue shr 16)).toByte()
 }
 
-internal fun writeFixedBlock(output: UByteArray, bitPosition: Int, data: UByteArray): Int {
+internal fun writeFixedBlock(output: ByteArray, bitPosition: Int, data: ByteArray): Int {
     val dataLength = data.size
     val bytePosition = shiftToNextByte(bitPosition + 2)
-    output[bytePosition] = (dataLength and 255).toUByte()
-    output[bytePosition + 1] = (dataLength shr 8).toUByte()
-    output[bytePosition + 2] = (output[bytePosition].toInt() xor 255).toUByte()
-    output[bytePosition + 3] = (output[bytePosition + 1].toInt() xor 255).toUByte()
+    output[bytePosition] = (dataLength and 255).toByte()
+    output[bytePosition + 1] = (dataLength shr 8).toByte()
+    output[bytePosition + 2] = (output[bytePosition].toInt() xor 255).toByte()
+    output[bytePosition + 3] = (output[bytePosition + 1].toInt() xor 255).toByte()
     for (i in data.indices) {
         output[bytePosition + i + 4] = data[i]
     }
@@ -72,8 +74,8 @@ internal fun writeFixedBlock(output: UByteArray, bitPosition: Int, data: UByteAr
 }
 
 internal fun writeBlock(
-    data: UByteArray,
-    output: UByteArray,
+    data: ByteArray,
+    output: ByteArray,
     isFinal: Boolean,
     symbols: IntArray,
     literalFrequencies: UShortArray,
@@ -130,9 +132,9 @@ internal fun writeBlock(
     }
 
     var literalMap: UShortArray
-    var literalLengths: UByteArray
+    var literalLengths: ByteArray
     var distanceMap: UShortArray
-    var distanceLengths: UByteArray
+    var distanceLengths: ByteArray
 
     writeBits(output, currentBitPosition, 1 + if (dynamicTypedLength < fixedTypedLength) 1 else 0)
     currentBitPosition += 2
@@ -199,39 +201,39 @@ internal fun writeBlock(
     return currentBitPosition + literalLengths[256].toInt()
 }
 
-internal fun readTwoBytes(data: UByteArray, offset: Int): Int {
+internal fun readTwoBytes(data: ByteArray, offset: Int): Int {
     return (data[offset].toInt() and 0xFF) or ((data[offset + 1].toInt() and 0xFF) shl 8)
 }
 
-internal fun readFourBytes(data: UByteArray, offset: Int): Long {
+internal fun readFourBytes(data: ByteArray, offset: Int): Long {
     return (data[offset].toLong() and 0xFF) or
             ((data[offset + 1].toLong() and 0xFF) shl 8) or
             ((data[offset + 2].toLong() and 0xFF) shl 16) or
             ((data[offset + 3].toLong() and 0xFF) shl 24)
 }
 
-internal fun readFourBytesBE(data: UByteArray, offset: Int): Int {
+internal fun readFourBytesBE(data: ByteArray, offset: Int): Int {
     return ((data[offset].toInt() and 0xFF) shl 24) or
             ((data[offset + 1].toInt() and 0xFF) shl 16) or
             ((data[offset + 2].toInt() and 0xFF) shl 8) or
             (data[offset + 3].toInt() and 0xFF)
 }
 
-internal fun readEightBytes(data: UByteArray, offset: Int): Long {
+internal fun readEightBytes(data: ByteArray, offset: Int): Long {
     return readFourBytes(data, offset) + (readFourBytes(data, offset + 4) * 4294967296L)
 }
 
-internal fun writeBytes(data: UByteArray, offset: Int, value: Long) {
+internal fun writeBytes(data: ByteArray, offset: Int, value: Long) {
     val v = value.toUInt()
-    data[offset] = (v and 0xFFu).toUByte()
-    data[offset + 1] = ((v shr 8) and 0xFFu).toUByte()
-    data[offset + 2] = ((v shr 16) and 0xFFu).toUByte()
-    data[offset + 3] = ((v shr 24) and 0xFFu).toUByte()
+    data[offset] = (v and 0xFFu).toByte()
+    data[offset + 1] = ((v shr 8) and 0xFFu).toByte()
+    data[offset + 2] = ((v shr 16) and 0xFFu).toByte()
+    data[offset + 3] = ((v shr 24) and 0xFFu).toByte()
 }
 
-internal fun writeBytesBE(data: UByteArray, offset: Int, value: Int) {
-    data[offset] = ((value shr 24) and 0xFF).toUByte()
-    data[offset + 1] = ((value shr 16) and 0xFF).toUByte()
-    data[offset + 2] = ((value shr 8) and 0xFF).toUByte()
-    data[offset + 3] = (value and 0xFF).toUByte()
+internal fun writeBytesBE(data: ByteArray, offset: Int, value: Int) {
+    data[offset] = ((value shr 24) and 0xFF).toByte()
+    data[offset + 1] = ((value shr 16) and 0xFF).toByte()
+    data[offset + 2] = ((value shr 8) and 0xFF).toByte()
+    data[offset + 3] = (value and 0xFF).toByte()
 }

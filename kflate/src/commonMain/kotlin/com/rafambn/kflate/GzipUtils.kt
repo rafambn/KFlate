@@ -72,7 +72,7 @@ internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
     }
 
     if (timeInMillis != 0L)
-        writeBytes(output.asUByteArray(), 4, floor(timeInMillis / 1000.0).toLong())
+        writeBytes(output, 4, floor(timeInMillis / 1000.0).toLong())
 
     var headerOffset = 10
 
@@ -185,7 +185,7 @@ internal fun writeGzipStart(data: ByteArray): Int {
 
 internal fun getGzipUncompressedSize(data: ByteArray): Long {
     val length = data.size
-    return readFourBytes(data.asUByteArray(), length - 4)
+    return readFourBytes(data, length - 4)
 }
 
 internal fun getGzipHeaderSize(options: GZIP): Int {
@@ -246,7 +246,7 @@ internal fun processSingleGzipMember(
     // Inflate with state tracking
     val inflateState = InflateState(lastCheck = 2)
     val inputForInflate = data.copyOfRange(compressedDataStart, data.size)
-    val decompressed = inflate(inputForInflate.asUByteArray(), inflateState, null, dictionary?.asUByteArray())
+    val decompressed = inflate(inputForInflate, inflateState, null, dictionary)
 
     // Calculate bytes consumed by inflate
     val bitsConsumed = inflateState.position ?: 0
@@ -259,20 +259,19 @@ internal fun processSingleGzipMember(
     }
 
     // Validate CRC32
-    val storedCrc32 = readFourBytes(data.asUByteArray(), trailerStart).toInt()
+    val storedCrc32 = readFourBytes(data, trailerStart).toInt()
     val crc = Crc32Checksum()
-    val decompressedBytes = decompressed.asByteArray()
-    crc.update(decompressedBytes)
+    crc.update(decompressed)
     if (crc.getChecksum() != storedCrc32) {
         createFlateError(FlateErrorCode.CRC_MISMATCH)
     }
 
     // Validate ISIZE
-    val storedISize = readFourBytes(data.asUByteArray(), trailerStart + 4)
-    if ((decompressedBytes.size.toLong() and 0xFFFFFFFFL) != storedISize) {
+    val storedISize = readFourBytes(data, trailerStart + 4)
+    if ((decompressed.size.toLong() and 0xFFFFFFFFL) != storedISize) {
         createFlateError(FlateErrorCode.ISIZE_MISMATCH)
     }
 
     val totalBytesConsumed = headerEndPos + bytesConsumedByInflate + 8
-    return GzipMemberResult(decompressedBytes, totalBytesConsumed)
+    return GzipMemberResult(decompressed, totalBytesConsumed)
 }

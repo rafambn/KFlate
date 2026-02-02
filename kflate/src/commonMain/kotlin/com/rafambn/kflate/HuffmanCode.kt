@@ -25,11 +25,11 @@ internal data class HuffmanTable(
     }
 }
 
-internal fun generateHuffmanTable(extraBits: UByteArray, startValue: Int): HuffmanTable {
+internal fun generateHuffmanTable(extraBits: ByteArray, startValue: Int): HuffmanTable {
     val baseLengths = UShortArray(31)
     var currentStart = startValue
     for (i in 0 until 31) {
-        val extraBit = if (i == 0) 0 else extraBits[i - 1].toInt()
+        val extraBit = if (i == 0) 0 else extraBits[i - 1].toInt() and 0xFF
         currentStart += 1 shl extraBit
         baseLengths[i] = currentStart.toUShort()
     }
@@ -43,13 +43,14 @@ internal fun generateHuffmanTable(extraBits: UByteArray, startValue: Int): Huffm
     return HuffmanTable(baseLengths, reverseLookup)
 }
 
-internal fun createHuffmanTree(codeLengths: UByteArray, maxBits: Int, isReversed: Boolean): UShortArray {
+internal fun createHuffmanTree(codeLengths: ByteArray, maxBits: Int, isReversed: Boolean): UShortArray {
     val codeLengthSize = codeLengths.size
     val lengths = UShortArray(maxBits)
 
     for (i in 0 until codeLengthSize) {
-        if (codeLengths[i].toInt() != 0) {
-            lengths[codeLengths[i].toInt() - 1]++
+        val len = codeLengths[i].toInt() and 0xFF
+        if (len != 0) {
+            lengths[len - 1]++
         }
     }
 
@@ -64,8 +65,8 @@ internal fun createHuffmanTree(codeLengths: UByteArray, maxBits: Int, isReversed
         val reverseBits = 15 - maxBits
 
         for (i in 0 until codeLengthSize) {
-            if (codeLengths[i].toInt() != 0) {
-                val codeLength = codeLengths[i].toInt()
+            val codeLength = codeLengths[i].toInt() and 0xFF
+            if (codeLength != 0) {
                 val symbolAndBits = (i shl 4) or codeLength
                 val remainingBits = maxBits - codeLength
 
@@ -83,8 +84,8 @@ internal fun createHuffmanTree(codeLengths: UByteArray, maxBits: Int, isReversed
     } else {
         codes = UShortArray(codeLengthSize)
         for (i in 0 until codeLengthSize) {
-            if (codeLengths[i].toInt() != 0) {
-                val codeLength = codeLengths[i].toInt()
+            val codeLength = codeLengths[i].toInt() and 0xFF
+            if (codeLength != 0) {
                 val currentCode = minCodes[codeLength - 1]
                 minCodes[codeLength - 1]++
                 codes[i] = (REVERSE_TABLE[currentCode].toInt() shr (15 - codeLength)).toUShort()
@@ -106,7 +107,7 @@ internal fun createHuffmanTree(codeLengths: UByteArray, maxBits: Int, isReversed
  * @param maxBits Maximum code length
  * @return true if valid, false if oversubscribed or incomplete
  */
-internal fun validateHuffmanCodeLengths(codeLengths: UByteArray, maxBits: Int): Boolean {
+internal fun validateHuffmanCodeLengths(codeLengths: ByteArray, maxBits: Int): Boolean {
     if (maxBits <= 0) return true  // Empty tree
 
     // Count symbols at each code length
@@ -114,7 +115,7 @@ internal fun validateHuffmanCodeLengths(codeLengths: UByteArray, maxBits: Int): 
     var totalSymbols = 0
 
     for (length in codeLengths) {
-        val len = length.toInt()
+        val len = length.toInt() and 0xFF
         if (len > 0) {
             if (len > maxBits) return false  // Invalid code length
             lengthCounts[len]++
@@ -151,7 +152,7 @@ internal data class HuffmanNode(
     var rightChild: HuffmanNode? = null
 )
 
-internal data class HuffmanTreeResult(val tree: UByteArray, val maxBits: Int) {
+internal data class HuffmanTreeResult(val tree: ByteArray, val maxBits: Int) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false
@@ -183,11 +184,11 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: UShortArray, maxBits: 
     val originalNodes = ArrayList(nodes)
 
     if (nodeCount == 0) {
-        return HuffmanTreeResult(UByteArray(0), 0)
+        return HuffmanTreeResult(ByteArray(0), 0)
     }
     if (nodeCount == 1) {
-        val codeLengths = UByteArray(nodes[0].symbol + 1)
-        codeLengths[nodes[0].symbol] = 1u
+        val codeLengths = ByteArray(nodes[0].symbol + 1)
+        codeLengths[nodes[0].symbol] = 1
         return HuffmanTreeResult(codeLengths, 1)
     }
 
@@ -271,7 +272,7 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: UShortArray, maxBits: 
         currentMaxBits = maxBits
     }
 
-    return HuffmanTreeResult(UByteArray(codeLengths.size) { codeLengths[it].toUByte() }, currentMaxBits)
+    return HuffmanTreeResult(ByteArray(codeLengths.size) { codeLengths[it].toByte() }, currentMaxBits)
 }
 
 internal fun assignCodeLengthsAndGetMaxDepth(node: HuffmanNode, lengths: UShortArray, depth: Int): Int {
@@ -286,24 +287,25 @@ internal fun assignCodeLengthsAndGetMaxDepth(node: HuffmanNode, lengths: UShortA
     }
 }
 
-internal fun generateLengthCodes(codeLengths: UByteArray): Pair<UShortArray, Int> {
+internal fun generateLengthCodes(codeLengths: ByteArray): Pair<UShortArray, Int> {
     var maxSymbol = codeLengths.size
-    while (maxSymbol > 0 && codeLengths[maxSymbol - 1] == 0.toUByte()) {
+    while (maxSymbol > 0 && codeLengths[maxSymbol - 1].toInt() == 0) {
         maxSymbol--
     }
 
     val compactCodes = UShortArray(maxSymbol)
     var compactCodeIndex = 0
-    var currentCode = codeLengths[0]
+    var currentCode = codeLengths[0].toInt() and 0xFF
     var runLength = 1
 
     val writeCode = { value: Int -> compactCodes[compactCodeIndex++] = value.toUShort() }
 
     for (i in 1..maxSymbol) {
-        if (i < maxSymbol && codeLengths[i] == currentCode) {
+        val nextCode = if (i < maxSymbol) codeLengths[i].toInt() and 0xFF else -1
+        if (i < maxSymbol && nextCode == currentCode) {
             runLength++
         } else {
-            if (currentCode.toInt() == 0 && runLength > 2) {
+            if (currentCode == 0 && runLength > 2) {
                 while (runLength > 138) {
                     writeCode(32754)
                     runLength -= 138
@@ -313,7 +315,7 @@ internal fun generateLengthCodes(codeLengths: UByteArray): Pair<UShortArray, Int
                     runLength = 0
                 }
             } else if (runLength > 3) {
-                writeCode(currentCode.toInt())
+                writeCode(currentCode)
                 runLength--
                 while (runLength > 6) {
                     writeCode(8304)
@@ -325,21 +327,21 @@ internal fun generateLengthCodes(codeLengths: UByteArray): Pair<UShortArray, Int
                 }
             }
             while (runLength-- > 0) {
-                writeCode(currentCode.toInt())
+                writeCode(currentCode)
             }
             runLength = 1
             if (i < maxSymbol) {
-                currentCode = codeLengths[i]
+                currentCode = nextCode
             }
         }
     }
     return Pair(compactCodes.sliceArray(0 until compactCodeIndex), maxSymbol)
 }
 
-internal fun calculateCodeLength(codeFrequencies: UShortArray, codeLengths: UByteArray): Int {
+internal fun calculateCodeLength(codeFrequencies: UShortArray, codeLengths: ByteArray): Int {
     var length = 0
     for (i in codeLengths.indices) {
-        length += codeFrequencies[i].toInt() * codeLengths[i].toInt()
+        length += codeFrequencies[i].toInt() * (codeLengths[i].toInt() and 0xFF)
     }
     return length
 }

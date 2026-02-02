@@ -19,7 +19,7 @@ Follow these conventions when contributing to KFlate.
 
 ```kotlin
 // Good: internal implementation
-internal fun readBits(data: UByteArray, bitPosition: Int, bitMask: Int): Int
+internal fun readBits(data: ByteArray, bitPosition: Int, bitMask: Int): Int
 
 // Good: public API via singleton
 object KFlate {
@@ -61,7 +61,7 @@ val table = UShortArray(256).apply {
 options.dictionary?.let { validateDictionary(it) }
 
 // Elvis for defaults
-val buffer = outputBuffer ?: UByteArray(defaultSize)
+val buffer = outputBuffer ?: ByteArray(defaultSize)
 
 // when for exhaustive branching
 when (blockType) {
@@ -80,12 +80,12 @@ Reference RFC specs in comments for algorithm implementations:
 
 ```kotlin
 // RFC 1951, section 3.2.7: code length order
-internal val CODE_LENGTH_INDEX_MAP = ubyteArrayOf(16u, 17u, 18u, 0u, 8u, ...)
+internal val CODE_LENGTH_INDEX_MAP = byteArrayOf(16, 17, 18, 0, 8, ...)
 
 /**
  * Validates Huffman code lengths form a complete tree per RFC 1951.
  */
-internal fun validateHuffmanCodeLengths(codeLengths: UByteArray, maxBits: Int): Boolean
+internal fun validateHuffmanCodeLengths(codeLengths: ByteArray, maxBits: Int): Boolean
 ```
 
 ## File Organization

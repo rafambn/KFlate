@@ -17,7 +17,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateOversubscribedTree() {
-        val codeLengths = ubyteArrayOf(2u, 2u, 2u, 3u, 3u, 3u, 3u, 3u)
+        val codeLengths = byteArrayOf(2, 2, 2, 3, 3, 3, 3, 3)
         val result = validateHuffmanCodeLengths(codeLengths, 3)
         assert(!result) { "Should detect oversubscribed tree" }
     }
@@ -29,7 +29,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateIncompleteTree() {
-        val codeLengths = ubyteArrayOf(3u, 3u)
+        val codeLengths = byteArrayOf(3, 3)
         val result = validateHuffmanCodeLengths(codeLengths, 3)
         assert(!result) { "Should detect incomplete tree" }
     }
@@ -41,7 +41,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateCompleteTree() {
-        val codeLengths = ubyteArrayOf(2u, 2u, 3u, 3u, 3u, 3u)
+        val codeLengths = byteArrayOf(2, 2, 3, 3, 3, 3)
         val result = validateHuffmanCodeLengths(codeLengths, 3)
         assert(result) { "Should accept complete tree" }
     }
@@ -52,7 +52,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateSingleSymbolTree() {
-        val codeLengths = ubyteArrayOf(1u)
+        val codeLengths = byteArrayOf(1)
         val result = validateHuffmanCodeLengths(codeLengths, 1)
         assert(result) { "Should accept single symbol (RFC 1951 special case)" }
     }
@@ -62,7 +62,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateSingleSymbolWithHigherMaxBits() {
-        val codeLengths = ubyteArrayOf(2u)
+        val codeLengths = byteArrayOf(2)
         val result = validateHuffmanCodeLengths(codeLengths, 2)
         assert(result) { "Should accept single symbol regardless of maxBits" }
     }
@@ -72,7 +72,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateEmptyTree() {
-        val codeLengths = ubyteArrayOf(0u, 0u, 0u, 0u)
+        val codeLengths = byteArrayOf(0, 0, 0, 0)
         val result = validateHuffmanCodeLengths(codeLengths, 2)
         assert(result) { "Should accept empty tree" }
     }
@@ -82,7 +82,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateWithMaxBitsZero() {
-        val codeLengths = ubyteArrayOf(1u)
+        val codeLengths = byteArrayOf(1)
         val result = validateHuffmanCodeLengths(codeLengths, 0)
         assert(result) { "Should skip validation for maxBits <= 0" }
     }
@@ -92,7 +92,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateCodeLengthExceedsMaxBits() {
-        val codeLengths = ubyteArrayOf(2u, 5u)  // 5 > maxBits(3)
+        val codeLengths = byteArrayOf(2, 5)  // 5 > maxBits(3)
         val result = validateHuffmanCodeLengths(codeLengths, 3)
         assert(!result) { "Should reject code length exceeding maxBits" }
     }
@@ -104,7 +104,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateSingleCodeAtMaxLength() {
-        val codeLengths = ubyteArrayOf(15u)
+        val codeLengths = byteArrayOf(15)
         val result = validateHuffmanCodeLengths(codeLengths, 15)
         assert(result) { "Should accept single symbol at any length" }
     }
@@ -115,7 +115,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateTwoSymbolsIncomplete() {
-        val codeLengths = ubyteArrayOf(1u, 2u)
+        val codeLengths = byteArrayOf(1, 2)
         val result = validateHuffmanCodeLengths(codeLengths, 2)
         assert(!result) { "Should detect incomplete tree with two symbols" }
     }
@@ -126,7 +126,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateTwoSymbolsComplete() {
-        val codeLengths = ubyteArrayOf(1u, 1u)
+        val codeLengths = byteArrayOf(1, 1)
         val result = validateHuffmanCodeLengths(codeLengths, 1)
         assert(result) { "Should accept complete two-symbol tree" }
     }
@@ -140,9 +140,9 @@ class HuffmanTreeValidationTest {
     fun testValidateRealisticLiteralLengthTree() {
         // Simplified realistic distribution: 32 codes at length 5
         // This exactly fills 2^9 = 512 units (32 * 2^(9-5) = 32 * 16 = 512)
-        val codeLengths = UByteArray(32)
+        val codeLengths = ByteArray(32)
         for (i in 0 until 32) {
-            codeLengths[i] = 5u
+            codeLengths[i] = 5
         }
         val result = validateHuffmanCodeLengths(codeLengths, 9)
         assert(result) { "Should validate realistic literal/length tree" }
@@ -329,8 +329,8 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateSingleSymbolVeryLongCode() {
-        val codeLengths = UByteArray(100)
-        codeLengths[50] = 15u
+        val codeLengths = ByteArray(100)
+        codeLengths[50] = 15
         val result = validateHuffmanCodeLengths(codeLengths, 15)
         assert(result) { "Should accept single symbol even with very long code" }
     }
@@ -341,9 +341,9 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateSparseLengthDistribution() {
-        val codeLengths = UByteArray(1000)
-        codeLengths[0] = 1u
-        codeLengths[500] = 1u
+        val codeLengths = ByteArray(1000)
+        codeLengths[0] = 1
+        codeLengths[500] = 1
         // Only 2 symbols in 1000-element array
         val result = validateHuffmanCodeLengths(codeLengths, 1)
         assert(result) { "Should correctly count only non-zero lengths" }
@@ -355,7 +355,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateBoundaryComplete() {
-        val codeLengths = ubyteArrayOf(2u, 2u, 2u, 2u)
+        val codeLengths = byteArrayOf(2, 2, 2, 2)
         val result = validateHuffmanCodeLengths(codeLengths, 2)
         assert(result) { "4 codes at length 2 should exactly fill 2^2 space" }
     }
@@ -366,7 +366,7 @@ class HuffmanTreeValidationTest {
      */
     @Test
     fun testValidateBoundaryOversubscribed() {
-        val codeLengths = ubyteArrayOf(2u, 2u, 2u, 2u, 2u)
+        val codeLengths = byteArrayOf(2, 2, 2, 2, 2)
         val result = validateHuffmanCodeLengths(codeLengths, 2)
         assert(!result) { "5 codes at length 2 exceeds 2^2 space" }
     }
