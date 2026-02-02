@@ -23,7 +23,7 @@ internal fun writeZlibHeader(output: ByteArray, options: DeflateOptions) {
 
     options.dictionary?.let {
         val checksum = Adler32Checksum()
-        checksum.update(it)
+        checksum.update(it.asByteArray())
         writeBytesBE(output.asUByteArray(), 2, checksum.getChecksum())
     }
 }
@@ -51,7 +51,7 @@ internal fun writeZlibStart(data: ByteArray, hasDictionary: Boolean, dictionary:
 
         val storedDictId = readFourBytesBE(data.asUByteArray(), 2)
         val computedDictId = Adler32Checksum().apply {
-            update(dictionary.asUByteArray())
+            update(dictionary)
         }.getChecksum()
 
         if (storedDictId != computedDictId) {

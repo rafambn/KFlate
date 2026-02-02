@@ -12,11 +12,11 @@ import kotlin.math.floor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-internal fun computeGzipHeaderCrc16(data: UByteArray, start: Int, end: Int): Int {
+internal fun computeGzipHeaderCrc16(data: ByteArray, start: Int, end: Int): Int {
     // RFC 1952: CRC16 is the lower 16 bits of the CRC32 over the header bytes.
     var crc = -1
     for (i in start until end) {
-        crc = CRC32_TABLE[(crc and 0xFF) xor data[i].toInt()] xor (crc ushr 8)
+        crc = CRC32_TABLE[(crc and 0xFF) xor (data[i].toInt() and 0xFF)] xor (crc ushr 8)
     }
     return crc.inv() and 0xFFFF
 }
@@ -108,7 +108,7 @@ internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
 
     // FHCRC: Compute and write CRC-16 of header bytes 0 to headerOffset
     if (options.includeHeaderCrc) {
-        val crc16 = computeGzipHeaderCrc16(output, 0, headerOffset)
+        val crc16 = computeGzipHeaderCrc16(output.asByteArray(), 0, headerOffset)
         output[headerOffset] = (crc16 and 0xFF).toUByte()
         output[headerOffset + 1] = (crc16 shr 8).toUByte()
         headerOffset += 2
@@ -175,7 +175,7 @@ internal fun writeGzipStart(data: UByteArray): Int {
         if (headerSize + 2 > data.size) {
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
-        val computedCrc = computeGzipHeaderCrc16(data, 0, headerSize)
+        val computedCrc = computeGzipHeaderCrc16(data.asByteArray(), 0, headerSize)
         val storedCrc = (data[headerSize].toInt() and 0xFF) or ((data[headerSize + 1].toInt() and 0xFF) shl 8)
         if (computedCrc != storedCrc) {
             createFlateError(FlateErrorCode.INVALID_HEADER)
@@ -263,7 +263,7 @@ internal fun processSingleGzipMember(
     // Validate CRC32
     val storedCrc32 = readFourBytes(data, trailerStart).toInt()
     val crc = Crc32Checksum()
-    crc.update(decompressed)
+    crc.update(decompressed.asByteArray())
     if (crc.getChecksum() != storedCrc32) {
         createFlateError(FlateErrorCode.CRC_MISMATCH)
     }

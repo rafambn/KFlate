@@ -6,13 +6,13 @@ internal class Adler32Checksum : ChecksumGenerator {
     private var a = 1
     private var b = 0
 
-    override fun update(data: UByteArray) {
+    override fun update(data: ByteArray) {
         val len = data.size
         var i = 0
         while (i < len) {
             val end = minOf(i + 2655, len)
             while (i < end) {
-                a += data[i].toInt()
+                a += data[i].toInt() and 0xFF
                 b += a
                 i++
             }

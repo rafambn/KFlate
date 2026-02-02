@@ -78,7 +78,7 @@ object KFlate {
 
         val crc = Crc32Checksum()
         val dataLength = data.size
-        crc.update(data)
+        crc.update(data.asByteArray())
         val deflatedData = deflateWithOptions(data, options, getGzipHeaderSize(options), 8)
         val deflatedDataLength = deflatedData.size
         writeGzipHeader(deflatedData, options)
@@ -145,7 +145,7 @@ object KFlate {
         )
 
         val adler = Adler32Checksum()
-        adler.update(data)
+        adler.update(data.asByteArray())
         val deflatedData = deflateWithOptions(data, options, if (type.dictionary != null) 6 else 2, 4)
 
         val gzipOptions = GzipOptions(
@@ -177,7 +177,7 @@ object KFlate {
         )
 
         val computedAdler32 = Adler32Checksum().apply {
-            update(decompressedData)
+            update(decompressedData.asByteArray())
         }.getChecksum()
 
         if (computedAdler32 != storedAdler32) {

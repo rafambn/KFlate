@@ -17,9 +17,9 @@ internal val CRC32_TABLE = IntArray(256).apply {
 internal class Crc32Checksum : ChecksumGenerator {
     private var crc = -1
 
-    override fun update(data: UByteArray) {
+    override fun update(data: ByteArray) {
         for (byte in data) {
-            crc = CRC32_TABLE[(crc and 0xFF) xor byte.toInt()] xor (crc ushr 8)
+            crc = CRC32_TABLE[(crc and 0xFF) xor (byte.toInt() and 0xFF)] xor (crc ushr 8)
         }
     }
 
