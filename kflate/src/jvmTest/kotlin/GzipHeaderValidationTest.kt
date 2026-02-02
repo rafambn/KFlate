@@ -8,9 +8,6 @@ import kotlin.test.assertFailsWith
 
 class GzipHeaderValidationTest {
 
-    private fun ByteArray.toUByteArray(): UByteArray {
-        return UByteArray(this.size) { this[it].toUByte() }
-    }
 
     private fun createMinimalGzipHeader(flags: Int): ByteArray {
         val header = ByteArray(10)
@@ -25,19 +22,19 @@ class GzipHeaderValidationTest {
     @Test
     fun testReservedFlagBits() {
         // Bit 5 is reserved (32)
-        val data = createMinimalGzipHeader(32).toUByteArray()
+        val data = createMinimalGzipHeader(32).let { UByteArray(it.size) { i -> it[i].toUByte() } }
         assertFailsWith<FlateError> {
             writeGzipStart(data)
         }
         
         // Bit 6 is reserved (64)
-        val data2 = createMinimalGzipHeader(64).toUByteArray()
+        val data2 = createMinimalGzipHeader(64).let { UByteArray(it.size) { i -> it[i].toUByte() } }
         assertFailsWith<FlateError> {
             writeGzipStart(data2)
         }
 
         // Bit 7 is reserved (128)
-        val data3 = createMinimalGzipHeader(128).toUByteArray()
+        val data3 = createMinimalGzipHeader(128).let { UByteArray(it.size) { i -> it[i].toUByte() } }
         assertFailsWith<FlateError> {
             writeGzipStart(data3)
         }
@@ -51,7 +48,7 @@ class GzipHeaderValidationTest {
         extraData[1] = 0  // XLEN high
         // Only providing 2 bytes of data (total 4 bytes for extra part), need 12 bytes total (2 len + 10 data)
         
-        val data = (baseHeader + extraData).toUByteArray()
+        val data = (baseHeader + extraData).let { UByteArray(it.size) { i -> it[i].toUByte() } }
         
         assertFailsWith<FlateError> {
             writeGzipStart(data)
@@ -63,7 +60,7 @@ class GzipHeaderValidationTest {
         val baseHeader = createMinimalGzipHeader(8) // FNAME set
         val filename = "missing-null-terminator".encodeToByteArray()
         
-        val data = (baseHeader + filename).toUByteArray()
+        val data = (baseHeader + filename).let { UByteArray(it.size) { i -> it[i].toUByte() } }
         
         assertFailsWith<FlateError> {
             writeGzipStart(data)
@@ -75,7 +72,7 @@ class GzipHeaderValidationTest {
         val baseHeader = createMinimalGzipHeader(16) // FCOMMENT set
         val comment = "missing-null-terminator".encodeToByteArray()
         
-        val data = (baseHeader + comment).toUByteArray()
+        val data = (baseHeader + comment).let { UByteArray(it.size) { i -> it[i].toUByte() } }
         
         assertFailsWith<FlateError> {
             writeGzipStart(data)

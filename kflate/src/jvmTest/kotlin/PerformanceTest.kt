@@ -24,13 +24,6 @@ class PerformanceTest {
             ?: throw IllegalArgumentException("Resource file not found: $fileName")
     }
 
-    private fun ByteArray.toUByteArray(): UByteArray {
-        return UByteArray(this.size) { this[it].toUByte() }
-    }
-
-    private fun UByteArray.toByteArray(): ByteArray {
-        return ByteArray(this.size) { this[it].toByte() }
-    }
 
     // FLATE TESTS
     @Test
@@ -42,7 +35,7 @@ class PerformanceTest {
             val originalData = readResourceFile(fileName)
 
             val kflateTime = measureTimeMillis {
-                KFlate.Raw.deflate(originalData.toUByteArray())
+                KFlate.compress(originalData, RAW())
             }
 
             val jvmTime = measureTimeMillis {
@@ -74,7 +67,7 @@ class PerformanceTest {
             val compressedData = outputStream.toByteArray()
 
             val kflateTime = measureTimeMillis {
-                KFlate.Raw.inflate(compressedData.toUByteArray())
+                KFlate.decompress(compressedData, Raw())
             }
 
             val jvmTime = measureTimeMillis {
@@ -99,7 +92,7 @@ class PerformanceTest {
             val originalData = readResourceFile(fileName)
 
             val kflateTime = measureTimeMillis {
-                KFlate.Gzip.compress(originalData.toUByteArray())
+                KFlate.compress(originalData, GZIP())
             }
 
             val jvmTime = measureTimeMillis {
@@ -129,7 +122,7 @@ class PerformanceTest {
             val compressedData = outputStream.toByteArray()
 
             val kflateTime = measureTimeMillis {
-                KFlate.Gzip.decompress(compressedData.toUByteArray())
+                KFlate.decompress(compressedData, Gzip())
             }
 
             val jvmTime = measureTimeMillis {
@@ -152,7 +145,7 @@ class PerformanceTest {
             val originalData = readResourceFile(fileName)
 
             val kflateTime = measureTimeMillis {
-                KFlate.Zlib.compress(originalData.toUByteArray())
+                KFlate.compress(originalData, ZLIB())
             }
 
             val jvmTime = measureTimeMillis {
@@ -184,7 +177,7 @@ class PerformanceTest {
             val compressedData = outputStream.toByteArray()
 
             val kflateTime = measureTimeMillis {
-                KFlate.Zlib.decompress(compressedData.toUByteArray())
+                KFlate.decompress(compressedData, Zlib())
             }
 
             val jvmTime = measureTimeMillis {

@@ -24,16 +24,13 @@ class SizeTest {
             ?: throw IllegalArgumentException("Resource file not found: $fileName")
     }
 
-    private fun ByteArray.toUByteArray(): UByteArray {
-        return UByteArray(this.size) { this[it].toUByte() }
-    }
 
     @Test
     fun testFlateSize() {
         println("Flate Size Test")
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
-            val compressedData = KFlate.Raw.deflate(originalData.toUByteArray())
+            val compressedData = KFlate.compress(originalData, RAW())
 
             val deflater = Deflater(6, true)
             val outputStream = ByteArrayOutputStream()
@@ -54,7 +51,7 @@ class SizeTest {
         println("Gzip Size Test")
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
-            val compressedData = KFlate.Gzip.compress(originalData.toUByteArray())
+            val compressedData = KFlate.compress(originalData, GZIP())
 
             val outputStream = ByteArrayOutputStream()
             val gzipOutputStream = GZIPOutputStream(outputStream)
@@ -74,7 +71,7 @@ class SizeTest {
         println("Zlib Size Test")
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
-            val compressedData = KFlate.Zlib.compress(originalData.toUByteArray())
+            val compressedData = KFlate.compress(originalData, ZLIB())
 
             val deflater = Deflater(Deflater.DEFAULT_COMPRESSION)
             val outputStream = ByteArrayOutputStream()

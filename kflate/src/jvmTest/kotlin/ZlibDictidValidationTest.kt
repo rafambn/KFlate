@@ -5,99 +5,90 @@ package com.rafambn.kflate
 import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.options.DeflateOptions
-import com.rafambn.kflate.options.InflateOptions
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class ZlibDictidValidationTest {
 
-    private fun ByteArray.toUByteArray(): UByteArray = UByteArray(this.size) { this[it].toUByte() }
-
     @Test
     fun testValidDictidMatch() {
-        val data = "hello world".encodeToByteArray().toUByteArray()
-        val dictionary = "common".encodeToByteArray().toUByteArray()
-        val options = DeflateOptions(dictionary = dictionary)
+        val data = "hello world".encodeToByteArray()
+        val dictionary = "common".encodeToByteArray()
 
-        val compressed = KFlate.Zlib.compress(data, options)
-        val decompressed = KFlate.Zlib.decompress(compressed, InflateOptions(dictionary = dictionary))
+        val compressed = KFlate.compress(data, ZLIB(dictionary = dictionary))
+        val decompressed = KFlate.decompress(compressed, Zlib(dictionary = dictionary))
 
-        assertEquals("hello world", decompressed.toByteArray().decodeToString())
+        assertEquals("hello world", decompressed.decodeToString())
     }
 
     @Test
     fun testMismatchedDictid() {
-        val data = "hello world".encodeToByteArray().toUByteArray()
-        val correctDict = "common".encodeToByteArray().toUByteArray()
-        val wrongDict = "wrong".encodeToByteArray().toUByteArray()
+        val data = "hello world".encodeToByteArray()
+        val correctDict = "common".encodeToByteArray()
+        val wrongDict = "wrong".encodeToByteArray()
 
-        val options = DeflateOptions(dictionary = correctDict)
-        val compressed = KFlate.Zlib.compress(data, options)
+        val compressed = KFlate.compress(data, ZLIB(dictionary = correctDict))
 
         val error = assertFailsWith<FlateError> {
-            KFlate.Zlib.decompress(compressed, InflateOptions(dictionary = wrongDict))
+            KFlate.decompress(compressed, Zlib(dictionary = wrongDict))
         }
         assertEquals(FlateErrorCode.CHECKSUM_MISMATCH, error.code)
     }
 
     @Test
     fun testFdictFlagSetButNoDictionary() {
-        val data = "hello world".encodeToByteArray().toUByteArray()
-        val dictionary = "common".encodeToByteArray().toUByteArray()
+        val data = "hello world".encodeToByteArray()
+        val dictionary = "common".encodeToByteArray()
 
-        val options = DeflateOptions(dictionary = dictionary)
-        val compressed = KFlate.Zlib.compress(data, options)
+        val compressed = KFlate.compress(data, ZLIB(dictionary = dictionary))
 
         // Try to decompress without providing the required dictionary
         val error = assertFailsWith<FlateError> {
-            KFlate.Zlib.decompress(compressed, InflateOptions())
+            KFlate.decompress(compressed, Zlib())
         }
         assertEquals(FlateErrorCode.INVALID_HEADER, error.code)
     }
 
     @Test
     fun testNoDictidWhenFdictNotSet() {
-        val data = "hello world".encodeToByteArray().toUByteArray()
+        val data = "hello world".encodeToByteArray()
 
-        val compressed = KFlate.Zlib.compress(data)
-        val decompressed = KFlate.Zlib.decompress(compressed)
+        val compressed = KFlate.compress(data, ZLIB())
+        val decompressed = KFlate.decompress(compressed, Zlib())
 
-        assertEquals("hello world", decompressed.toByteArray().decodeToString())
+        assertEquals("hello world", decompressed.decodeToString())
     }
 
     @Test
     fun testTruncatedDictid() {
-        val data = "hello world".encodeToByteArray().toUByteArray()
-        val dictionary = "common".encodeToByteArray().toUByteArray()
+        val data = "hello world".encodeToByteArray()
+        val dictionary = "common".encodeToByteArray()
 
-        val options = DeflateOptions(dictionary = dictionary)
-        val compressed = KFlate.Zlib.compress(data, options)
+        val compressed = KFlate.compress(data, ZLIB(dictionary = dictionary))
 
         // Truncate to remove the DICTID (it's after the 2-byte header)
         // Header with DICTID is 6 bytes total (2 bytes CMF/FLG + 4 bytes DICTID)
         val truncated = compressed.copyOfRange(0, 5)
 
         val error = assertFailsWith<FlateError> {
-            KFlate.Zlib.decompress(truncated, InflateOptions(dictionary = dictionary))
+            KFlate.decompress(truncated, Zlib(dictionary = dictionary))
         }
         assertEquals(FlateErrorCode.UNEXPECTED_EOF, error.code)
     }
 
     @Test
     fun testCorruptedDictid() {
-        val data = "hello world".encodeToByteArray().toUByteArray()
-        val dictionary = "common".encodeToByteArray().toUByteArray()
+        val data = "hello world".encodeToByteArray()
+        val dictionary = "common".encodeToByteArray()
 
-        val options = DeflateOptions(dictionary = dictionary)
-        val compressed = KFlate.Zlib.compress(data, options).toMutableList()
+        val compressed = KFlate.compress(data, ZLIB(dictionary = dictionary)).toMutableList()
 
         // Corrupt the DICTID bytes (bytes 2-5)
-        compressed[2] = (compressed[2] + 1u).toUByte()
+        compressed[2] = (compressed[2].toInt() + 1).toByte()
 
         val error = assertFailsWith<FlateError> {
-            KFlate.Zlib.decompress(compressed.toUByteArray(), InflateOptions(dictionary = dictionary))
+            KFlate.decompress(compressed.toByteArray(), Zlib(dictionary = dictionary))
         }
         assertEquals(FlateErrorCode.CHECKSUM_MISMATCH, error.code)
     }

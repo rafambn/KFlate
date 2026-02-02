@@ -4,7 +4,7 @@ package com.rafambn.kflate.options
 
 import com.rafambn.kflate.toIsoStringBytes
 
-class GzipOptions(
+internal class GzipOptions(
     level: Int = 6,
     mem: Int? = null,
     dictionary: UByteArray? = null,

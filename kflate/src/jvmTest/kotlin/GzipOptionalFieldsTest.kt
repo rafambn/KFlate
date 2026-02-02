@@ -3,6 +3,7 @@
 package com.rafambn.kflate
 
 import com.rafambn.kflate.options.GzipOptions
+import com.rafambn.kflate.options.DeflateOptions
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
@@ -13,97 +14,111 @@ import kotlin.test.assertFailsWith
 
 class GzipOptionalFieldsTest {
 
-    private fun ByteArray.toUByteArray(): UByteArray {
-        return UByteArray(this.size) { this[it].toUByte() }
-    }
-
-    private fun UByteArray.toByteArray(): ByteArray {
-        return ByteArray(this.size) { this[it].toByte() }
-    }
 
     @Test
     fun testHeaderSizeCalculationNoOptionalFields() {
-        val options = GzipOptions()
+        val gzip = GZIP()
+        val options = GzipOptions(level = gzip.level)
         assertEquals(10, getGzipHeaderSize(options))
     }
 
     @Test
     fun testHeaderSizeCalculationFilenameOnly() {
-        val options = GzipOptions(filename = "test.txt")
+        val gzip = GZIP(filename = "test.txt")
+        val options = GzipOptions(level = gzip.level, filename = gzip.filename)
         assertEquals(19, getGzipHeaderSize(options))
     }
 
     @Test
     fun testHeaderSizeCalculationCommentOnly() {
-        val options = GzipOptions(comment = "note")
+        val gzip = GZIP(comment = "note")
+        val options = GzipOptions(level = gzip.level, comment = gzip.comment)
         assertEquals(15, getGzipHeaderSize(options))
     }
 
     @Test
     fun testHeaderSizeCalculationExtraFieldsOnly() {
-        val options = GzipOptions(extraFields = mapOf("AB" to ubyteArrayOf(1u, 2u, 3u)))
+        val gzip = GZIP(extraFields = mapOf("AB" to byteArrayOf(1, 2, 3)))
+        val options = GzipOptions(level = gzip.level, extraFields = mapOf("AB" to ubyteArrayOf(1u, 2u, 3u)))
         assertEquals(19, getGzipHeaderSize(options))
     }
 
     @Test
     fun testHeaderSizeCalculationHeaderCrcOnly() {
-        val options = GzipOptions(includeHeaderCrc = true)
+        val gzip = GZIP(includeHeaderCrc = true)
+        val options = GzipOptions(level = gzip.level, includeHeaderCrc = gzip.includeHeaderCrc)
         assertEquals(12, getGzipHeaderSize(options))
     }
 
     @Test
     fun testHeaderSizeCalculationAllOptionalFields() {
-        val options = GzipOptions(
+        val gzip = GZIP(
             filename = "file.txt",
             comment = "comment",
-            extraFields = mapOf("XX" to ubyteArrayOf(1u, 2u)),
+            extraFields = mapOf("XX" to byteArrayOf(1, 2)),
             includeHeaderCrc = true
+        )
+        val options = GzipOptions(
+            level = gzip.level,
+            filename = gzip.filename,
+            comment = gzip.comment,
+            extraFields = mapOf("XX" to ubyteArrayOf(1u, 2u)),
+            includeHeaderCrc = gzip.includeHeaderCrc
         )
         assertEquals(37, getGzipHeaderSize(options))
     }
 
     @Test
     fun testHeaderSizeMatchesActualHeader() {
-        val options = GzipOptions(
+        val gzip = GZIP(
             filename = "file.txt",
             comment = "comment",
-            extraFields = mapOf("XX" to ubyteArrayOf(1u, 2u)),
+            extraFields = mapOf("XX" to byteArrayOf(1, 2)),
             includeHeaderCrc = true
         )
-        val data = "test".encodeToByteArray().toUByteArray()
-        val compressed = KFlate.Gzip.compress(data, options)
-        val actualHeaderSize = writeGzipStart(compressed)
+        val data = "test".encodeToByteArray()
+        val compressed = KFlate.compress(data, gzip)
+
+        val options = GzipOptions(
+            level = gzip.level,
+            filename = gzip.filename,
+            comment = gzip.comment,
+            extraFields = mapOf("XX" to ubyteArrayOf(1u, 2u)),
+            includeHeaderCrc = gzip.includeHeaderCrc
+        )
+        val compressedUByteArray = UByteArray(compressed.size) { i -> compressed[i].toUByte() }
+        val actualHeaderSize = writeGzipStart(compressedUByteArray)
 
         assertEquals(getGzipHeaderSize(options), actualHeaderSize)
     }
 
     @Test
     fun testGzipOptionalFieldsRoundTripWithKFlate() {
-        val options = GzipOptions(
+        val gzip = GZIP(
             filename = "file.txt",
             comment = "comment",
-            extraFields = mapOf("XX" to ubyteArrayOf(1u, 2u, 3u)),
+            extraFields = mapOf("XX" to byteArrayOf(1, 2, 3)),
             includeHeaderCrc = true
         )
         val data = "optional-fields".encodeToByteArray()
-        val compressed = KFlate.Gzip.compress(data.toUByteArray(), options)
-        val decompressed = KFlate.Gzip.decompress(compressed).toByteArray()
+        val compressed = KFlate.compress(data, gzip)
+        val decompressed = KFlate.decompress(compressed, Gzip())
 
         assertContentEquals(data, decompressed)
     }
 
     @Test
     fun testGzipOptionalFieldsReadableByJavaGzip() {
-        val options = GzipOptions(
+        val gzip = GZIP(
             filename = "file.txt",
             comment = "comment",
-            extraFields = mapOf("XX" to ubyteArrayOf(1u)),
+            extraFields = mapOf("XX" to byteArrayOf(1)),
             includeHeaderCrc = true
         )
         val data = "optional-fields".encodeToByteArray()
-        val compressed = KFlate.Gzip.compress(data.toUByteArray(), options)
+        val compressed = KFlate.compress(data, gzip)
 
-        val inputStream = ByteArrayInputStream(compressed.toByteArray())
+        val inputStream = ByteArrayInputStream(compressed)
         val gzipInputStream = GZIPInputStream(inputStream)
         val outputStream = ByteArrayOutputStream()
 
@@ -116,32 +131,28 @@ class GzipOptionalFieldsTest {
     fun testXlenAtMaximum65535() {
         // Create extra fields totaling exactly 65535 bytes (maximum allowed XLEN)
         // Single field with 65531 bytes of data: 4 bytes (SI1+SI2+LEN) + 65531 bytes = 65535
-        val maxData = UByteArray(65531) { it.toByte().toUByte() }
-        val options = GzipOptions(
+        val maxData = ByteArray(65531) { it.toByte() }
+        val gzip = GZIP(
             extraFields = mapOf("AB" to maxData)
         )
-        val data = "test".encodeToByteArray().toUByteArray()
+        val data = "test".encodeToByteArray()
 
         // Should not throw - this is a valid maximum XLEN
-        val compressed = KFlate.Gzip.compress(data, options)
-        val decompressed = KFlate.Gzip.decompress(compressed).toByteArray()
+        val compressed = KFlate.compress(data, gzip)
+        val decompressed = KFlate.decompress(compressed, Gzip())
 
-        assertContentEquals(data.toByteArray(), decompressed)
+        assertContentEquals(data, decompressed)
     }
 
     @Test
     fun testXlenExceedsMaximum() {
         // Create extra fields totaling 65536 bytes (exceeds maximum XLEN of 65535)
         // Single field with 65532 bytes of data: 4 bytes (SI1+SI2+LEN) + 65532 bytes = 65536
-        val exceedData = UByteArray(65532) { it.toByte().toUByte() }
-        val options = GzipOptions(
-            extraFields = mapOf("AB" to exceedData)
-        )
-        val data = "test".encodeToByteArray().toUByteArray()
+        val exceedData = ByteArray(65532) { it.toByte() }
 
         // Should throw because total XLEN exceeds 65535
         assertFailsWith<IllegalArgumentException> {
-            KFlate.Gzip.compress(data, options)
+            GZIP(extraFields = mapOf("AB" to exceedData))
         }
     }
 
@@ -162,36 +173,34 @@ class GzipOptionalFieldsTest {
         // Total = N * (4 + D)
         // Let's use 655 fields with 98 bytes each: 655 * (4 + 98) = 655 * 102 = 66810 (too much)
         // Let's use 100 fields with 651 bytes each: 100 * (4 + 651) = 100 * 655 = 65500 (ok!)
-        val fields = mutableMapOf<String, UByteArray>()
+        val fields = mutableMapOf<String, ByteArray>()
         for (i in 0 until 100) {
             val fieldId = String(charArrayOf('A' + (i / 26), 'A' + (i % 26)))
-            fields[fieldId] = UByteArray(651) { it.toByte().toUByte() }
+            fields[fieldId] = ByteArray(651) { it.toByte() }
         }
-        val options = GzipOptions(extraFields = fields)
-        val data = "test".encodeToByteArray().toUByteArray()
+        val gzip = GZIP(extraFields = fields)
+        val data = "test".encodeToByteArray()
 
         // Should not throw - total is 65500 bytes
-        val compressed = KFlate.Gzip.compress(data, options)
-        val decompressed = KFlate.Gzip.decompress(compressed).toByteArray()
+        val compressed = KFlate.compress(data, gzip)
+        val decompressed = KFlate.decompress(compressed, Gzip())
 
-        assertContentEquals(data.toByteArray(), decompressed)
+        assertContentEquals(data, decompressed)
     }
 
     @Test
     fun testXlenMultipleFieldsExceedsMaximum() {
         // Create multiple extra fields totaling more than 65535 bytes
         // 100 fields with 652 bytes each: 100 * (4 + 652) = 100 * 656 = 65600 (exceeds limit)
-        val fields = mutableMapOf<String, UByteArray>()
+        val fields = mutableMapOf<String, ByteArray>()
         for (i in 0 until 100) {
             val fieldId = String(charArrayOf('A' + (i / 26), 'A' + (i % 26)))
-            fields[fieldId] = UByteArray(652) { it.toByte().toUByte() }
+            fields[fieldId] = ByteArray(652) { it.toByte() }
         }
-        val options = GzipOptions(extraFields = fields)
-        val data = "test".encodeToByteArray().toUByteArray()
 
         // Should throw because total XLEN exceeds 65535
         assertFailsWith<IllegalArgumentException> {
-            KFlate.Gzip.compress(data, options)
+            GZIP(extraFields = fields)
         }
     }
 }

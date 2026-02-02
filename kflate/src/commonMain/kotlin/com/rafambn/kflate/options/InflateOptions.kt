@@ -2,7 +2,7 @@
 
 package com.rafambn.kflate.options
 
-data class InflateOptions(
+internal data class InflateOptions(
     val dictionary: UByteArray? = null
 ) {
     init {

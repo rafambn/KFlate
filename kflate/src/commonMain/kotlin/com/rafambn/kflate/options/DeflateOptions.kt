@@ -2,7 +2,7 @@
 
 package com.rafambn.kflate.options
 
-open class DeflateOptions(
+internal open class DeflateOptions(
     val level: Int = 6,
     val mem: Int? = null,
     val dictionary: UByteArray? = null
