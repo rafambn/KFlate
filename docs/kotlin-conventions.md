@@ -53,7 +53,7 @@ Prefer these patterns:
 
 ```kotlin
 // apply for initialization
-val table = UShortArray(256).apply {
+val table = ShortArray(256).apply {
     for (i in indices) { this[i] = compute(i) }
 }
 
@@ -93,11 +93,9 @@ internal fun validateHuffmanCodeLengths(codeLengths: ByteArray, maxBits: Int): B
 - One primary class per file, filename matches class name
 - Group related utilities: `Utils.kt`, `GzipUtils.kt`
 - State classes can share a file: `State.kt` contains both `InflateState` and `DeflateState`
-- File header order: `@file:OptIn`, package, imports
+// File header order: package, imports
 
 ```kotlin
-@file:OptIn(ExperimentalUnsignedTypes::class)
-
 package com.rafambn.kflate
 
 import com.rafambn.kflate.error.FlateErrorCode

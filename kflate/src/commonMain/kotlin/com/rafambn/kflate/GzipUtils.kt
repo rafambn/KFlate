@@ -118,14 +118,14 @@ internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
     }
 }
 
-internal fun writeGzipStart(data: ByteArray): Int {
-    if (data.size < 10) {
+internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {
+    if (startOffset + 10 > data.size) {
         createFlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
-    if ((data[0].toInt() and 0xFF) != 31 || (data[1].toInt() and 0xFF) != 139 || (data[2].toInt() and 0xFF) != 8) {
+    if ((data[startOffset].toInt() and 0xFF) != 31 || (data[startOffset + 1].toInt() and 0xFF) != 139 || (data[startOffset + 2].toInt() and 0xFF) != 8) {
         createFlateError(FlateErrorCode.INVALID_HEADER)
     }
-    val flags = data[3].toInt() and 0xFF
+    val flags = data[startOffset + 3].toInt() and 0xFF
     if ((flags and 0xE0) != 0) { // Check reserved bits 5, 6, 7
         createFlateError(FlateErrorCode.INVALID_HEADER)
     }
@@ -133,12 +133,12 @@ internal fun writeGzipStart(data: ByteArray): Int {
     var headerSize = 10
     // FEXTRA
     if ((flags and 4) != 0) {
-        if (headerSize + 2 > data.size) {
+        if (startOffset + headerSize + 2 > data.size) {
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
-        val xlen = (data[headerSize].toInt() and 0xFF) or ((data[headerSize + 1].toInt() and 0xFF) shl 8)
+        val xlen = (data[startOffset + headerSize].toInt() and 0xFF) or ((data[startOffset + headerSize + 1].toInt() and 0xFF) shl 8)
         headerSize += 2
-        if (headerSize + xlen > data.size) {
+        if (startOffset + headerSize + xlen > data.size) {
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         headerSize += xlen
@@ -147,10 +147,10 @@ internal fun writeGzipStart(data: ByteArray): Int {
     // FNAME
     if ((flags and 8) != 0) {
         while (true) {
-            if (headerSize >= data.size) {
+            if (startOffset + headerSize >= data.size) {
                 createFlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
-            if (data[headerSize++].toInt() == 0) {
+            if (data[startOffset + headerSize++].toInt() == 0) {
                 break
             }
         }
@@ -159,10 +159,10 @@ internal fun writeGzipStart(data: ByteArray): Int {
     // FCOMMENT
     if ((flags and 16) != 0) {
         while (true) {
-            if (headerSize >= data.size) {
+            if (startOffset + headerSize >= data.size) {
                 createFlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
-            if (data[headerSize++].toInt() == 0) {
+            if (data[startOffset + headerSize++].toInt() == 0) {
                 break
             }
         }
@@ -170,11 +170,11 @@ internal fun writeGzipStart(data: ByteArray): Int {
 
     // FHCRC
     if ((flags and 2) != 0) {
-        if (headerSize + 2 > data.size) {
+        if (startOffset + headerSize + 2 > data.size) {
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
-        val computedCrc = computeGzipHeaderCrc16(data, 0, headerSize)
-        val storedCrc = (data[headerSize].toInt() and 0xFF) or ((data[headerSize + 1].toInt() and 0xFF) shl 8)
+        val computedCrc = computeGzipHeaderCrc16(data, startOffset, startOffset + headerSize)
+        val storedCrc = (data[startOffset + headerSize].toInt() and 0xFF) or ((data[startOffset + headerSize + 1].toInt() and 0xFF) shl 8)
         if (computedCrc != storedCrc) {
             createFlateError(FlateErrorCode.INVALID_HEADER)
         }
@@ -240,7 +240,7 @@ internal fun processSingleGzipMember(
     }
 
     // Parse header
-    val headerEndPos = writeGzipStart(data.copyOfRange(startOffset, data.size))
+    val headerEndPos = writeGzipStart(data, startOffset)
     val compressedDataStart = startOffset + headerEndPos
 
     // Inflate with state tracking

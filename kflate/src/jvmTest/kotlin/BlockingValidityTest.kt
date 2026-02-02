@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
 
 package com.rafambn.kflate
 
@@ -140,14 +139,14 @@ class BlockingValidityTest {
         // Use simpleText resource to ensure compressed data is large enough
         val testData = readResourceFile("simpleText")
 
-        // Test level 0-1: should set XFL = 4u (max speed)
+        // Test level 0-1: should set XFL = 4 (max speed)
         val compressed0 = KFlate.compress(testData, GZIP(level = 0))
         assert(compressed0[8] == 4.toByte()) { "Level 0 should set XFL = 4 (max speed)" }
 
         val compressed1 = KFlate.compress(testData, GZIP(level = 1))
         assert(compressed1[8] == 4.toByte()) { "Level 1 should set XFL = 4 (max speed)" }
 
-        // Test levels 2-8: should set XFL = 0u (default)
+        // Test levels 2-8: should set XFL = 0 (default)
         for (level in 2..8) {
             val compressed = KFlate.compress(testData, GZIP(level = level))
             assert(compressed[8] == 0.toByte()) {
@@ -155,7 +154,7 @@ class BlockingValidityTest {
             }
         }
 
-        // Test level 9: should set XFL = 2u (max compression)
+        // Test level 9: should set XFL = 2 (max compression)
         val compressed9 = KFlate.compress(testData, GZIP(level = 9))
         assert(compressed9[8] == 2.toByte()) { "Level 9 should set XFL = 2 (max compression)" }
     }

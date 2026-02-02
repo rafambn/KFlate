@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
 
 package com.rafambn.kflate
 

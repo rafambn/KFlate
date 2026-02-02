@@ -39,7 +39,7 @@ class GzipEncodingTest {
         }
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
+    
     @Test
     fun testHeaderGenerationWithIso() {
         val filename = "caf\u00E9.txt" // café.txt

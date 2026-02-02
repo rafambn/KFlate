@@ -6,7 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
-@OptIn(ExperimentalUnsignedTypes::class)
+
 class GzipTrailerValidationTest {
 
     @Test

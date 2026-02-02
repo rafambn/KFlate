@@ -238,16 +238,16 @@ internal fun inflate(
         var savedBitPosition = currentBitPosition
 
         while (true) {
-            val literalCode = literalLengthMap!![readBits16(inputData, currentBitPosition) and literalBitMask]
-            val symbol = literalCode.toInt() shr 4
-            currentBitPosition += (literalCode.toInt() and 15)
+            val literalCode = (literalLengthMap!![readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
+            val symbol = literalCode shr 4
+            currentBitPosition += (literalCode and 15)
 
             if (currentBitPosition > totalAvailableBits) {
                 if (hasNoStoredState != 0) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
 
-            if (literalCode.toInt() == 0) createFlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
+            if (literalCode == 0) createFlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
 
             when {
                 symbol < 256 -> {
@@ -267,18 +267,18 @@ internal fun inflate(
                         val lengthIndex = symbol - 257
                         val extraBits = FIXED_LENGTH_EXTRA_BITS[lengthIndex].toInt() and 0xFF
                         matchLength =
-                            readBits(inputData, currentBitPosition, (1 shl extraBits) - 1) + FIXED_LENGTH_BASE[lengthIndex].toInt()
+                            readBits(inputData, currentBitPosition, (1 shl extraBits) - 1) + (FIXED_LENGTH_BASE[lengthIndex].toInt() and 0xFFFF)
                         currentBitPosition += extraBits
                     }
 
-                    val distanceCode = distanceMap!![readBits16(inputData, currentBitPosition) and distanceBitMask]
-                    val distanceSymbol = distanceCode.toInt() shr 4
-                    if (distanceCode.toInt() == 0) createFlateError(FlateErrorCode.INVALID_DISTANCE)
+                    val distanceCode = (distanceMap!![readBits16(inputData, currentBitPosition) and distanceBitMask].toInt() and 0xFFFF)
+                    val distanceSymbol = distanceCode shr 4
+                    if (distanceCode == 0) createFlateError(FlateErrorCode.INVALID_DISTANCE)
                     // RFC 1951: Distance codes 30-31 will never occur in valid compressed data
                     if (distanceSymbol >= 30) createFlateError(FlateErrorCode.INVALID_DISTANCE)
-                    currentBitPosition += (distanceCode.toInt() and 15)
+                    currentBitPosition += (distanceCode and 15)
 
-                    var matchDistance = FIXED_DISTANCE_BASE[distanceSymbol].toInt()
+                    var matchDistance = FIXED_DISTANCE_BASE[distanceSymbol].toInt() and 0xFFFF
                     if (distanceSymbol > 3) {
                         val extraBits = FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF
                         matchDistance += readBits16(inputData, currentBitPosition) and ((1 shl extraBits) - 1)
@@ -339,7 +339,9 @@ internal fun deflate(
     state: DeflateState
 ): ByteArray {
     val dataSize = state.endIndex.takeIf { it != 0 } ?: data.size
-    val output = ByteArray(prefixSize + dataSize + 5 * (1 + ceil((dataSize / 7000.0)).toInt()) + postfixSize)
+    // Heuristic: dataSize + 1/8th of dataSize (for expansion) + 256 (for tree/header overhead) + 5 per block
+    val bufferMargin = (dataSize shr 3) + 256 + 5 * (1 + (dataSize / 7000))
+    val output = ByteArray(prefixSize + dataSize + bufferMargin + postfixSize)
     val writeBuffer = ByteArray(output.size - prefixSize - postfixSize)
     val isLastBlock = state.isLastChunk
     var bitPosition = state.remainderByteInfo and 7
@@ -358,7 +360,7 @@ internal fun deflate(
         val baseShift2 = 2 * baseShift1
         val hash = { i: Int -> ((data[i].toInt() and 0xFF) xor ((data[i + 1].toInt() and 0xFF) shl baseShift1) xor ((data[i + 2].toInt() and 0xFF) shl baseShift2)) and mask }
 
-        val symbols = IntArray(25000)
+        val symbols = IntArray(65536)
         val literalFrequencies = IntArray(288)
         val distanceFrequencies = IntArray(32)
         var literalCount = 0
@@ -401,9 +403,9 @@ internal fun deflate(
                     val maxLength = minOf(258, remaining)
 
                     while (diff <= maxD && --currentChain != 0 && iMod != pIMod) {
-                        if (data[i + length] == data[i + length - diff]) {
+                        if ((data[i + length].toInt() and 0xFF) == (data[i + length - diff].toInt() and 0xFF)) {
                             var newLength = 0
-                            while (newLength < maxLength && data[i + newLength] == data[i + newLength - diff]) {
+                            while (newLength < maxLength && (data[i + newLength].toInt() and 0xFF) == (data[i + newLength - diff].toInt() and 0xFF)) {
                                 newLength++
                             }
                             if (newLength > length) {

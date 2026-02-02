@@ -288,7 +288,7 @@ internal fun assignCodeLengthsAndGetMaxDepth(node: HuffmanNode, lengths: IntArra
 
 internal fun generateLengthCodes(codeLengths: ByteArray): Pair<ShortArray, Int> {
     var maxSymbol = codeLengths.size
-    while (maxSymbol > 0 && codeLengths[maxSymbol - 1].toInt() == 0) {
+    while (maxSymbol > 0 && (codeLengths[maxSymbol - 1].toInt() and 0xFF) == 0) {
         maxSymbol--
     }
 
@@ -334,7 +334,7 @@ internal fun generateLengthCodes(codeLengths: ByteArray): Pair<ShortArray, Int> 
             }
         }
     }
-    return Pair(compactCodes.sliceArray(0..compactCodeIndex), maxSymbol)
+    return Pair(compactCodes.sliceArray(0 until compactCodeIndex), maxSymbol)
 }
 
 internal fun calculateCodeLength(codeFrequencies: IntArray, codeLengths: ByteArray): Int {

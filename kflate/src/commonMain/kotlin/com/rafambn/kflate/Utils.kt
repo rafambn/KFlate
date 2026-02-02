@@ -46,16 +46,16 @@ internal fun shiftToNextByte(bitPosition: Int): Int {
 internal fun writeBits(data: ByteArray, bitPosition: Int, value: Int) {
     val shiftedValue = value shl (bitPosition and 7)
     val byteIndex = bitPosition / 8
-    data[byteIndex] = (data[byteIndex].toInt() or shiftedValue).toByte()
-    data[byteIndex + 1] = (data[byteIndex + 1].toInt() or (shiftedValue shr 8)).toByte()
+    data[byteIndex] = ((data[byteIndex].toInt() and 0xFF) or shiftedValue).toByte()
+    data[byteIndex + 1] = ((data[byteIndex + 1].toInt() and 0xFF) or (shiftedValue shr 8)).toByte()
 }
 
 internal fun writeBits16(data: ByteArray, bitPosition: Int, value: Int) {
     val shiftedValue = value shl (bitPosition and 7)
     val byteIndex = bitPosition / 8
-    data[byteIndex] = (data[byteIndex].toInt() or shiftedValue).toByte()
-    data[byteIndex + 1] = (data[byteIndex + 1].toInt() or (shiftedValue shr 8)).toByte()
-    data[byteIndex + 2] = (data[byteIndex + 2].toInt() or (shiftedValue shr 16)).toByte()
+    data[byteIndex] = ((data[byteIndex].toInt() and 0xFF) or shiftedValue).toByte()
+    data[byteIndex + 1] = ((data[byteIndex + 1].toInt() and 0xFF) or (shiftedValue shr 8)).toByte()
+    data[byteIndex + 2] = ((data[byteIndex + 2].toInt() and 0xFF) or (shiftedValue shr 16)).toByte()
 }
 
 internal fun writeFixedBlock(output: ByteArray, bitPosition: Int, data: ByteArray): Int {
