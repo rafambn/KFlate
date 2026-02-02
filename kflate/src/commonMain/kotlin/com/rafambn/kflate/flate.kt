@@ -19,17 +19,15 @@ internal fun inflate(
     val sourceLength = inputData.size
     val dictionaryLength = dictionary?.size ?: 0
 
-    if (sourceLength == 0 || (inflateState.finalFlag != null &&
-                inflateState.finalFlag != 0 && inflateState.literalMap == null)
-    ) {
+    if (sourceLength == 0 || (inflateState.isFinalBlock && inflateState.literalMap == null)) {
         return outputBuffer ?: ByteArray(0)
     }
 
     var workingBuffer = outputBuffer
     val isBufferProvided = workingBuffer != null
 
-    val needsResize = !isBufferProvided || inflateState.lastCheck != 2
-    val hasNoStoredState = inflateState.lastCheck
+    val needsResize = !isBufferProvided || inflateState.validationMode != 2
+    val hasNoStoredState = inflateState.validationMode != 0
 
     if (!isBufferProvided)
         workingBuffer = ByteArray(sourceLength * 3)
@@ -44,19 +42,19 @@ internal fun inflate(
         }
     }
 
-    var isFinalBlock = inflateState.finalFlag ?: 0
-    var currentBitPosition = inflateState.position ?: 0
-    var bytesWrittenToOutput = inflateState.byte ?: 0
+    var isFinalBlock = inflateState.isFinalBlock
+    var currentBitPosition = inflateState.inputBitPosition
+    var bytesWrittenToOutput = inflateState.outputOffset
     var literalLengthMap = inflateState.literalMap
     var distanceMap = inflateState.distanceMap
-    var literalMaxBits = inflateState.literalBits
-    var distanceMaxBits = inflateState.distanceBits
+    var literalMaxBits = inflateState.literalMaxBits
+    var distanceMaxBits = inflateState.distanceMaxBits
 
     val totalAvailableBits = sourceLength * 8
 
     do {
         if (literalLengthMap == null) {
-            isFinalBlock = readBits(inputData, currentBitPosition, 1)
+            isFinalBlock = readBits(inputData, currentBitPosition, 1) != 0
             val blockType = readBits(inputData, currentBitPosition + 1, 3)
             currentBitPosition += 3
 
@@ -66,7 +64,7 @@ internal fun inflate(
 
                     // Check if at least 4 bytes remain for LEN and NLEN
                     if (blockStartByte + 4 > sourceLength) {
-                        if (hasNoStoredState != 0) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
@@ -82,7 +80,7 @@ internal fun inflate(
                     val blockEndByte = dataStartByte + blockLength
 
                     if (blockEndByte > sourceLength) {
-                        if (hasNoStoredState != 0) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
@@ -98,9 +96,9 @@ internal fun inflate(
                     bytesWrittenToOutput += blockLength
                     currentBitPosition = blockEndByte * 8
 
-                    inflateState.byte = bytesWrittenToOutput
-                    inflateState.position = currentBitPosition
-                    inflateState.finalFlag = isFinalBlock
+                    inflateState.outputOffset = bytesWrittenToOutput
+                    inflateState.inputBitPosition = currentBitPosition
+                    inflateState.isFinalBlock = isFinalBlock
                     continue
                 }
 
@@ -226,15 +224,15 @@ internal fun inflate(
             }
 
             if (currentBitPosition > totalAvailableBits) {
-                if (hasNoStoredState != 0) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
         }
 
         if (needsResize) ensureBufferCapacity(bytesWrittenToOutput + 131072)
 
-        val literalBitMask = (1 shl literalMaxBits!!) - 1
-        val distanceBitMask = (1 shl distanceMaxBits!!) - 1
+        val literalBitMask = (1 shl literalMaxBits) - 1
+        val distanceBitMask = (1 shl distanceMaxBits) - 1
         var savedBitPosition = currentBitPosition
 
         while (true) {
@@ -243,7 +241,7 @@ internal fun inflate(
             currentBitPosition += (literalCode and 15)
 
             if (currentBitPosition > totalAvailableBits) {
-                if (hasNoStoredState != 0) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
 
@@ -314,18 +312,18 @@ internal fun inflate(
         }
 
         inflateState.literalMap = literalLengthMap
-        inflateState.position = savedBitPosition
-        inflateState.byte = bytesWrittenToOutput
-        inflateState.finalFlag = isFinalBlock
+        inflateState.inputBitPosition = savedBitPosition
+        inflateState.outputOffset = bytesWrittenToOutput
+        inflateState.isFinalBlock = isFinalBlock
 
         if (literalLengthMap != null) {
-            isFinalBlock = 1
-            inflateState.literalBits = literalMaxBits
+            isFinalBlock = true
+            inflateState.literalMaxBits = literalMaxBits
             inflateState.distanceMap = distanceMap
-            inflateState.distanceBits = distanceMaxBits
+            inflateState.distanceMaxBits = distanceMaxBits
         }
 
-    } while (isFinalBlock == 0)
+    } while (!isFinalBlock)
 
     return workingBuffer.copyOfRange(0, bytesWrittenToOutput)
 }
@@ -338,17 +336,17 @@ internal fun deflate(
     postfixSize: Int,
     state: DeflateState
 ): ByteArray {
-    val dataSize = state.endIndex.takeIf { it != 0 } ?: data.size
+    val dataSize = state.inputEndIndex.takeIf { it != 0 } ?: data.size
     // Heuristic: dataSize + 1/8th of dataSize (for expansion) + 256 (for tree/header overhead) + 5 per block
     val bufferMargin = (dataSize shr 3) + 256 + 5 * (1 + (dataSize / 7000))
     val output = ByteArray(prefixSize + dataSize + bufferMargin + postfixSize)
     val writeBuffer = ByteArray(output.size - prefixSize - postfixSize)
     val isLastBlock = state.isLastChunk
-    var bitPosition = state.remainderByteInfo and 7
+    var bitPosition = state.bitBuffer and 7
 
     if (level > 0) {
         if (bitPosition != 0) {
-            writeBuffer[0] = (state.remainderByteInfo shr 3).toByte()
+            writeBuffer[0] = (state.bitBuffer shr 3).toByte()
         }
         val option = DEFLATE_OPTIONS[level - 1]
         val niceLength = option shr 13
@@ -365,7 +363,7 @@ internal fun deflate(
         val distanceFrequencies = IntArray(32)
         var literalCount = 0
         var extraBits = 0
-        var i = state.index
+        var i = state.inputOffset
         var symbolIndex = 0
         var waitIndex = state.waitIndex
         var blockStart = 0
@@ -379,7 +377,7 @@ internal fun deflate(
 
             if (waitIndex <= i) {
                 val remaining = dataSize - i
-                if ((literalCount > 7000 || symbolIndex > 24576) && (remaining > 423 || isLastBlock == 0)) {
+                if ((literalCount > 7000 || symbolIndex > 24576) && (remaining > 423 || !isLastBlock)) {
                     bitPosition = writeBlock(
                         data, writeBuffer, false, symbols, literalFrequencies, distanceFrequencies,
                         extraBits, symbolIndex, blockStart, i - blockStart, bitPosition
@@ -457,30 +455,31 @@ internal fun deflate(
         }
 
         bitPosition = writeBlock(
-            data, writeBuffer, isLastBlock != 0, symbols, literalFrequencies, distanceFrequencies,
+            data, writeBuffer, isLastBlock, symbols, literalFrequencies, distanceFrequencies,
             extraBits, symbolIndex, blockStart, i - blockStart, bitPosition
         )
 
-        if (isLastBlock == 0) {
-            state.remainderByteInfo = (bitPosition and 7) or ((writeBuffer[bitPosition / 8].toInt() and 0xFF) shl 3)
+        if (!isLastBlock) {
+            state.bitBuffer = (bitPosition and 7) or ((writeBuffer[bitPosition / 8].toInt() and 0xFF) shl 3)
             bitPosition -= 7
             state.head = head
             state.prev = prev
-            state.index = i
+            state.inputOffset = i
             state.waitIndex = waitIndex
         }
     } else {
         var i = state.waitIndex
-        while (i < dataSize + isLastBlock) {
+        val lastBlockFlag = if (isLastBlock) 1 else 0
+        while (i < dataSize + lastBlockFlag) {
             var end = i + 65535
             if (end >= dataSize) {
-                writeBuffer[bitPosition / 8] = isLastBlock.toByte()
+                writeBuffer[bitPosition / 8] = lastBlockFlag.toByte()
                 end = dataSize
             }
             bitPosition = writeFixedBlock(writeBuffer, bitPosition + 1, data.sliceArray(i until end))
             i += 65535
         }
-        state.index = dataSize
+        state.inputOffset = dataSize
     }
     writeBuffer.copyInto(output, destinationOffset = prefixSize)
     return output.sliceArray(0 until prefixSize + shiftToNextByte(bitPosition) + postfixSize)
@@ -513,7 +512,7 @@ internal fun deflateWithOptions(
     }
 
     if (workingState == null) {
-        workingState = DeflateState(isLastChunk = 1)
+        workingState = DeflateState(isLastChunk = true)
 
         if (dictionary != null) {
             val combinedData = ByteArray(dictionary.size + inputData.size)
@@ -529,7 +528,7 @@ internal fun deflateWithOptions(
 
         val compressionLevel = level
 
-        val memoryUsage = if (workingState.isLastChunk != 0 && bufferSize == 4096) {
+        val memoryUsage = if (workingState.isLastChunk && bufferSize == 4096) {
             ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt()
         } else {
             var bits = 0

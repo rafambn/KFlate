@@ -244,12 +244,12 @@ internal fun processSingleGzipMember(
     val compressedDataStart = startOffset + headerEndPos
 
     // Inflate with state tracking
-    val inflateState = InflateState(lastCheck = 2)
+    val inflateState = InflateState(validationMode = 2)
     val inputForInflate = data.copyOfRange(compressedDataStart, data.size)
     val decompressed = inflate(inputForInflate, inflateState, null, dictionary)
 
     // Calculate bytes consumed by inflate
-    val bitsConsumed = inflateState.position ?: 0
+    val bitsConsumed = inflateState.inputBitPosition
     val bytesConsumedByInflate = (bitsConsumed + 7) / 8
 
     // Validate trailer

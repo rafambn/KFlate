@@ -39,7 +39,7 @@ object KFlate {
     }
 
     private fun decompressRaw(data: ByteArray, type: Raw): ByteArray {
-        return inflate(data, InflateState(lastCheck = 2), null, type.dictionary)
+        return inflate(data, InflateState(validationMode = 2), null, type.dictionary)
     }
 
     private fun compressGzip(data: ByteArray, type: GZIP): ByteArray {
@@ -125,7 +125,7 @@ object KFlate {
         val inputData = data.copyOfRange(start, data.size - 4)
         val decompressedData = inflate(
             inputData,
-            InflateState(lastCheck = 2),
+            InflateState(validationMode = 2),
             null,
             type.dictionary
         )
