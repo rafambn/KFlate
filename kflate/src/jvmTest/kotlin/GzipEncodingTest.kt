@@ -53,7 +53,7 @@ class GzipEncodingTest {
         // Convert to internal GzipOptions for testing header functions
         val options = GzipOptions(
             level = gzip.level,
-            mem = gzip.mem,
+            bufferSize = gzip.bufferSize,
             dictionary = gzip.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } },
             filename = gzip.filename,
             mtime = gzip.mtime,

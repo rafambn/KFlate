@@ -6,14 +6,14 @@ import com.rafambn.kflate.toIsoStringBytes
 
 internal class GzipOptions(
     level: Int = 6,
-    mem: Int? = null,
+    bufferSize: Int = 4096,
     dictionary: UByteArray? = null,
     val filename: String? = null,
     val mtime: Any? = null,
     val comment: String? = null,
     val extraFields: Map<String, UByteArray>? = null,
     val includeHeaderCrc: Boolean = false
-) : DeflateOptions(level, mem, dictionary) {
+) : DeflateOptions(level, bufferSize, dictionary) {
 
     init {
         filename?.let {

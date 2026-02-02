@@ -12,7 +12,7 @@ import com.rafambn.kflate.options.InflateOptions
 
 object KFlate {
 
-    fun compress(data: ByteArray, type: CompressionType, bufferSize: Int = 4096): ByteArray {
+    fun compress(data: ByteArray, type: CompressionType): ByteArray {
         val ubyteData = UByteArray(data.size) { i -> data[i].toUByte() }
 
         val result = when (type) {
@@ -24,7 +24,7 @@ object KFlate {
         return ByteArray(result.size) { i -> result[i].toByte() }
     }
 
-    fun decompress(data: ByteArray, type: DecompressionType, bufferSize: Int = 4096): ByteArray {
+    fun decompress(data: ByteArray, type: DecompressionType): ByteArray {
         val ubyteData = UByteArray(data.size) { i -> data[i].toUByte() }
 
         val result = when (type) {
@@ -37,11 +37,11 @@ object KFlate {
     }
 
     /*
-    suspend fun compress(type: CompressionType, bufferSize: Int = 4096, writer: suspend () -> ByteArray?, reader: suspend (ByteArray) -> Unit) {
+    suspend fun compress(type: CompressionType, writer: suspend () -> ByteArray?, reader: suspend (ByteArray) -> Unit) {
         throw NotImplementedError("Streaming compression not yet implemented")
     }
 
-    suspend fun decompress(type: DecompressionType, bufferSize: Int = 4096, writer: suspend () -> ByteArray?, reader: suspend (ByteArray) -> Unit) {
+    suspend fun decompress(type: DecompressionType, writer: suspend () -> ByteArray?, reader: suspend (ByteArray) -> Unit) {
         throw NotImplementedError("Streaming decompression not yet implemented")
     }
     */
@@ -49,7 +49,7 @@ object KFlate {
     private fun compressRaw(data: UByteArray, type: RAW): UByteArray {
         val options = DeflateOptions(
             level = type.level,
-            mem = type.mem,
+            bufferSize = type.bufferSize,
             dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } }
         )
         return deflateWithOptions(data, options, 0, 0)
@@ -65,7 +65,7 @@ object KFlate {
     private fun compressGzip(data: UByteArray, type: GZIP): UByteArray {
         val options = GzipOptions(
             level = type.level,
-            mem = type.mem,
+            bufferSize = type.bufferSize,
             dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } },
             filename = type.filename,
             mtime = type.mtime,
@@ -140,7 +140,7 @@ object KFlate {
     private fun compressZlib(data: UByteArray, type: ZLIB): UByteArray {
         val options = DeflateOptions(
             level = type.level,
-            mem = type.mem,
+            bufferSize = type.bufferSize,
             dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } }
         )
 
@@ -151,7 +151,7 @@ object KFlate {
         // Create temporary GzipOptions for writeZlibHeader (it only uses level and dictionary from DeflateOptions)
         val gzipOptions = GzipOptions(
             level = type.level,
-            mem = type.mem,
+            bufferSize = options.bufferSize,
             dictionary = options.dictionary
         )
         writeZlibHeader(deflatedData, options)

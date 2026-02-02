@@ -88,7 +88,7 @@ val zWithDict = KFlate.Zlib.compress(input, options)
 
 - `DeflateOptions`
   - `level`: 0..9 compression level
-  - `mem`: optional memory tuning
+  - `bufferSize`: optional internal buffer size (for hash table)
   - `dictionary`: optional preset dictionary (max 32 KB)
 - `GzipOptions` (extends `DeflateOptions`)
   - `filename`: optional file name

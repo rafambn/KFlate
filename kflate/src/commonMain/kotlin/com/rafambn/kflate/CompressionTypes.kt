@@ -6,12 +6,13 @@ sealed interface CompressionType
 
 data class RAW(
     val level: Int = 6,
-    val mem: Int? = null,
+    val bufferSize: Int = 4096,
     val dictionary: ByteArray? = null
 ) : CompressionType {
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
-        mem?.let { require(it in -1..12) { "mem must be -1 (default) or in range 0..12, but was $it" } }
+        require(bufferSize >= 1024) { "bufferSize must be at least 1024, but was $bufferSize" }
+        require(bufferSize >= 16777216) { "bufferSize must be at maximum 16777216, but was $bufferSize" }
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
@@ -24,7 +25,7 @@ data class RAW(
         other as RAW
 
         if (level != other.level) return false
-        if (mem != other.mem) return false
+        if (bufferSize != other.bufferSize) return false
         if (!dictionary.contentEquals(other.dictionary)) return false
 
         return true
@@ -32,7 +33,7 @@ data class RAW(
 
     override fun hashCode(): Int {
         var result = level
-        result = 31 * result + (mem ?: 0)
+        result = 31 * result + bufferSize
         result = 31 * result + (dictionary?.contentHashCode() ?: 0)
         return result
     }
@@ -40,7 +41,7 @@ data class RAW(
 
 data class GZIP(
     val level: Int = 6,
-    val mem: Int? = null,
+    val bufferSize: Int = 4096,
     val dictionary: ByteArray? = null,
     val filename: String? = null,
     val mtime: Any? = null,
@@ -50,7 +51,8 @@ data class GZIP(
 ) : CompressionType {
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
-        mem?.let { require(it in -1..12) { "mem must be -1 (default) or in range 0..12, but was $it" } }
+        require(bufferSize >= 1024) { "bufferSize must be at least 1024, but was $bufferSize" }
+        require(bufferSize >= 16777216) { "bufferSize must be at maximum 16777216, but was $bufferSize" }
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
@@ -80,7 +82,7 @@ data class GZIP(
         other as GZIP
 
         if (level != other.level) return false
-        if (mem != other.mem) return false
+        if (bufferSize != other.bufferSize) return false
         if (!dictionary.contentEquals(other.dictionary)) return false
         if (filename != other.filename) return false
         if (mtime != other.mtime) return false
@@ -93,7 +95,7 @@ data class GZIP(
 
     override fun hashCode(): Int {
         var result = level
-        result = 31 * result + (mem ?: 0)
+        result = 31 * result + bufferSize
         result = 31 * result + (dictionary?.contentHashCode() ?: 0)
         result = 31 * result + (filename?.hashCode() ?: 0)
         result = 31 * result + (mtime?.hashCode() ?: 0)
@@ -106,12 +108,13 @@ data class GZIP(
 
 data class ZLIB(
     val level: Int = 6,
-    val mem: Int? = null,
+    val bufferSize: Int = 4096,
     val dictionary: ByteArray? = null
 ) : CompressionType {
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
-        mem?.let { require(it in -1..12) { "mem must be -1 (default) or in range 0..12, but was $it" } }
+        require(bufferSize >= 1024) { "bufferSize must be at least 1024, but was $bufferSize" }
+        require(bufferSize >= 16777216) { "bufferSize must be at maximum 16777216, but was $bufferSize" }
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
@@ -124,7 +127,7 @@ data class ZLIB(
         other as ZLIB
 
         if (level != other.level) return false
-        if (mem != other.mem) return false
+        if (bufferSize != other.bufferSize) return false
         if (!dictionary.contentEquals(other.dictionary)) return false
 
         return true
@@ -132,7 +135,7 @@ data class ZLIB(
 
     override fun hashCode(): Int {
         var result = level
-        result = 31 * result + (mem ?: 0)
+        result = 31 * result + bufferSize
         result = 31 * result + (dictionary?.contentHashCode() ?: 0)
         return result
     }

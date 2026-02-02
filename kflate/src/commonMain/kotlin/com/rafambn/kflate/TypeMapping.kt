@@ -17,7 +17,7 @@ internal fun CompressionType.toDeflateOptions(): Pair<DeflateOptions, Boolean> {
         is RAW -> Pair(
             DeflateOptions(
                 level = level,
-                mem = mem,
+                bufferSize = bufferSize,
                 dictionary = dictionary.toUByteArray()
             ),
             false
@@ -25,7 +25,7 @@ internal fun CompressionType.toDeflateOptions(): Pair<DeflateOptions, Boolean> {
         is ZLIB -> Pair(
             DeflateOptions(
                 level = level,
-                mem = mem,
+                bufferSize = bufferSize,
                 dictionary = dictionary.toUByteArray()
             ),
             true
@@ -33,7 +33,7 @@ internal fun CompressionType.toDeflateOptions(): Pair<DeflateOptions, Boolean> {
         is GZIP -> Pair(
             GzipOptions(
                 level = level,
-                mem = mem,
+                bufferSize = bufferSize,
                 dictionary = dictionary.toUByteArray(),
                 filename = filename,
                 mtime = mtime,

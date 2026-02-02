@@ -4,12 +4,12 @@ package com.rafambn.kflate.options
 
 internal open class DeflateOptions(
     val level: Int = 6,
-    val mem: Int? = null,
+    val bufferSize: Int = 4096,
     val dictionary: UByteArray? = null
 ) {
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
-        mem?.let { require(it in -1..12) { "mem must be -1 (default) or in range 0..12, but was $it" } }
+        require(bufferSize >= 1024) { "bufferSize must be at least 1024, but was $bufferSize" }
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
@@ -22,7 +22,7 @@ internal open class DeflateOptions(
         other as DeflateOptions
 
         if (level != other.level) return false
-        if (mem != other.mem) return false
+        if (bufferSize != other.bufferSize) return false
         if (!dictionary.contentEquals(other.dictionary)) return false
 
         return true
@@ -30,7 +30,7 @@ internal open class DeflateOptions(
 
     override fun hashCode(): Int {
         var result = level
-        result = 31 * result + (mem ?: 0)
+        result = 31 * result + bufferSize
         result = 31 * result + (dictionary?.contentHashCode() ?: 0)
         return result
     }

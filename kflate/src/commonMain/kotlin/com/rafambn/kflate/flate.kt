@@ -512,14 +512,19 @@ internal fun deflateWithOptions(
         }
     }
 
-    val compressionLevel = options.level
+        val compressionLevel = options.level
 
-    val memoryUsage = if (options.mem == null) if (workingState.isLastChunk != 0) {
-        ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt()
-    } else {
-        20
-    }
-    else options.mem + 12
+        val memoryUsage = if (workingState.isLastChunk != 0 && options.bufferSize == 4096) {
+            ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt()
+        } else {
+            var bits = 0
+            var valTemp = options.bufferSize - 1
+            while (valTemp > 0) {
+                valTemp = valTemp shr 1
+                bits++
+            }
+            bits
+        }
 
     return deflate(
         workingData,
