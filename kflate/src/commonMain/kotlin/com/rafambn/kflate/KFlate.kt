@@ -77,8 +77,8 @@ object KFlate {
             }
 
             // Process member
-            val result = processSingleGzipMember(data.asUByteArray(), currentPosition, type.dictionary?.asUByteArray())
-            decompressedChunks.add(result.decompressed.asByteArray())
+            val result = processSingleGzipMember(data, currentPosition, type.dictionary)
+            decompressedChunks.add(result.decompressed)
             currentPosition += result.bytesConsumed
         }
 

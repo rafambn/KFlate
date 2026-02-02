@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
-
 package com.rafambn.kflate
 
 import java.io.ByteArrayInputStream
@@ -65,7 +63,7 @@ class GzipOptionalFieldsTest {
         val data = "test".encodeToByteArray()
         val compressed = KFlate.compress(data, gzip)
 
-        val actualHeaderSize = writeGzipStart(compressed.asUByteArray())
+        val actualHeaderSize = writeGzipStart(compressed)
 
         assertEquals(getGzipHeaderSize(gzip), actualHeaderSize)
     }

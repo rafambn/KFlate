@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
-
 package com.rafambn.kflate
 
 import com.rafambn.kflate.error.FlateError
@@ -22,19 +20,19 @@ class GzipHeaderValidationTest {
     @Test
     fun testReservedFlagBits() {
         // Bit 5 is reserved (32)
-        val data = createMinimalGzipHeader(32).let { UByteArray(it.size) { i -> it[i].toUByte() } }
+        val data = createMinimalGzipHeader(32)
         assertFailsWith<FlateError> {
             writeGzipStart(data)
         }
         
         // Bit 6 is reserved (64)
-        val data2 = createMinimalGzipHeader(64).let { UByteArray(it.size) { i -> it[i].toUByte() } }
+        val data2 = createMinimalGzipHeader(64)
         assertFailsWith<FlateError> {
             writeGzipStart(data2)
         }
 
         // Bit 7 is reserved (128)
-        val data3 = createMinimalGzipHeader(128).let { UByteArray(it.size) { i -> it[i].toUByte() } }
+        val data3 = createMinimalGzipHeader(128)
         assertFailsWith<FlateError> {
             writeGzipStart(data3)
         }
@@ -48,7 +46,7 @@ class GzipHeaderValidationTest {
         extraData[1] = 0  // XLEN high
         // Only providing 2 bytes of data (total 4 bytes for extra part), need 12 bytes total (2 len + 10 data)
         
-        val data = (baseHeader + extraData).let { UByteArray(it.size) { i -> it[i].toUByte() } }
+        val data = baseHeader + extraData
         
         assertFailsWith<FlateError> {
             writeGzipStart(data)
@@ -60,7 +58,7 @@ class GzipHeaderValidationTest {
         val baseHeader = createMinimalGzipHeader(8) // FNAME set
         val filename = "missing-null-terminator".encodeToByteArray()
         
-        val data = (baseHeader + filename).let { UByteArray(it.size) { i -> it[i].toUByte() } }
+        val data = baseHeader + filename
         
         assertFailsWith<FlateError> {
             writeGzipStart(data)
@@ -72,7 +70,7 @@ class GzipHeaderValidationTest {
         val baseHeader = createMinimalGzipHeader(16) // FCOMMENT set
         val comment = "missing-null-terminator".encodeToByteArray()
         
-        val data = (baseHeader + comment).let { UByteArray(it.size) { i -> it[i].toUByte() } }
+        val data = baseHeader + comment
         
         assertFailsWith<FlateError> {
             writeGzipStart(data)

@@ -118,14 +118,14 @@ internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
     }
 }
 
-internal fun writeGzipStart(data: UByteArray): Int {
+internal fun writeGzipStart(data: ByteArray): Int {
     if (data.size < 10) {
         createFlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
-    if (data[0].toInt() != 31 || data[1].toInt() != 139 || data[2].toInt() != 8) {
+    if ((data[0].toInt() and 0xFF) != 31 || (data[1].toInt() and 0xFF) != 139 || (data[2].toInt() and 0xFF) != 8) {
         createFlateError(FlateErrorCode.INVALID_HEADER)
     }
-    val flags = data[3].toInt()
+    val flags = data[3].toInt() and 0xFF
     if ((flags and 0xE0) != 0) { // Check reserved bits 5, 6, 7
         createFlateError(FlateErrorCode.INVALID_HEADER)
     }
@@ -173,7 +173,7 @@ internal fun writeGzipStart(data: UByteArray): Int {
         if (headerSize + 2 > data.size) {
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
-        val computedCrc = computeGzipHeaderCrc16(data.asByteArray(), 0, headerSize)
+        val computedCrc = computeGzipHeaderCrc16(data, 0, headerSize)
         val storedCrc = (data[headerSize].toInt() and 0xFF) or ((data[headerSize + 1].toInt() and 0xFF) shl 8)
         if (computedCrc != storedCrc) {
             createFlateError(FlateErrorCode.INVALID_HEADER)
@@ -183,9 +183,9 @@ internal fun writeGzipStart(data: UByteArray): Int {
     return headerSize
 }
 
-internal fun getGzipUncompressedSize(data: UByteArray): Long {
+internal fun getGzipUncompressedSize(data: ByteArray): Long {
     val length = data.size
-    return readFourBytes(data, length - 4)
+    return readFourBytes(data.asUByteArray(), length - 4)
 }
 
 internal fun getGzipHeaderSize(options: GZIP): Int {
@@ -214,7 +214,7 @@ internal fun getGzipHeaderSize(options: GZIP): Int {
 }
 
 internal data class GzipMemberResult(
-    val decompressed: UByteArray,
+    val decompressed: ByteArray,
     val bytesConsumed: Int
 ) {
     override fun equals(other: Any?): Boolean {
@@ -230,9 +230,9 @@ internal data class GzipMemberResult(
 }
 
 internal fun processSingleGzipMember(
-    data: UByteArray,
+    data: ByteArray,
     startOffset: Int,
-    dictionary: UByteArray? = null
+    dictionary: ByteArray? = null
 ): GzipMemberResult {
     // Validate minimum size: 10 bytes header + at least 2 bytes compressed data + 8 bytes trailer (CRC32 + ISIZE)
     if (startOffset + 20 > data.size) {
@@ -246,7 +246,7 @@ internal fun processSingleGzipMember(
     // Inflate with state tracking
     val inflateState = InflateState(lastCheck = 2)
     val inputForInflate = data.copyOfRange(compressedDataStart, data.size)
-    val decompressed = inflate(inputForInflate, inflateState, null, dictionary)
+    val decompressed = inflate(inputForInflate.asUByteArray(), inflateState, null, dictionary?.asUByteArray())
 
     // Calculate bytes consumed by inflate
     val bitsConsumed = inflateState.position ?: 0
@@ -259,19 +259,20 @@ internal fun processSingleGzipMember(
     }
 
     // Validate CRC32
-    val storedCrc32 = readFourBytes(data, trailerStart).toInt()
+    val storedCrc32 = readFourBytes(data.asUByteArray(), trailerStart).toInt()
     val crc = Crc32Checksum()
-    crc.update(decompressed.asByteArray())
+    val decompressedBytes = decompressed.asByteArray()
+    crc.update(decompressedBytes)
     if (crc.getChecksum() != storedCrc32) {
         createFlateError(FlateErrorCode.CRC_MISMATCH)
     }
 
     // Validate ISIZE
-    val storedISize = readFourBytes(data, trailerStart + 4)
-    if ((decompressed.size.toLong() and 0xFFFFFFFFL) != storedISize) {
+    val storedISize = readFourBytes(data.asUByteArray(), trailerStart + 4)
+    if ((decompressedBytes.size.toLong() and 0xFFFFFFFFL) != storedISize) {
         createFlateError(FlateErrorCode.ISIZE_MISMATCH)
     }
 
     val totalBytesConsumed = headerEndPos + bytesConsumedByInflate + 8
-    return GzipMemberResult(decompressed, totalBytesConsumed)
+    return GzipMemberResult(decompressedBytes, totalBytesConsumed)
 }
