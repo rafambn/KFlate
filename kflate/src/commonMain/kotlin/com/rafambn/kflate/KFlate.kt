@@ -148,13 +148,12 @@ object KFlate {
         adler.update(data)
         val deflatedData = deflateWithOptions(data, options, if (type.dictionary != null) 6 else 2, 4)
 
-        // Create temporary GzipOptions for writeZlibHeader (it only uses level and dictionary from DeflateOptions)
         val gzipOptions = GzipOptions(
             level = type.level,
             bufferSize = options.bufferSize,
             dictionary = options.dictionary
         )
-        writeZlibHeader(deflatedData, options)
+        writeZlibHeader(deflatedData.asByteArray(), options)
         writeBytesBE(deflatedData, deflatedData.size - 4, adler.getChecksum())
         return deflatedData
     }
@@ -165,7 +164,7 @@ object KFlate {
         }
 
         val dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } }
-        val start = writeZlibStart(data, dictionary != null, dictionary)
+        val start = writeZlibStart(data.asByteArray(), dictionary != null, dictionary?.asByteArray())
 
         val storedAdler32 = readFourBytesBE(data, data.size - 4)
 

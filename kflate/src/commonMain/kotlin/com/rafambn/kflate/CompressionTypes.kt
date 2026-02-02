@@ -12,7 +12,7 @@ data class RAW(
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
         require(bufferSize >= 1024) { "bufferSize must be at least 1024, but was $bufferSize" }
-        require(bufferSize >= 16777216) { "bufferSize must be at maximum 16777216, but was $bufferSize" }
+        require(bufferSize <= 16777216) { "bufferSize must be at maximum 16777216, but was $bufferSize" }
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
@@ -52,7 +52,7 @@ data class GZIP(
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
         require(bufferSize >= 1024) { "bufferSize must be at least 1024, but was $bufferSize" }
-        require(bufferSize >= 16777216) { "bufferSize must be at maximum 16777216, but was $bufferSize" }
+        require(bufferSize <= 16777216) { "bufferSize must be at maximum 16777216, but was $bufferSize" }
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
@@ -114,7 +114,7 @@ data class ZLIB(
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
         require(bufferSize >= 1024) { "bufferSize must be at least 1024, but was $bufferSize" }
-        require(bufferSize >= 16777216) { "bufferSize must be at maximum 16777216, but was $bufferSize" }
+        require(bufferSize <= 16777216) { "bufferSize must be at maximum 16777216, but was $bufferSize" }
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }

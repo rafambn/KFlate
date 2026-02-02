@@ -7,7 +7,7 @@ import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
 import com.rafambn.kflate.options.DeflateOptions
 
-internal fun writeZlibHeader(output: UByteArray, options: DeflateOptions) {
+internal fun writeZlibHeader(output: ByteArray, options: DeflateOptions) {
     val level = options.level
     val compressionLevelFlag = when {
         level == 0 -> 0
@@ -15,22 +15,22 @@ internal fun writeZlibHeader(output: UByteArray, options: DeflateOptions) {
         level == 9 -> 3
         else -> 2
     }
-    output[0] = 120u
+    output[0] = 120.toByte()
     var headerByte1 = (compressionLevelFlag shl 6) or (if (options.dictionary != null) 32 else 0)
     // FCHECK: ensure (CMF * 256 + FLG) % 31 == 0. Use % 31 on result to get 0 instead of 31
-    headerByte1 = headerByte1 or ((31 - ((output[0].toInt() shl 8) or headerByte1) % 31) % 31)
-    output[1] = headerByte1.toUByte()
+    headerByte1 = headerByte1 or ((31 - ((output[0].toInt() and 0xFF shl 8) or headerByte1) % 31) % 31)
+    output[1] = headerByte1.toByte()
 
     options.dictionary?.let {
         val checksum = Adler32Checksum()
         checksum.update(it)
-        writeBytesBE(output, 2, checksum.getChecksum())
+        writeBytesBE(output.asUByteArray(), 2, checksum.getChecksum())
     }
 }
 
-internal fun writeZlibStart(data: UByteArray, hasDictionary: Boolean, dictionary: UByteArray? = null): Int {
-    val cmf = data[0].toInt()
-    val flg = data[1].toInt()
+internal fun writeZlibStart(data: ByteArray, hasDictionary: Boolean, dictionary: ByteArray? = null): Int {
+    val cmf = data[0].toInt() and 0xFF
+    val flg = data[1].toInt() and 0xFF
     if ((cmf and 15) != 8 || (cmf ushr 4) > 7 || ((cmf shl 8 or flg) % 31 != 0))
         createFlateError(FlateErrorCode.INVALID_HEADER)
     val needsDictionary = (flg and 32) != 0
@@ -49,9 +49,9 @@ internal fun writeZlibStart(data: UByteArray, hasDictionary: Boolean, dictionary
             createFlateError(FlateErrorCode.INVALID_HEADER)
         }
 
-        val storedDictId = readFourBytesBE(data, 2)
+        val storedDictId = readFourBytesBE(data.asUByteArray(), 2)
         val computedDictId = Adler32Checksum().apply {
-            update(dictionary)
+            update(dictionary.asUByteArray())
         }.getChecksum()
 
         if (storedDictId != computedDictId) {
