@@ -1,9 +1,8 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
 
 package com.rafambn.kflate
 
 internal data class HuffmanTable(
-    val baseLengths: UShortArray,
+    val baseLengths: ShortArray,
     val reverseLookup: IntArray
 ) {
     override fun equals(other: Any?): Boolean {
@@ -26,26 +25,26 @@ internal data class HuffmanTable(
 }
 
 internal fun generateHuffmanTable(extraBits: ByteArray, startValue: Int): HuffmanTable {
-    val baseLengths = UShortArray(31)
+    val baseLengths = ShortArray(31)
     var currentStart = startValue
     for (i in 0 until 31) {
         val extraBit = if (i == 0) 0 else extraBits[i - 1].toInt() and 0xFF
         currentStart += 1 shl extraBit
-        baseLengths[i] = currentStart.toUShort()
+        baseLengths[i] = currentStart.toShort()
     }
 
-    val reverseLookup = IntArray(baseLengths[30].toInt())
+    val reverseLookup = IntArray((baseLengths[30].toInt() and 0xFFFF))
     for (i in 1 until 30) {
-        for (j in baseLengths[i].toInt() until baseLengths[i + 1].toInt()) {
-            reverseLookup[j] = ((j - baseLengths[i].toInt()) shl 5) or i
+        for (j in (baseLengths[i].toInt() and 0xFFFF) until (baseLengths[i + 1].toInt() and 0xFFFF)) {
+            reverseLookup[j] = ((j - (baseLengths[i].toInt() and 0xFFFF)) shl 5) or i
         }
     }
     return HuffmanTable(baseLengths, reverseLookup)
 }
 
-internal fun createHuffmanTree(codeLengths: ByteArray, maxBits: Int, isReversed: Boolean): UShortArray {
+internal fun createHuffmanTree(codeLengths: ByteArray, maxBits: Int, isReversed: Boolean): ShortArray {
     val codeLengthSize = codeLengths.size
-    val lengths = UShortArray(maxBits)
+    val lengths = IntArray(maxBits)
 
     for (i in 0 until codeLengthSize) {
         val len = codeLengths[i].toInt() and 0xFF
@@ -56,12 +55,12 @@ internal fun createHuffmanTree(codeLengths: ByteArray, maxBits: Int, isReversed:
 
     val minCodes = IntArray(maxBits)
     for (i in 1 until maxBits) {
-        minCodes[i] = (minCodes[i - 1] + lengths[i - 1].toInt()) shl 1
+        minCodes[i] = (minCodes[i - 1] + lengths[i - 1]) shl 1
     }
 
-    val codes: UShortArray
+    val codes: ShortArray
     if (isReversed) {
-        codes = UShortArray(1 shl maxBits)
+        codes = ShortArray(1 shl maxBits)
         val reverseBits = 15 - maxBits
 
         for (i in 0 until codeLengthSize) {
@@ -76,19 +75,19 @@ internal fun createHuffmanTree(codeLengths: ByteArray, maxBits: Int, isReversed:
 
                 val endValue = value or ((1 shl remainingBits) - 1)
                 while (value <= endValue) {
-                    codes[REVERSE_TABLE[value].toInt() shr reverseBits] = symbolAndBits.toUShort()
+                    codes[(REVERSE_TABLE[value].toInt() and 0xFFFF) shr reverseBits] = symbolAndBits.toShort()
                     value++
                 }
             }
         }
     } else {
-        codes = UShortArray(codeLengthSize)
+        codes = ShortArray(codeLengthSize)
         for (i in 0 until codeLengthSize) {
             val codeLength = codeLengths[i].toInt() and 0xFF
             if (codeLength != 0) {
                 val currentCode = minCodes[codeLength - 1]
                 minCodes[codeLength - 1]++
-                codes[i] = (REVERSE_TABLE[currentCode].toInt() shr (15 - codeLength)).toUShort()
+                codes[i] = ((REVERSE_TABLE[currentCode].toInt() and 0xFFFF) shr (15 - codeLength)).toShort()
             }
         }
     }
@@ -172,11 +171,11 @@ internal data class HuffmanTreeResult(val tree: ByteArray, val maxBits: Int) {
     }
 }
 
-internal fun buildHuffmanTreeFromFrequencies(frequencies: UShortArray, maxBits: Int): HuffmanTreeResult {
+internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int): HuffmanTreeResult {
     val nodes = mutableListOf<HuffmanNode>()
     for (i in frequencies.indices) {
-        if (frequencies[i] > 0u) {
-            nodes.add(HuffmanNode(symbol = i, frequency = frequencies[i].toInt()))
+        if (frequencies[i] > 0) {
+            nodes.add(HuffmanNode(symbol = i, frequency = frequencies[i]))
         }
     }
 
@@ -193,7 +192,7 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: UShortArray, maxBits: 
     }
 
     val maxSymbol = originalNodes.maxOf { it.symbol }
-    val codeLengths = UShortArray(maxSymbol + 1)
+    val codeLengths = IntArray(maxSymbol + 1)
 
     nodes.sortBy { it.frequency }
 
@@ -233,15 +232,15 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: UShortArray, maxBits: 
         val costShift = currentMaxBits - maxBits
         val cost = 1 shl costShift
 
-        originalNodes.sortWith(compareByDescending<HuffmanNode> { codeLengths[it.symbol].toInt() }
+        originalNodes.sortWith(compareByDescending<HuffmanNode> { codeLengths[it.symbol] }
             .thenBy { it.frequency })
 
         var i = 0
         for (nodeIndex in 0 until nodeCount) {
             val symbol = originalNodes[nodeIndex].symbol
-            if (codeLengths[symbol] > maxBits.toUShort()) {
-                debt += cost - (1 shl (currentMaxBits - codeLengths[symbol].toInt()))
-                codeLengths[symbol] = maxBits.toUShort()
+            if (codeLengths[symbol] > maxBits) {
+                debt += cost - (1 shl (currentMaxBits - codeLengths[symbol]))
+                codeLengths[symbol] = maxBits
             } else {
                 i = nodeIndex
                 break
@@ -252,8 +251,8 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: UShortArray, maxBits: 
 
         while (debt > 0) {
             val symbol = originalNodes[i].symbol
-            if (codeLengths[symbol] < maxBits.toUShort()) {
-                debt -= 1 shl (maxBits - codeLengths[symbol].toInt() - 1)
+            if (codeLengths[symbol] < maxBits) {
+                debt -= 1 shl (maxBits - codeLengths[symbol] - 1)
                 codeLengths[symbol]++
             } else {
                 i++
@@ -263,7 +262,7 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: UShortArray, maxBits: 
         i = nodeCount - 1
         while (i >= 0 && debt != 0) {
             val symbol = originalNodes[i].symbol
-            if (codeLengths[symbol] == maxBits.toUShort()) {
+            if (codeLengths[symbol] == maxBits) {
                 codeLengths[symbol]--
                 debt++
             }
@@ -275,9 +274,9 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: UShortArray, maxBits: 
     return HuffmanTreeResult(ByteArray(codeLengths.size) { codeLengths[it].toByte() }, currentMaxBits)
 }
 
-internal fun assignCodeLengthsAndGetMaxDepth(node: HuffmanNode, lengths: UShortArray, depth: Int): Int {
+internal fun assignCodeLengthsAndGetMaxDepth(node: HuffmanNode, lengths: IntArray, depth: Int): Int {
     return if (node.symbol != -1) {
-        lengths[node.symbol] = depth.toUShort()
+        lengths[node.symbol] = depth
         depth
     } else {
         maxOf(
@@ -287,18 +286,18 @@ internal fun assignCodeLengthsAndGetMaxDepth(node: HuffmanNode, lengths: UShortA
     }
 }
 
-internal fun generateLengthCodes(codeLengths: ByteArray): Pair<UShortArray, Int> {
+internal fun generateLengthCodes(codeLengths: ByteArray): Pair<ShortArray, Int> {
     var maxSymbol = codeLengths.size
     while (maxSymbol > 0 && codeLengths[maxSymbol - 1].toInt() == 0) {
         maxSymbol--
     }
 
-    val compactCodes = UShortArray(maxSymbol)
+    val compactCodes = ShortArray(maxSymbol)
     var compactCodeIndex = 0
     var currentCode = codeLengths[0].toInt() and 0xFF
     var runLength = 1
 
-    val writeCode = { value: Int -> compactCodes[compactCodeIndex++] = value.toUShort() }
+    val writeCode = { value: Int -> compactCodes[compactCodeIndex++] = value.toShort() }
 
     for (i in 1..maxSymbol) {
         val nextCode = if (i < maxSymbol) codeLengths[i].toInt() and 0xFF else -1
@@ -335,13 +334,13 @@ internal fun generateLengthCodes(codeLengths: ByteArray): Pair<UShortArray, Int>
             }
         }
     }
-    return Pair(compactCodes.sliceArray(0 until compactCodeIndex), maxSymbol)
+    return Pair(compactCodes.sliceArray(0..compactCodeIndex), maxSymbol)
 }
 
-internal fun calculateCodeLength(codeFrequencies: UShortArray, codeLengths: ByteArray): Int {
+internal fun calculateCodeLength(codeFrequencies: IntArray, codeLengths: ByteArray): Int {
     var length = 0
     for (i in codeLengths.indices) {
-        length += codeFrequencies[i].toInt() * (codeLengths[i].toInt() and 0xFF)
+        length += codeFrequencies[i] * (codeLengths[i].toInt() and 0xFF)
     }
     return length
 }

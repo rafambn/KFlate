@@ -1,10 +1,9 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
 
 package com.rafambn.kflate
 
 data class InflateState(
-    var literalMap: UShortArray? = null,
-    var distanceMap: UShortArray? = null,
+    var literalMap: ShortArray? = null,
+    var distanceMap: ShortArray? = null,
     var literalBits: Int? = null,
     var distanceBits: Int? = null,
     var finalFlag: Int? = null,
@@ -44,8 +43,8 @@ data class InflateState(
 }
 
 data class DeflateState(
-    var head: UShortArray? = null,
-    var prev: UShortArray? = null,
+    var head: ShortArray? = null,
+    var prev: ShortArray? = null,
     var index: Int = 0,
     var endIndex: Int = 0,
     var waitIndex: Int = 0,

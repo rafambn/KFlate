@@ -89,7 +89,7 @@ internal fun inflate(
                     if (needsResize) ensureBufferCapacity(bytesWrittenToOutput + blockLength)
 
                     inputData.copyInto(
-                        workingBuffer!!,
+                        workingBuffer,
                         destinationOffset = bytesWrittenToOutput,
                         startIndex = dataStartByte,
                         endIndex = blockEndByte
@@ -251,7 +251,7 @@ internal fun inflate(
 
             when {
                 symbol < 256 -> {
-                    workingBuffer!![bytesWrittenToOutput++] = symbol.toByte()
+                    workingBuffer[bytesWrittenToOutput++] = symbol.toByte()
                 }
 
                 symbol == 256 -> {
@@ -300,13 +300,13 @@ internal fun inflate(
                         }
 
                         while (bytesWrittenToOutput < dictionaryEndIndex) {
-                            workingBuffer!![bytesWrittenToOutput] = dictionary!![dictionaryOffset + bytesWrittenToOutput]
+                            workingBuffer[bytesWrittenToOutput] = dictionary!![dictionaryOffset + bytesWrittenToOutput]
                             bytesWrittenToOutput++
                         }
                     }
 
                     while (bytesWrittenToOutput < copyEndIndex) {
-                        workingBuffer!![bytesWrittenToOutput] = workingBuffer!![bytesWrittenToOutput - matchDistance]
+                        workingBuffer[bytesWrittenToOutput] = workingBuffer[bytesWrittenToOutput - matchDistance]
                         bytesWrittenToOutput++
                     }
                 }
@@ -327,7 +327,7 @@ internal fun inflate(
 
     } while (isFinalBlock == 0)
 
-    return workingBuffer!!.copyOfRange(0, bytesWrittenToOutput)
+    return workingBuffer.copyOfRange(0, bytesWrittenToOutput)
 }
 
 internal fun deflate(
@@ -352,15 +352,15 @@ internal fun deflate(
         val niceLength = option shr 13
         val chainLength = option and 8191
         val mask = (1 shl compressionLevel) - 1
-        val prev = state.prev ?: UShortArray(32768)
-        val head = state.head ?: UShortArray(mask + 1)
+        val prev = state.prev ?: ShortArray(32768)
+        val head = state.head ?: ShortArray(mask + 1)
         val baseShift1 = ceil(compressionLevel / 3.0).toInt()
         val baseShift2 = 2 * baseShift1
         val hash = { i: Int -> ((data[i].toInt() and 0xFF) xor ((data[i + 1].toInt() and 0xFF) shl baseShift1) xor ((data[i + 2].toInt() and 0xFF) shl baseShift2)) and mask }
 
         val symbols = IntArray(25000)
-        val literalFrequencies = UShortArray(288)
-        val distanceFrequencies = UShortArray(32)
+        val literalFrequencies = IntArray(288)
+        val distanceFrequencies = IntArray(32)
         var literalCount = 0
         var extraBits = 0
         var i = state.index
@@ -371,9 +371,9 @@ internal fun deflate(
         while (i + 2 < dataSize) {
             val hashValue = hash(i)
             var iMod = i and 32767
-            var pIMod = head[hashValue].toInt()
-            prev[iMod] = pIMod.toUShort()
-            head[hashValue] = iMod.toUShort()
+            var pIMod = head[hashValue].toInt() and 0xFFFF
+            prev[iMod] = pIMod.toShort()
+            head[hashValue] = iMod.toShort()
 
             if (waitIndex <= i) {
                 val remaining = dataSize - i
@@ -386,8 +386,8 @@ internal fun deflate(
                     literalCount = 0
                     extraBits = 0
                     blockStart = i
-                    literalFrequencies.fill(0u, 0, 286)
-                    distanceFrequencies.fill(0u, 0, 30)
+                    literalFrequencies.fill(0, 0, 286)
+                    distanceFrequencies.fill(0, 0, 30)
                 }
 
                 var length = 2
@@ -415,7 +415,7 @@ internal fun deflate(
                                 var maxDiff = 0
                                 for (j in 0 until minMatchDiff) {
                                     val tI = (i - diff + j) and 32767
-                                    val pTI = prev[tI].toInt()
+                                    val pTI = prev[tI].toInt() and 0xFFFF
                                     val cD = (tI - pTI) and 32767
                                     if (cD > maxDiff) {
                                         maxDiff = cD
@@ -425,7 +425,7 @@ internal fun deflate(
                             }
                         }
                         iMod = pIMod
-                        pIMod = prev[iMod].toInt()
+                        pIMod = prev[iMod].toInt() and 0xFFFF
                         diff += (iMod - pIMod) and 32767
                     }
                 }

@@ -1,4 +1,3 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
 
 package com.rafambn.kflate
 
@@ -27,7 +26,7 @@ internal val CODE_LENGTH_INDEX_MAP = byteArrayOf(
 )
 
 internal val FIXED_LENGTH_BASE = generateHuffmanTable(FIXED_LENGTH_EXTRA_BITS, 2).baseLengths.apply {
-    this[28] = 258u
+    this[28] = 258.toShort()
 }
 internal val FIXED_LENGTH_REVERSE_LOOKUP = generateHuffmanTable(FIXED_LENGTH_EXTRA_BITS, 2).reverseLookup.apply {
     this[258] = 28
@@ -36,12 +35,12 @@ internal val FIXED_DISTANCE_BASE = generateHuffmanTable(FIXED_DISTANCE_EXTRA_BIT
 
 internal val FIXED_DISTANCE_REVERSE_LOOKUP = generateHuffmanTable(FIXED_DISTANCE_EXTRA_BITS, 0).reverseLookup
 
-internal val REVERSE_TABLE = UShortArray(32768).apply {
+internal val REVERSE_TABLE = ShortArray(32768).apply {
     for (value in this.indices) {
         var reversedBits = ((value and 0xAAAA) shr 1) or ((value and 0x5555) shl 1)
         reversedBits = ((reversedBits and 0xCCCC) shr 2) or ((reversedBits and 0x3333) shl 2)
         reversedBits = ((reversedBits and 0xF0F0) shr 4) or ((reversedBits and 0x0F0F) shl 4)
-        this[value] = ((((reversedBits and 0xFF00) shr 8) or ((reversedBits and 0x00FF) shl 8)) shr 1).toUShort()
+        this[value] = ((((reversedBits and 0xFF00) shr 8) or ((reversedBits and 0x00FF) shl 8)) shr 1).toShort()
     }
 }
 

@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
-
 package com.rafambn.kflate
 
 internal fun findMaxValue(array: ByteArray): Int {
@@ -78,8 +76,8 @@ internal fun writeBlock(
     output: ByteArray,
     isFinal: Boolean,
     symbols: IntArray,
-    literalFrequencies: UShortArray,
-    distanceFrequencies: UShortArray,
+    literalFrequencies: IntArray,
+    distanceFrequencies: IntArray,
     extraBits: Int,
     symbolCount: Int,
     blockStart: Int,
@@ -91,13 +89,13 @@ internal fun writeBlock(
     literalFrequencies[256]++
     var hasDistance = false
     for (frequency in distanceFrequencies) {
-        if (frequency > 0u) {
+        if (frequency > 0) {
             hasDistance = true
             break
         }
     }
     if (!hasDistance) {
-        distanceFrequencies[0] = 1u
+        distanceFrequencies[0] = 1
     }
 
     val (dynamicLiteralTree, maxLiteralBits) = buildHuffmanTreeFromFrequencies(literalFrequencies, 15)
@@ -105,7 +103,7 @@ internal fun writeBlock(
     val (literalCodeLengths, numLiteralCodes) = generateLengthCodes(dynamicLiteralTree)
     val (distanceCodeLengths, numDistanceCodes) = generateLengthCodes(dynamicDistanceTree)
 
-    val codeLengthFrequencies = UShortArray(19)
+    val codeLengthFrequencies = IntArray(19)
     for (i in literalCodeLengths.indices) {
         codeLengthFrequencies[(literalCodeLengths[i].toInt() and 31)]++
     }
@@ -124,16 +122,16 @@ internal fun writeBlock(
             calculateCodeLength(distanceFrequencies, FIXED_DISTANCE_TREE) + extraBits
     val dynamicTypedLength = calculateCodeLength(literalFrequencies, dynamicLiteralTree) +
             calculateCodeLength(distanceFrequencies, dynamicDistanceTree) + extraBits + 14 + 3 * numCodeLengthCodes +
-            calculateCodeLength(codeLengthFrequencies, codeLengthTree) + 2 * codeLengthFrequencies[16].toInt() +
-            3 * codeLengthFrequencies[17].toInt() + 7 * codeLengthFrequencies[18].toInt()
+            calculateCodeLength(codeLengthFrequencies, codeLengthTree) + 2 * codeLengthFrequencies[16] +
+            3 * codeLengthFrequencies[17] + 7 * codeLengthFrequencies[18]
 
     if (blockStart >= 0 && fixedBlockLength <= fixedTypedLength && fixedBlockLength <= dynamicTypedLength) {
         return writeFixedBlock(output, currentBitPosition, data.sliceArray(blockStart until blockStart + blockLength))
     }
 
-    var literalMap: UShortArray
+    var literalMap: ShortArray
     var literalLengths: ByteArray
-    var distanceMap: UShortArray
+    var distanceMap: ShortArray
     var distanceLengths: ByteArray
 
     writeBits(output, currentBitPosition, 1 + if (dynamicTypedLength < fixedTypedLength) 1 else 0)
@@ -159,8 +157,8 @@ internal fun writeBlock(
         for (tree in codeLengthTrees) {
             for (i in tree.indices) {
                 val len = tree[i].toInt() and 31
-                writeBits(output, currentBitPosition, codeLengthMap[len].toInt())
-                currentBitPosition += codeLengthTree[len].toInt()
+                writeBits(output, currentBitPosition, (codeLengthMap[len].toInt() and 0xFFFF))
+                currentBitPosition += codeLengthTree[len].toInt() and 0xFF
                 if (len > 15) {
                     writeBits(output, currentBitPosition, (tree[i].toInt() shr 5) and 127)
                     currentBitPosition += (tree[i].toInt() shr 12)
@@ -178,27 +176,27 @@ internal fun writeBlock(
         val symbol = symbols[i]
         if (symbol > 255) {
             val lengthSymbol = (symbol shr 18) and 31
-            writeBits16(output, currentBitPosition, literalMap[lengthSymbol + 257].toInt())
-            currentBitPosition += literalLengths[lengthSymbol + 257].toInt()
+            writeBits16(output, currentBitPosition, (literalMap[lengthSymbol + 257].toInt() and 0xFFFF))
+            currentBitPosition += literalLengths[lengthSymbol + 257].toInt() and 0xFF
             if (lengthSymbol > 7) {
                 writeBits(output, currentBitPosition, (symbol shr 23) and 31)
-                currentBitPosition += FIXED_LENGTH_EXTRA_BITS[lengthSymbol].toInt()
+                currentBitPosition += FIXED_LENGTH_EXTRA_BITS[lengthSymbol].toInt() and 0xFF
             }
             val distanceSymbol = symbol and 31
-            writeBits16(output, currentBitPosition, distanceMap[distanceSymbol].toInt())
-            currentBitPosition += distanceLengths[distanceSymbol].toInt()
+            writeBits16(output, currentBitPosition, (distanceMap[distanceSymbol].toInt() and 0xFFFF))
+            currentBitPosition += distanceLengths[distanceSymbol].toInt() and 0xFF
             if (distanceSymbol > 3) {
                 writeBits16(output, currentBitPosition, (symbol shr 5) and 8191)
-                currentBitPosition += FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt()
+                currentBitPosition += FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF
             }
         } else {
-            writeBits16(output, currentBitPosition, literalMap[symbol].toInt())
-            currentBitPosition += literalLengths[symbol].toInt()
+            writeBits16(output, currentBitPosition, (literalMap[symbol].toInt() and 0xFFFF))
+            currentBitPosition += literalLengths[symbol].toInt() and 0xFF
         }
     }
 
-    writeBits16(output, currentBitPosition, literalMap[256].toInt())
-    return currentBitPosition + literalLengths[256].toInt()
+    writeBits16(output, currentBitPosition, (literalMap[256].toInt() and 0xFFFF))
+    return currentBitPosition + (literalLengths[256].toInt() and 0xFF)
 }
 
 internal fun readTwoBytes(data: ByteArray, offset: Int): Int {
@@ -224,11 +222,10 @@ internal fun readEightBytes(data: ByteArray, offset: Int): Long {
 }
 
 internal fun writeBytes(data: ByteArray, offset: Int, value: Long) {
-    val v = value.toUInt()
-    data[offset] = (v and 0xFFu).toByte()
-    data[offset + 1] = ((v shr 8) and 0xFFu).toByte()
-    data[offset + 2] = ((v shr 16) and 0xFFu).toByte()
-    data[offset + 3] = ((v shr 24) and 0xFFu).toByte()
+    data[offset] = (value and 0xFF).toByte()
+    data[offset + 1] = ((value shr 8) and 0xFF).toByte()
+    data[offset + 2] = ((value shr 16) and 0xFF).toByte()
+    data[offset + 3] = ((value shr 24) and 0xFF).toByte()
 }
 
 internal fun writeBytesBE(data: ByteArray, offset: Int, value: Int) {
