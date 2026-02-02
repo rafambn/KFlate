@@ -2,8 +2,6 @@
 
 package com.rafambn.kflate
 
-import com.rafambn.kflate.options.GzipOptions
-import com.rafambn.kflate.options.DeflateOptions
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream
@@ -18,36 +16,31 @@ class GzipOptionalFieldsTest {
     @Test
     fun testHeaderSizeCalculationNoOptionalFields() {
         val gzip = GZIP()
-        val options = GzipOptions(level = gzip.level)
-        assertEquals(10, getGzipHeaderSize(options))
+        assertEquals(10, getGzipHeaderSize(gzip))
     }
 
     @Test
     fun testHeaderSizeCalculationFilenameOnly() {
         val gzip = GZIP(filename = "test.txt")
-        val options = GzipOptions(level = gzip.level, filename = gzip.filename)
-        assertEquals(19, getGzipHeaderSize(options))
+        assertEquals(19, getGzipHeaderSize(gzip))
     }
 
     @Test
     fun testHeaderSizeCalculationCommentOnly() {
         val gzip = GZIP(comment = "note")
-        val options = GzipOptions(level = gzip.level, comment = gzip.comment)
-        assertEquals(15, getGzipHeaderSize(options))
+        assertEquals(15, getGzipHeaderSize(gzip))
     }
 
     @Test
     fun testHeaderSizeCalculationExtraFieldsOnly() {
         val gzip = GZIP(extraFields = mapOf("AB" to byteArrayOf(1, 2, 3)))
-        val options = GzipOptions(level = gzip.level, extraFields = mapOf("AB" to ubyteArrayOf(1u, 2u, 3u)))
-        assertEquals(19, getGzipHeaderSize(options))
+        assertEquals(19, getGzipHeaderSize(gzip))
     }
 
     @Test
     fun testHeaderSizeCalculationHeaderCrcOnly() {
         val gzip = GZIP(includeHeaderCrc = true)
-        val options = GzipOptions(level = gzip.level, includeHeaderCrc = gzip.includeHeaderCrc)
-        assertEquals(12, getGzipHeaderSize(options))
+        assertEquals(12, getGzipHeaderSize(gzip))
     }
 
     @Test
@@ -58,14 +51,7 @@ class GzipOptionalFieldsTest {
             extraFields = mapOf("XX" to byteArrayOf(1, 2)),
             includeHeaderCrc = true
         )
-        val options = GzipOptions(
-            level = gzip.level,
-            filename = gzip.filename,
-            comment = gzip.comment,
-            extraFields = mapOf("XX" to ubyteArrayOf(1u, 2u)),
-            includeHeaderCrc = gzip.includeHeaderCrc
-        )
-        assertEquals(37, getGzipHeaderSize(options))
+        assertEquals(37, getGzipHeaderSize(gzip))
     }
 
     @Test
@@ -79,17 +65,9 @@ class GzipOptionalFieldsTest {
         val data = "test".encodeToByteArray()
         val compressed = KFlate.compress(data, gzip)
 
-        val options = GzipOptions(
-            level = gzip.level,
-            filename = gzip.filename,
-            comment = gzip.comment,
-            extraFields = mapOf("XX" to ubyteArrayOf(1u, 2u)),
-            includeHeaderCrc = gzip.includeHeaderCrc
-        )
-        val compressedUByteArray = UByteArray(compressed.size) { i -> compressed[i].toUByte() }
-        val actualHeaderSize = writeGzipStart(compressedUByteArray)
+        val actualHeaderSize = writeGzipStart(compressed.asUByteArray())
 
-        assertEquals(getGzipHeaderSize(options), actualHeaderSize)
+        assertEquals(getGzipHeaderSize(gzip), actualHeaderSize)
     }
 
     @Test

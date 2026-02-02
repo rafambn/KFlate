@@ -4,7 +4,6 @@ package com.rafambn.kflate
 
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
-import com.rafambn.kflate.options.DeflateOptions
 import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.max
@@ -486,22 +485,36 @@ internal fun deflate(
 }
 
 internal fun deflateWithOptions(
-    inputData: UByteArray,
-    options: DeflateOptions = DeflateOptions(),
+    inputData: ByteArray,
+    type: CompressionType = RAW(),
     prefixSize: Int,
     suffixSize: Int,
     deflateState: DeflateState? = null
-): UByteArray {
+): ByteArray {
     var workingState = deflateState
     var workingData = inputData
+
+    val level = when (type) {
+        is RAW -> type.level
+        is GZIP -> type.level
+        is ZLIB -> type.level
+    }
+    val bufferSize = when (type) {
+        is RAW -> type.bufferSize
+        is GZIP -> type.bufferSize
+        is ZLIB -> type.bufferSize
+    }
+    val dictionary = when (type) {
+        is RAW -> type.dictionary
+        is GZIP -> type.dictionary
+        is ZLIB -> type.dictionary
+    }
 
     if (workingState == null) {
         workingState = DeflateState(isLastChunk = 1)
 
-        if (options.dictionary != null) {
-            val dictionary = options.dictionary
-
-            val combinedData = UByteArray(dictionary.size + inputData.size)
+        if (dictionary != null) {
+            val combinedData = ByteArray(dictionary.size + inputData.size)
 
             dictionary.copyInto(combinedData, destinationOffset = 0)
 
@@ -512,13 +525,13 @@ internal fun deflateWithOptions(
         }
     }
 
-        val compressionLevel = options.level
+        val compressionLevel = level
 
-        val memoryUsage = if (workingState.isLastChunk != 0 && options.bufferSize == 4096) {
+        val memoryUsage = if (workingState.isLastChunk != 0 && bufferSize == 4096) {
             ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt()
         } else {
             var bits = 0
-            var valTemp = options.bufferSize - 1
+            var valTemp = bufferSize - 1
             while (valTemp > 0) {
                 valTemp = valTemp shr 1
                 bits++
@@ -527,11 +540,11 @@ internal fun deflateWithOptions(
         }
 
     return deflate(
-        workingData,
+        workingData.asUByteArray(),
         compressionLevel,
         memoryUsage,
         prefixSize,
         suffixSize,
         workingState
-    )
+    ).asByteArray()
 }

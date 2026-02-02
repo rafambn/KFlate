@@ -6,34 +6,23 @@ import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
-import com.rafambn.kflate.options.DeflateOptions
-import com.rafambn.kflate.options.GzipOptions
-import com.rafambn.kflate.options.InflateOptions
 
 object KFlate {
 
     fun compress(data: ByteArray, type: CompressionType): ByteArray {
-        val ubyteData = UByteArray(data.size) { i -> data[i].toUByte() }
-
-        val result = when (type) {
-            is RAW -> compressRaw(ubyteData, type)
-            is GZIP -> compressGzip(ubyteData, type)
-            is ZLIB -> compressZlib(ubyteData, type)
+        return when (type) {
+            is RAW -> compressRaw(data, type)
+            is GZIP -> compressGzip(data, type)
+            is ZLIB -> compressZlib(data, type)
         }
-
-        return ByteArray(result.size) { i -> result[i].toByte() }
     }
 
     fun decompress(data: ByteArray, type: DecompressionType): ByteArray {
-        val ubyteData = UByteArray(data.size) { i -> data[i].toUByte() }
-
-        val result = when (type) {
-            is Raw -> decompressRaw(ubyteData, type)
-            is Gzip -> decompressGzip(ubyteData, type)
-            is Zlib -> decompressZlib(ubyteData, type)
+        return when (type) {
+            is Raw -> decompressRaw(data, type)
+            is Gzip -> decompressGzip(data, type)
+            is Zlib -> decompressZlib(data, type)
         }
-
-        return ByteArray(result.size) { i -> result[i].toByte() }
     }
 
     /*
@@ -46,53 +35,32 @@ object KFlate {
     }
     */
 
-    private fun compressRaw(data: UByteArray, type: RAW): UByteArray {
-        val options = DeflateOptions(
-            level = type.level,
-            bufferSize = type.bufferSize,
-            dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } }
-        )
-        return deflateWithOptions(data, options, 0, 0)
+    private fun compressRaw(data: ByteArray, type: RAW): ByteArray {
+        return deflateWithOptions(data, type, 0, 0)
     }
 
-    private fun decompressRaw(data: UByteArray, type: Raw): UByteArray {
-        val options = InflateOptions(
-            dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } }
-        )
-        return inflate(data, InflateState(lastCheck = 2), null, options.dictionary)
+    private fun decompressRaw(data: ByteArray, type: Raw): ByteArray {
+        return inflate(data.asUByteArray(), InflateState(lastCheck = 2), null, type.dictionary?.asUByteArray()).asByteArray()
     }
 
-    private fun compressGzip(data: UByteArray, type: GZIP): UByteArray {
-        val options = GzipOptions(
-            level = type.level,
-            bufferSize = type.bufferSize,
-            dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } },
-            filename = type.filename,
-            mtime = type.mtime,
-            comment = type.comment,
-            extraFields = type.extraFields?.mapValues { (_, v) ->
-                UByteArray(v.size) { i -> v[i].toUByte() }
-            },
-            includeHeaderCrc = type.includeHeaderCrc
-        )
-
+    private fun compressGzip(data: ByteArray, type: GZIP): ByteArray {
         val crc = Crc32Checksum()
         val dataLength = data.size
-        crc.update(data.asByteArray())
-        val deflatedData = deflateWithOptions(data, options, getGzipHeaderSize(options), 8)
+        crc.update(data)
+        val deflatedData = deflateWithOptions(data, type, getGzipHeaderSize(type), 8)
         val deflatedDataLength = deflatedData.size
-        writeGzipHeader(deflatedData, options)
-        writeBytes(deflatedData, deflatedDataLength - 8, crc.getChecksum().toLong())
-        writeBytes(deflatedData, deflatedDataLength - 4, dataLength.toLong())
+        writeGzipHeader(deflatedData, type)
+        writeBytes(deflatedData.asUByteArray(), deflatedDataLength - 8, crc.getChecksum().toLong())
+        writeBytes(deflatedData.asUByteArray(), deflatedDataLength - 4, dataLength.toLong())
         return deflatedData
     }
 
-    private fun decompressGzip(data: UByteArray, type: Gzip): UByteArray {
+    private fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
         if (data.size < 20) {
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
 
-        val decompressedChunks = mutableListOf<UByteArray>()
+        val decompressedChunks = mutableListOf<ByteArray>()
         var currentPosition = 0
 
         while (currentPosition < data.size) {
@@ -102,16 +70,15 @@ object KFlate {
             }
 
             // Validate gzip magic bytes
-            if (data[currentPosition].toInt() != 31 ||
-                data[currentPosition + 1].toInt() != 139 ||
-                data[currentPosition + 2].toInt() != 8) {
+            if ((data[currentPosition].toInt() and 0xFF) != 31 ||
+                (data[currentPosition + 1].toInt() and 0xFF) != 139 ||
+                (data[currentPosition + 2].toInt() and 0xFF) != 8) {
                 createFlateError(FlateErrorCode.TRAILING_GARBAGE)
             }
 
             // Process member
-            val dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } }
-            val result = processSingleGzipMember(data, currentPosition, dictionary)
-            decompressedChunks.add(result.decompressed)
+            val result = processSingleGzipMember(data.asUByteArray(), currentPosition, type.dictionary?.asUByteArray())
+            decompressedChunks.add(result.decompressed.asByteArray())
             currentPosition += result.bytesConsumed
         }
 
@@ -127,7 +94,7 @@ object KFlate {
 
         // Concatenate multiple members
         val totalSize = decompressedChunks.sumOf { it.size }
-        val result = UByteArray(totalSize)
+        val result = ByteArray(totalSize)
         var offset = 0
         for (chunk in decompressedChunks) {
             chunk.copyInto(result, destinationOffset = offset)
@@ -137,47 +104,35 @@ object KFlate {
         return result
     }
 
-    private fun compressZlib(data: UByteArray, type: ZLIB): UByteArray {
-        val options = DeflateOptions(
-            level = type.level,
-            bufferSize = type.bufferSize,
-            dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } }
-        )
-
+    private fun compressZlib(data: ByteArray, type: ZLIB): ByteArray {
         val adler = Adler32Checksum()
-        adler.update(data.asByteArray())
-        val deflatedData = deflateWithOptions(data, options, if (type.dictionary != null) 6 else 2, 4)
+        adler.update(data)
+        val deflatedData = deflateWithOptions(data, type, if (type.dictionary != null) 6 else 2, 4)
 
-        val gzipOptions = GzipOptions(
-            level = type.level,
-            bufferSize = options.bufferSize,
-            dictionary = options.dictionary
-        )
-        writeZlibHeader(deflatedData.asByteArray(), options)
-        writeBytesBE(deflatedData, deflatedData.size - 4, adler.getChecksum())
+        writeZlibHeader(deflatedData, type)
+        writeBytesBE(deflatedData.asUByteArray(), deflatedData.size - 4, adler.getChecksum())
         return deflatedData
     }
 
-    private fun decompressZlib(data: UByteArray, type: Zlib): UByteArray {
+    private fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
         if (data.size < 6) {
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
 
-        val dictionary = type.dictionary?.let { UByteArray(it.size) { i -> it[i].toUByte() } }
-        val start = writeZlibStart(data.asByteArray(), dictionary != null, dictionary?.asByteArray())
+        val start = writeZlibStart(data, type.dictionary != null, type.dictionary)
 
-        val storedAdler32 = readFourBytesBE(data, data.size - 4)
+        val storedAdler32 = readFourBytesBE(data.asUByteArray(), data.size - 4)
 
         val inputData = data.copyOfRange(start, data.size - 4)
         val decompressedData = inflate(
-            inputData,
+            inputData.asUByteArray(),
             InflateState(lastCheck = 2),
             null,
-            dictionary
-        )
+            type.dictionary?.asUByteArray()
+        ).asByteArray()
 
         val computedAdler32 = Adler32Checksum().apply {
-            update(decompressedData.asByteArray())
+            update(decompressedData)
         }.getChecksum()
 
         if (computedAdler32 != storedAdler32) {

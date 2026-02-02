@@ -16,13 +16,16 @@ Separate modules handle format-specific logic:
 - **`ZlibUtils.kt`**: ZLIB header parsing, dictionary support, checksum validation
 - **`HuffmanCode.kt`**: Huffman tree construction and code generation
 
-## Options and Configuration
+## Types and Configuration
 
-Configuration classes allow customization of compression/decompression:
+Sealed interfaces define the compression and decompression types with their specific configurations:
 
-- **`DeflateOptions`**: Compression level (0-9), optional memory setting, optional dictionary
-- **`GzipOptions`**: Extends DeflateOptions with GZIP-specific metadata
-- **`InflateOptions`**: Decompression-only options (optional dictionary for ZLIB)
+- **`CompressionType`**: Sealed interface for `RAW`, `GZIP`, and `ZLIB`
+  - `RAW`: Compression level (0-9), internal buffer size, optional dictionary
+  - `GZIP`: Same as RAW plus metadata (filename, comment, mtime, extra fields) and header CRC option
+  - `ZLIB`: Same as RAW
+- **`DecompressionType`**: Sealed interface for `Raw`, `Gzip`, and `Zlib`
+  - All support an optional dictionary for ZLIB decompression
 
 ## Error Handling
 

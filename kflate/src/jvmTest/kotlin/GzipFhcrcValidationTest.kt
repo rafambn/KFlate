@@ -1,11 +1,7 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
-
 package com.rafambn.kflate
 
 import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.options.GzipOptions
-import com.rafambn.kflate.options.DeflateOptions
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -49,8 +45,7 @@ class GzipFhcrcValidationTest {
         // Basic header is 10 bytes. FHCRC adds 2 bytes. Total 12 bytes if no other fields.
 
         // Verify header size
-        val options = GzipOptions(level = gzip.level, includeHeaderCrc = gzip.includeHeaderCrc)
-        assertEquals(12, getGzipHeaderSize(options))
+        assertEquals(12, getGzipHeaderSize(gzip))
 
         // Corrupt the FHCRC (last byte of the header, index 11)
         compressed[11] = (compressed[11] + 1).toByte()

@@ -5,9 +5,8 @@ package com.rafambn.kflate
 import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
-import com.rafambn.kflate.options.DeflateOptions
 
-internal fun writeZlibHeader(output: ByteArray, options: DeflateOptions) {
+internal fun writeZlibHeader(output: ByteArray, options: ZLIB) {
     val level = options.level
     val compressionLevelFlag = when {
         level == 0 -> 0
@@ -23,7 +22,7 @@ internal fun writeZlibHeader(output: ByteArray, options: DeflateOptions) {
 
     options.dictionary?.let {
         val checksum = Adler32Checksum()
-        checksum.update(it.asByteArray())
+        checksum.update(it)
         writeBytesBE(output.asUByteArray(), 2, checksum.getChecksum())
     }
 }

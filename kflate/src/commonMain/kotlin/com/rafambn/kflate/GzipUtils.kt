@@ -6,8 +6,6 @@ import com.rafambn.kflate.checksum.CRC32_TABLE
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
-import com.rafambn.kflate.options.DeflateOptions
-import com.rafambn.kflate.options.GzipOptions
 import kotlin.math.floor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -21,24 +19,24 @@ internal fun computeGzipHeaderCrc16(data: ByteArray, start: Int, end: Int): Int 
     return crc.inv() and 0xFFFF
 }
 
-internal fun buildExtraFields(extraFields: Map<String, UByteArray>): UByteArray {
+internal fun buildExtraFields(extraFields: Map<String, ByteArray>): ByteArray {
     // Each subfield: SI1 (1 byte) + SI2 (1 byte) + LEN (2 bytes LE) + data
     val totalSize = extraFields.values.sumOf { it.size + 4 }
     // RFC 1952: XLEN is a 2-byte little-endian value, so total extra field size must fit in 16 bits
     require(totalSize <= 65535) {
         "Total extra field size ($totalSize bytes) exceeds maximum XLEN of 65535 bytes"
     }
-    val output = UByteArray(totalSize)
+    val output = ByteArray(totalSize)
     var offset = 0
 
     for ((key, data) in extraFields) {
         require(key.length == 2) { "Extra field ID must be exactly 2 bytes, got: '$key'" }
         require(data.size <= 65535) { "Extra field data cannot exceed 65535 bytes" }
 
-        output[offset] = key[0].code.toUByte()  // SI1
-        output[offset + 1] = key[1].code.toUByte()  // SI2
-        output[offset + 2] = (data.size and 0xFF).toUByte()  // LEN low byte
-        output[offset + 3] = (data.size shr 8).toUByte()     // LEN high byte
+        output[offset] = key[0].code.toByte()  // SI1
+        output[offset + 1] = key[1].code.toByte()  // SI2
+        output[offset + 2] = (data.size and 0xFF).toByte()  // LEN low byte
+        output[offset + 3] = (data.size shr 8).toByte()     // LEN high byte
         data.copyInto(output, offset + 4)
         offset += data.size + 4
     }
@@ -46,25 +44,25 @@ internal fun buildExtraFields(extraFields: Map<String, UByteArray>): UByteArray 
     return output
 }
 
-internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
-    output[0] = 31u
-    output[1] = 139u
-    output[2] = 8u
+internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
+    output[0] = 31
+    output[1] = -117 // 139 as signed byte
+    output[2] = 8
 
     // Calculate FLG byte
-    var flg = 0u
-    if (options.includeHeaderCrc) flg = flg or 2u
-    if (options.extraFields != null) flg = flg or 4u
-    if (options.filename != null) flg = flg or 8u
-    if (options.comment != null) flg = flg or 16u
-    output[3] = flg.toUByte()
+    var flg = 0
+    if (options.includeHeaderCrc) flg = flg or 2
+    if (options.extraFields != null) flg = flg or 4
+    if (options.filename != null) flg = flg or 8
+    if (options.comment != null) flg = flg or 16
+    output[3] = flg.toByte()
 
     output[8] = when {
-        options.level <= 1 -> 4u
-        options.level >= 9 -> 2u
-        else -> 0u
-    }
-    output[9] = 255u  // RFC 1952: 255 = unknown OS (platform-agnostic)
+        options.level <= 1 -> 4
+        options.level >= 9 -> 2
+        else -> 0
+    }.toByte()
+    output[9] = -1 // 255 as signed byte
 
     val mtime = options.mtime
     val timeInMillis = when (mtime) {
@@ -74,7 +72,7 @@ internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
     }
 
     if (timeInMillis != 0L)
-        writeBytes(output, 4, floor(timeInMillis / 1000.0).toLong())
+        writeBytes(output.asUByteArray(), 4, floor(timeInMillis / 1000.0).toLong())
 
     var headerOffset = 10
 
@@ -82,8 +80,8 @@ internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
     options.extraFields?.let {
         val extraData = buildExtraFields(it)
         val xlen = extraData.size
-        output[headerOffset] = (xlen and 0xFF).toUByte()
-        output[headerOffset + 1] = (xlen shr 8).toUByte()
+        output[headerOffset] = (xlen and 0xFF).toByte()
+        output[headerOffset + 1] = (xlen shr 8).toByte()
         extraData.copyInto(output, headerOffset + 2)
         headerOffset += xlen + 2
     }
@@ -92,25 +90,25 @@ internal fun writeGzipHeader(output: UByteArray, options: GzipOptions) {
     options.filename?.let {
         val bytes = it.toIsoStringBytes()
         for (b in bytes) {
-            output[headerOffset++] = b.toUByte()
+            output[headerOffset++] = b
         }
-        output[headerOffset++] = 0u
+        output[headerOffset++] = 0
     }
 
     // FCOMMENT: Write comment (null-terminated)
     options.comment?.let {
         val bytes = it.toIsoStringBytes()
         for (b in bytes) {
-            output[headerOffset++] = b.toUByte()
+            output[headerOffset++] = b
         }
-        output[headerOffset++] = 0u
+        output[headerOffset++] = 0
     }
 
     // FHCRC: Compute and write CRC-16 of header bytes 0 to headerOffset
     if (options.includeHeaderCrc) {
-        val crc16 = computeGzipHeaderCrc16(output.asByteArray(), 0, headerOffset)
-        output[headerOffset] = (crc16 and 0xFF).toUByte()
-        output[headerOffset + 1] = (crc16 shr 8).toUByte()
+        val crc16 = computeGzipHeaderCrc16(output, 0, headerOffset)
+        output[headerOffset] = (crc16 and 0xFF).toByte()
+        output[headerOffset + 1] = (crc16 shr 8).toByte()
         headerOffset += 2
     }
 
@@ -190,7 +188,7 @@ internal fun getGzipUncompressedSize(data: UByteArray): Long {
     return readFourBytes(data, length - 4)
 }
 
-internal fun getGzipHeaderSize(options: GzipOptions): Int {
+internal fun getGzipHeaderSize(options: GZIP): Int {
     var size = 10
 
     options.extraFields?.let { fields ->

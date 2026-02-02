@@ -24,7 +24,7 @@ internal fun readBits(data: UByteArray, bitPosition: Int, bitMask: Int): Int
 // Good: public API via singleton
 object KFlate {
     object Gzip {
-        fun compress(data: UByteArray, options: GzipOptions = GzipOptions()): UByteArray
+        fun compress(data: ByteArray, options: GZIP = GZIP()): ByteArray
     }
 }
 ```

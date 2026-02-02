@@ -18,8 +18,8 @@
 ## Dictionary Support
 
 ZLIB supports optional preset dictionaries for better compression of specific data patterns:
-- Specified in `DeflateOptions.dictionary` during compression
-- Same dictionary must be provided during decompression via `InflateOptions`
+- Specified in `CompressionType.dictionary` during compression
+- Same dictionary must be provided during decompression via `DecompressionType`
 - Limited to 32KB maximum size
 
 ## Platform-Specific Gradle Tasks
