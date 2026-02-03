@@ -1,4 +1,4 @@
-package com.rafambn.kflate
+package com.rafambn.kflate.streaming
 
 internal data class InflateState(
     var literalMap: ShortArray? = null,

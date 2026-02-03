@@ -1,9 +1,12 @@
 
-package com.rafambn.kflate
+package com.rafambn.kflate.format
 
+import com.rafambn.kflate.ZLIB
 import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.util.readFourBytesBE
+import com.rafambn.kflate.util.writeBytesBE
 
 internal fun writeZlibHeader(output: ByteArray, options: ZLIB) {
     val level = options.level

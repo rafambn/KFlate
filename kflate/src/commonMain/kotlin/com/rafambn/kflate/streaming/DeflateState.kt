@@ -1,4 +1,4 @@
-package com.rafambn.kflate
+package com.rafambn.kflate.streaming
 
 internal data class DeflateState(
     var head: ShortArray? = null,

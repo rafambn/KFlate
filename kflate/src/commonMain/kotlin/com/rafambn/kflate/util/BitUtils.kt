@@ -1,4 +1,16 @@
-package com.rafambn.kflate
+package com.rafambn.kflate.util
+
+import com.rafambn.kflate.huffman.FIXED_DISTANCE_EXTRA_BITS
+import com.rafambn.kflate.huffman.FIXED_DISTANCE_TREE
+import com.rafambn.kflate.huffman.FIXED_LENGTH_EXTRA_BITS
+import com.rafambn.kflate.huffman.FIXED_DISTANCE_MAP
+import com.rafambn.kflate.huffman.FIXED_LENGTH_MAP
+import com.rafambn.kflate.huffman.FIXED_LENGTH_TREE
+import com.rafambn.kflate.huffman.CODE_LENGTH_INDEX_MAP
+import com.rafambn.kflate.huffman.createHuffmanTree
+import com.rafambn.kflate.huffman.buildHuffmanTreeFromFrequencies
+import com.rafambn.kflate.huffman.generateLengthCodes
+import com.rafambn.kflate.huffman.calculateCodeLength
 
 internal fun findMaxValue(array: ByteArray): Int {
     if (array.isEmpty()) return 0

@@ -1,11 +1,17 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.rafambn.kflate
+package com.rafambn.kflate.format
 
+import com.rafambn.kflate.GZIP
+import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.checksum.CRC32_TABLE
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.streaming.InflateState
+import com.rafambn.kflate.util.readFourBytes
+import com.rafambn.kflate.util.toIsoStringBytes
+import com.rafambn.kflate.util.writeBytes
 import kotlin.math.floor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime

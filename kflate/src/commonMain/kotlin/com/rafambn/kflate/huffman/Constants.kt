@@ -1,5 +1,5 @@
 
-package com.rafambn.kflate
+package com.rafambn.kflate.huffman
 
 /**
  * For a given length symbol, this table stores the number of extra bits to read

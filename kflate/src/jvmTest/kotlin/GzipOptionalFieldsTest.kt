@@ -1,5 +1,7 @@
 package com.rafambn.kflate
 
+import com.rafambn.kflate.format.getGzipHeaderSize
+import com.rafambn.kflate.format.writeGzipStart
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPInputStream

@@ -1,5 +1,4 @@
-
-package com.rafambn.kflate
+package com.rafambn.kflate.huffman
 
 internal data class HuffmanTable(
     val baseLengths: ShortArray,

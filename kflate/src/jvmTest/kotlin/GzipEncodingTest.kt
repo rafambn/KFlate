@@ -1,5 +1,7 @@
 package com.rafambn.kflate
 
+import com.rafambn.kflate.format.getGzipHeaderSize
+import com.rafambn.kflate.format.writeGzipHeader
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

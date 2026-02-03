@@ -1,6 +1,7 @@
 
 package com.rafambn.kflate
 
+import com.rafambn.kflate.huffman.validateHuffmanCodeLengths
 import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
 import java.util.zip.DeflaterOutputStream

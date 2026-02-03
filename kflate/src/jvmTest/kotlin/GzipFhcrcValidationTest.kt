@@ -2,6 +2,7 @@ package com.rafambn.kflate
 
 import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.error.FlateErrorCode
+import com.rafambn.kflate.format.getGzipHeaderSize
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

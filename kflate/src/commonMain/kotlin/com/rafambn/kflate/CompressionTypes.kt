@@ -1,6 +1,8 @@
 
 package com.rafambn.kflate
 
+import com.rafambn.kflate.util.toIsoStringBytes
+
 sealed interface CompressionType
 
 data class RAW(

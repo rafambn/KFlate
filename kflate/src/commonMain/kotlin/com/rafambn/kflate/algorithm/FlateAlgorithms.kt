@@ -1,9 +1,34 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.rafambn.kflate
+package com.rafambn.kflate.algorithm
 
+import com.rafambn.kflate.CompressionType
+import com.rafambn.kflate.RAW
+import com.rafambn.kflate.GZIP
+import com.rafambn.kflate.ZLIB
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.huffman.FIXED_DISTANCE_BASE
+import com.rafambn.kflate.huffman.FIXED_DISTANCE_EXTRA_BITS
+import com.rafambn.kflate.huffman.FIXED_DISTANCE_REVERSE_MAP
+import com.rafambn.kflate.huffman.FIXED_DISTANCE_REVERSE_LOOKUP
+import com.rafambn.kflate.huffman.FIXED_LENGTH_BASE
+import com.rafambn.kflate.huffman.FIXED_LENGTH_EXTRA_BITS
+import com.rafambn.kflate.huffman.FIXED_LENGTH_REVERSE_LOOKUP
+import com.rafambn.kflate.huffman.FIXED_LENGTH_REVERSE_MAP
+import com.rafambn.kflate.huffman.DEFLATE_OPTIONS
+import com.rafambn.kflate.huffman.CODE_LENGTH_INDEX_MAP
+import com.rafambn.kflate.huffman.createHuffmanTree
+import com.rafambn.kflate.huffman.validateHuffmanCodeLengths
+import com.rafambn.kflate.streaming.DeflateState
+import com.rafambn.kflate.streaming.InflateState
+import com.rafambn.kflate.util.findMaxValue
+import com.rafambn.kflate.util.readBits
+import com.rafambn.kflate.util.readBits16
+import com.rafambn.kflate.util.readTwoBytes
+import com.rafambn.kflate.util.shiftToNextByte
+import com.rafambn.kflate.util.writeBlock
+import com.rafambn.kflate.util.writeFixedBlock
 import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.max

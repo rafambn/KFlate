@@ -1,6 +1,7 @@
 package com.rafambn.kflate
 
 import com.rafambn.kflate.error.FlateError
+import com.rafambn.kflate.format.writeGzipStart
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
