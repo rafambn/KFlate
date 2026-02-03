@@ -1,10 +1,25 @@
 
 package com.rafambn.kflate
 
-sealed interface DecompressionType
+/**
+ * Base interface for decompression configuration options.
+ */
+sealed interface DecompressionType {
+    /**
+     * A buffer containing common byte sequences in the input data that can be used to significantly improve compression ratios.
+     *
+     * Dictionaries should be 32kB or smaller and include strings or byte sequences likely to appear in the input.
+     * The decompressor must supply the same dictionary as the compressor to extract the original data.
+     *
+     * Dictionaries only improve aggregate compression ratio when reused across multiple small inputs. They should typically not be used otherwise.
+     *
+     * Avoid using dictionaries with GZIP and ZIP to maximize software compatibility.
+     */
+    val dictionary: ByteArray?
+}
 
 data class Raw(
-    val dictionary: ByteArray? = null
+    override val dictionary: ByteArray? = null
 ) : DecompressionType {
     init {
         dictionary?.let {
@@ -29,7 +44,7 @@ data class Raw(
 }
 
 data class Gzip(
-    val dictionary: ByteArray? = null
+    override val dictionary: ByteArray? = null
 ) : DecompressionType {
     init {
         dictionary?.let {
@@ -54,7 +69,7 @@ data class Gzip(
 }
 
 data class Zlib(
-    val dictionary: ByteArray? = null
+    override val dictionary: ByteArray? = null
 ) : DecompressionType {
     init {
         dictionary?.let {

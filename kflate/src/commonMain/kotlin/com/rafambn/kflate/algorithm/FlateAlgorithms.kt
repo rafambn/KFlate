@@ -557,10 +557,10 @@ internal fun deflateWithOptions(
         is GZIP -> type.level
         is ZLIB -> type.level
     }
-    val bufferSize = when (type) {
-        is RAW -> type.bufferSize
-        is GZIP -> type.bufferSize
-        is ZLIB -> type.bufferSize
+    val mem = when (type) {
+        is RAW -> type.mem
+        is GZIP -> type.mem
+        is ZLIB -> type.mem
     }
     val dictionary = when (type) {
         is RAW -> type.dictionary
@@ -585,16 +585,10 @@ internal fun deflateWithOptions(
 
         val compressionLevel = level
 
-        val memoryUsage = if (workingState.isLastChunk && bufferSize == 4096) {
+        val memoryUsage = if (workingState.isLastChunk && mem == 8) {
             ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt()
         } else {
-            var bits = 0
-            var valTemp = bufferSize - 1
-            while (valTemp > 0) {
-                valTemp = valTemp shr 1
-                bits++
-            }
-            bits
+            mem + 12
         }
 
     return deflate(
