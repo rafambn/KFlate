@@ -110,6 +110,12 @@ internal fun inflate(
                 }
 
                 2 -> {
+                    // Check if we have at least 14 bits for the block header
+                    if (currentBitPosition + 14 > totalAvailableBits) {
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
+
                     val numLiteralCodes = readBits(inputData, currentBitPosition, 31) + 257
                     val numDistanceCodes = readBits(inputData, currentBitPosition + 5, 31) + 1
                     val numCodeLengthCodes = readBits(inputData, currentBitPosition + 10, 15) + 4
@@ -122,6 +128,13 @@ internal fun inflate(
 
                     val totalCodes = numLiteralCodes + numDistanceCodes
                     currentBitPosition += 14
+
+                    // Check if we have enough bits for the code length tree
+                    val codeLengthTreeBits = numCodeLengthCodes * 3
+                    if (currentBitPosition + codeLengthTreeBits > totalAvailableBits) {
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
 
                     val codeLengthTree = ByteArray(19)
                     for (i in 0 until numCodeLengthCodes) {
@@ -145,6 +158,11 @@ internal fun inflate(
                     var codeIndex = 0
 
                     while (codeIndex < totalCodes) {
+                        if (currentBitPosition > totalAvailableBits) {
+                            if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                            break
+                        }
+
                         val huffmanCode = codeLengthHuffmanMap[readBits(inputData, currentBitPosition, codeLengthBitMask)]
                         currentBitPosition += (huffmanCode.toInt() and 15)
                         val symbol = huffmanCode.toInt() shr 4
@@ -190,6 +208,16 @@ internal fun inflate(
                         }
                     }
 
+                    if (currentBitPosition > totalAvailableBits) {
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
+
+                    if (codeIndex < totalCodes) {
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
+
                     val literalLengthCodeLengths = allCodeLengths.copyOfRange(0, numLiteralCodes)
                     val distanceCodeLengths = allCodeLengths.copyOfRange(numLiteralCodes, totalCodes)
 
@@ -233,7 +261,7 @@ internal fun inflate(
 
         val literalBitMask = (1 shl literalMaxBits) - 1
         val distanceBitMask = (1 shl distanceMaxBits) - 1
-        var savedBitPosition = currentBitPosition
+        var lastBitPosition = currentBitPosition
 
         while (true) {
             val literalCode = (literalLengthMap!![readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
@@ -250,10 +278,11 @@ internal fun inflate(
             when {
                 symbol < 256 -> {
                     workingBuffer[bytesWrittenToOutput++] = symbol.toByte()
+                    lastBitPosition = currentBitPosition
                 }
 
                 symbol == 256 -> {
-                    savedBitPosition = currentBitPosition
+                    lastBitPosition = currentBitPosition
                     literalLengthMap = null
                     break
                 }
@@ -283,8 +312,10 @@ internal fun inflate(
                         currentBitPosition += extraBits
                     }
 
-                    if (currentBitPosition > totalAvailableBits)
-                        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                    if (currentBitPosition > totalAvailableBits) {
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
 
                     if (needsResize) ensureBufferCapacity(bytesWrittenToOutput + 131072)
 
@@ -307,12 +338,13 @@ internal fun inflate(
                         workingBuffer[bytesWrittenToOutput] = workingBuffer[bytesWrittenToOutput - matchDistance]
                         bytesWrittenToOutput++
                     }
+                    lastBitPosition = currentBitPosition
                 }
             }
         }
 
         inflateState.literalMap = literalLengthMap
-        inflateState.inputBitPosition = savedBitPosition
+        inflateState.inputBitPosition = lastBitPosition
         inflateState.outputOffset = bytesWrittenToOutput
         inflateState.isFinalBlock = isFinalBlock
 
@@ -366,7 +398,7 @@ internal fun deflate(
         var i = state.inputOffset
         var symbolIndex = 0
         var waitIndex = state.waitIndex
-        var blockStart = 0
+        var blockStart = maxOf(state.inputOffset, waitIndex)
 
         while (i + 2 < dataSize) {
             val hashValue = hash(i)
@@ -468,7 +500,7 @@ internal fun deflate(
             state.waitIndex = waitIndex
         }
     } else {
-        var i = state.waitIndex
+        var i = maxOf(state.waitIndex, state.inputOffset)
         val lastBlockFlag = if (isLastBlock) 1 else 0
         while (i < dataSize + lastBlockFlag) {
             var end = i + 65535

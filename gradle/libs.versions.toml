@@ -3,8 +3,10 @@
 kotlin = "2.3.0"
 agp = "9.0.0"
 maven-publish = "0.36.0"
+io = "0.8.2"
 
 [libraries]
+kotlinx-io = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "io" }
 
 [plugins]
 
