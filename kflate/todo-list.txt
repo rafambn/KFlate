@@ -1,3 +1,2 @@
 examine jvm impl for improvements on this lib;
-create performance test for each platform;
 Improve stream chunk reader;

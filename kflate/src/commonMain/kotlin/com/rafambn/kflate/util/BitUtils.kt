@@ -34,21 +34,25 @@ internal fun String.toIsoStringBytes(): ByteArray {
 
 internal fun readBits(data: ByteArray, bitPosition: Int, bitMask: Int): Int {
     val byteOffset = bitPosition / 8
+    val size = data.size
 
-    fun safe(index: Int): Int = if (index < data.size) data[index].toInt() and 0xFF else 0
+    val b0 = if (byteOffset < size) data[byteOffset].toInt() and 0xFF else 0
+    val b1 = if (byteOffset + 1 < size) data[byteOffset + 1].toInt() and 0xFF else 0
 
-    return ((safe(byteOffset) or (safe(byteOffset + 1) shl 8)) shr (bitPosition and 7)) and bitMask
+    return ((b0 or (b1 shl 8)) shr (bitPosition and 7)) and bitMask
 }
 
 internal fun readBits16(data: ByteArray, bitPosition: Int): Int {
     val byteOffset = bitPosition / 8
+    val size = data.size
 
-    fun safe(index: Int): Int =
-        if (index < data.size) data[index].toInt() and 0xFF else 0
+    val b0 = if (byteOffset < size) data[byteOffset].toInt() and 0xFF else 0
+    val b1 = if (byteOffset + 1 < size) data[byteOffset + 1].toInt() and 0xFF else 0
+    val b2 = if (byteOffset + 2 < size) data[byteOffset + 2].toInt() and 0xFF else 0
 
-    return ((safe(byteOffset)) or
-            (safe(byteOffset + 1) shl 8) or
-            (safe(byteOffset + 2) shl 16)) shr (bitPosition and 7)
+    return ((b0) or
+            (b1 shl 8) or
+            (b2 shl 16)) shr (bitPosition and 7)
 }
 
 internal fun shiftToNextByte(bitPosition: Int): Int {

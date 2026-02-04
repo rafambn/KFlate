@@ -55,14 +55,14 @@ internal fun inflate(
     val hasNoStoredState = inflateState.validationMode != 0
 
     if (!isBufferProvided)
-        workingBuffer = ByteArray(sourceLength * 3)
+        workingBuffer = ByteArray(maxOf(sourceLength * 3, 32768))
 
-    val ensureBufferCapacity = { requiredSize: Int ->
-        val currentSize = workingBuffer!!.size
-        if (requiredSize > currentSize) {
-            val newSize = maxOf(currentSize * 2, requiredSize)
+    fun ensureCapacity(requiredSize: Int) {
+        val currentBuffer = workingBuffer!!
+        if (requiredSize > currentBuffer.size) {
+            val newSize = maxOf(currentBuffer.size * 2, requiredSize)
             val newBuffer = ByteArray(newSize)
-            workingBuffer!!.copyInto(newBuffer)
+            currentBuffer.copyInto(newBuffer)
             workingBuffer = newBuffer
         }
     }
@@ -109,7 +109,7 @@ internal fun inflate(
                         break
                     }
 
-                    if (needsResize) ensureBufferCapacity(bytesWrittenToOutput + blockLength)
+                    if (needsResize) ensureCapacity(bytesWrittenToOutput + blockLength)
 
                     inputData.copyInto(
                         workingBuffer,
@@ -282,14 +282,16 @@ internal fun inflate(
             }
         }
 
-        if (needsResize) ensureBufferCapacity(bytesWrittenToOutput + 131072)
+        if (needsResize) ensureCapacity(bytesWrittenToOutput + 131072)
 
         val literalBitMask = (1 shl literalMaxBits) - 1
         val distanceBitMask = (1 shl distanceMaxBits) - 1
         var lastBitPosition = currentBitPosition
+        val currentLitMap = literalLengthMap!!
+        val currentDistMap = distanceMap!!
 
         while (true) {
-            val literalCode = (literalLengthMap!![readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
+            val literalCode = (currentLitMap[readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
             val symbol = literalCode shr 4
             currentBitPosition += (literalCode and 15)
 
@@ -323,7 +325,7 @@ internal fun inflate(
                         currentBitPosition += extraBits
                     }
 
-                    val distanceCode = (distanceMap!![readBits16(inputData, currentBitPosition) and distanceBitMask].toInt() and 0xFFFF)
+                    val distanceCode = (currentDistMap[readBits16(inputData, currentBitPosition) and distanceBitMask].toInt() and 0xFFFF)
                     val distanceSymbol = distanceCode shr 4
                     if (distanceCode == 0) createFlateError(FlateErrorCode.INVALID_DISTANCE)
                     // RFC 1951: Distance codes 30-31 will never occur in valid compressed data
@@ -342,9 +344,10 @@ internal fun inflate(
                         break
                     }
 
-                    if (needsResize) ensureBufferCapacity(bytesWrittenToOutput + 131072)
+                    if (needsResize) ensureCapacity(bytesWrittenToOutput + matchLength)
 
                     val copyEndIndex = bytesWrittenToOutput + matchLength
+                    val buffer = workingBuffer!!
 
                     if (bytesWrittenToOutput < matchDistance) {
                         val dictionaryOffset = dictionaryLength - matchDistance
@@ -353,14 +356,17 @@ internal fun inflate(
                             createFlateError(FlateErrorCode.INVALID_DISTANCE)
                         }
 
-                        while (bytesWrittenToOutput < dictionaryEndIndex) {
-                            workingBuffer[bytesWrittenToOutput] = dictionary!![dictionaryOffset + bytesWrittenToOutput]
-                            bytesWrittenToOutput++
-                        }
+                        dictionary!!.copyInto(
+                            buffer,
+                            destinationOffset = bytesWrittenToOutput,
+                            startIndex = dictionaryOffset + bytesWrittenToOutput,
+                            endIndex = dictionaryOffset + dictionaryEndIndex
+                        )
+                        bytesWrittenToOutput = dictionaryEndIndex
                     }
 
                     while (bytesWrittenToOutput < copyEndIndex) {
-                        workingBuffer[bytesWrittenToOutput] = workingBuffer[bytesWrittenToOutput - matchDistance]
+                        buffer[bytesWrittenToOutput] = buffer[bytesWrittenToOutput - matchDistance]
                         bytesWrittenToOutput++
                     }
                     lastBitPosition = currentBitPosition
@@ -382,7 +388,7 @@ internal fun inflate(
 
     } while (!isFinalBlock)
 
-    return workingBuffer.copyOfRange(0, bytesWrittenToOutput)
+    return workingBuffer!!.copyOfRange(0, bytesWrittenToOutput)
 }
 
 internal fun deflate(
@@ -413,7 +419,6 @@ internal fun deflate(
         val head = state.head ?: ShortArray(mask + 1)
         val baseShift1 = ceil(compressionLevel / 3.0).toInt()
         val baseShift2 = 2 * baseShift1
-        val hash = { i: Int -> ((data[i].toInt() and 0xFF) xor ((data[i + 1].toInt() and 0xFF) shl baseShift1) xor ((data[i + 2].toInt() and 0xFF) shl baseShift2)) and mask }
 
         val symbols = IntArray(65536)
         val literalFrequencies = IntArray(288)
@@ -426,7 +431,7 @@ internal fun deflate(
         var blockStart = maxOf(state.inputOffset, waitIndex)
 
         while (i + 2 < dataSize) {
-            val hashValue = hash(i)
+            val hashValue = ((data[i].toInt() and 0xFF) xor ((data[i + 1].toInt() and 0xFF) shl baseShift1) xor ((data[i + 2].toInt() and 0xFF) shl baseShift2)) and mask
             var iMod = i and 32767
             var pIMod = head[hashValue].toInt() and 0xFFFF
             prev[iMod] = pIMod.toShort()
@@ -452,15 +457,17 @@ internal fun deflate(
                 var currentChain = chainLength
                 var diff = (iMod - pIMod) and 32767
 
-                if (remaining > 2 && hashValue == hash(i - diff)) {
+                if (remaining > 2 && data[i] == data[i - diff] && data[i + 1] == data[i - diff + 1] && data[i + 2] == data[i - diff + 2]) {
                     val maxN = minOf(niceLength, remaining) - 1
                     val maxD = minOf(32767, i)
                     val maxLength = minOf(258, remaining)
 
                     while (diff <= maxD && --currentChain != 0 && iMod != pIMod) {
-                        if ((data[i + length].toInt() and 0xFF) == (data[i + length - diff].toInt() and 0xFF)) {
-                            var newLength = 0
-                            while (newLength < maxLength && (data[i + newLength].toInt() and 0xFF) == (data[i + newLength - diff].toInt() and 0xFF)) {
+                        if (data[i + length] == data[i + length - diff] &&
+                            data[i] == data[i - diff] &&
+                            data[i + 1] == data[i + 1 - diff]) {
+                            var newLength = 2
+                            while (newLength < maxLength && data[i + newLength] == data[i + newLength - diff]) {
                                 newLength++
                             }
                             if (newLength > length) {

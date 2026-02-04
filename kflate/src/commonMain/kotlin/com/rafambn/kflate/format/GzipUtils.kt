@@ -18,11 +18,9 @@ import kotlin.time.ExperimentalTime
 
 internal fun computeGzipHeaderCrc16(data: ByteArray, start: Int, end: Int): Int {
     // RFC 1952: CRC16 is the lower 16 bits of the CRC32 over the header bytes.
-    var crc = -1
-    for (i in start until end) {
-        crc = CRC32_TABLE[(crc and 0xFF) xor (data[i].toInt() and 0xFF)] xor (crc ushr 8)
-    }
-    return crc.inv() and 0xFFFF
+    val crc = Crc32Checksum()
+    crc.update(data, start, end - start)
+    return crc.getChecksum() and 0xFFFF
 }
 
 internal fun buildExtraFields(extraFields: Map<String, ByteArray>): ByteArray {
@@ -251,11 +249,11 @@ internal fun processSingleGzipMember(
 
     // Inflate with state tracking
     val inflateState = InflateState(validationMode = 2)
-    val inputForInflate = data.copyOfRange(compressedDataStart, data.size)
-    val decompressed = inflate(inputForInflate, inflateState, null, dictionary)
+    inflateState.inputBitPosition = compressedDataStart * 8
+    val decompressed = inflate(data, inflateState, null, dictionary)
 
     // Calculate bytes consumed by inflate
-    val bitsConsumed = inflateState.inputBitPosition
+    val bitsConsumed = inflateState.inputBitPosition - (compressedDataStart * 8)
     val bytesConsumedByInflate = (bitsConsumed + 7) / 8
 
     // Validate trailer
@@ -278,6 +276,6 @@ internal fun processSingleGzipMember(
         createFlateError(FlateErrorCode.ISIZE_MISMATCH)
     }
 
-    val totalBytesConsumed = headerEndPos + bytesConsumedByInflate + 8
+    val totalBytesConsumed = trailerStart + 8 - startOffset
     return GzipMemberResult(decompressed, totalBytesConsumed)
 }
