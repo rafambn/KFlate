@@ -4,6 +4,7 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import java.time.Duration
 
 plugins {
     alias(libs.plugins.multiplatform)
@@ -15,16 +16,16 @@ group = "com.rafambn"
 version = "0.1.0"
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(libs.versions.java.get().toInt())
 
     androidLibrary {
         namespace = "com.rafambn"
         compileSdk = 36
         minSdk = 24
     }
-
     jvm()
     js(IR) {
+        useEsModules()
         browser {
             testTask {
                 useKarma {
@@ -32,11 +33,16 @@ kotlin {
                 }
             }
         }
-        nodejs()
-        binaries.executable()
-
+        nodejs {
+            testTask {
+                useKarma {
+                    useFirefox()
+                }
+            }
+        }
     }
     wasmJs {
+        useEsModules()
         browser {
             testTask {
                 useKarma {
@@ -44,22 +50,43 @@ kotlin {
                 }
             }
         }
-        nodejs()
-        binaries.executable()
+        nodejs {
+            testTask {
+                useKarma {
+                    useFirefox()
+                }
+            }
+        }
     }
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    )
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+    mingwX64()
+    linuxX64()
+    linuxArm64()
+    macosX64()
+    macosArm64()
+    androidNativeArm32()
+    androidNativeArm64()
+    androidNativeX64()
+    androidNativeX86()
+    tvosArm64()
+    tvosX64()
+    tvosSimulatorArm64()
+    watchosArm32()
+    watchosArm64()
+    watchosX64()
+    watchosSimulatorArm64()
 
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.io)
         }
 
-        jvmTest.dependencies {
+        commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kompress.core)
+            implementation(libs.file)
         }
     }
 }

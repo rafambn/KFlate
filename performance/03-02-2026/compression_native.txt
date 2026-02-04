@@ -1,0 +1,20 @@
+=== KFlate vs Kompress Compression Benchmark Results ===
+
+File: Sunrise.bmp
+Original Size: 49.91MB
+
+KFlate:
+  Compressed Size: 23.76MB (47.61%)
+  Avg Compression Time (10 iterations): 8975.8ms
+  Avg Decompression Time (10 iterations): 2667.19ms
+
+Kompress:
+  Compressed Size: 25.46MB (51.0%)
+  Avg Compression Time (10 iterations): 1172.02ms
+  Avg Decompression Time (10 iterations): 212.7ms
+
+Comparison:
+  Size Difference: 1.69MB (6.64%)
+  KFlate is LARGER than Kompress
+
+──────────────────────────────────────────────────────────────────────
