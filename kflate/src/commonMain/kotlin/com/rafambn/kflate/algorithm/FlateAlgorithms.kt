@@ -475,15 +475,20 @@ internal fun deflate(
                                 distance = diff
                                 if (newLength > maxN) break
 
+                                // Optimized minMatchDiff loop: stop early if no improvement possible
                                 val minMatchDiff = minOf(diff, newLength - 2)
-                                var maxDiff = 0
-                                for (j in 0 until minMatchDiff) {
-                                    val tI = (i - diff + j) and 32767
-                                    val pTI = prev[tI].toInt() and 0xFFFF
-                                    val cD = (tI - pTI) and 32767
-                                    if (cD > maxDiff) {
-                                        maxDiff = cD
-                                        pIMod = tI
+                                if (minMatchDiff > 0) {
+                                    var maxDiff = 0
+                                    for (j in 0 until minMatchDiff) {
+                                        val tI = (i - diff + j) and 32767
+                                        val pTI = prev[tI].toInt() and 0xFFFF
+                                        val cD = (tI - pTI) and 32767
+                                        if (cD > maxDiff) {
+                                            maxDiff = cD
+                                            pIMod = tI
+                                            // Early exit if we found the maximum possible distance
+                                            if (maxDiff >= maxD) break
+                                        }
                                     }
                                 }
                             }

@@ -1,0 +1,15 @@
+OPTIMIZATION: MATCH FINDING - REDUNDANT COMPARISONS
+=============================================================
+
+CHANGES MADE:
+1. Added guard condition to minMatchDiff loop (if minMatchDiff > 0)
+   - Skips unnecessary loop iterations when minMatchDiff is 0
+   
+2. Added early exit in minMatchDiff loop (if maxDiff >= maxD)
+   - Terminates loop as soon as maximum distance is found
+   
+3. Kept original diff accumulation (diff += instead of diff =)
+   - Critical for correct hash chain traversal
+
+FILE: kflate/src/commonMain/kotlin/com/rafambn/kflate/algorithm/FlateAlgorithms.kt
+LINES: 475-495
