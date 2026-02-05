@@ -29,14 +29,14 @@ kotlin {
         browser {
             testTask {
                 useKarma {
-                    useFirefox()
+                    useChromiumHeadless()
                 }
             }
         }
         nodejs {
             testTask {
                 useKarma {
-                    useFirefox()
+                    useChromiumHeadless()
                 }
             }
         }
@@ -46,14 +46,14 @@ kotlin {
         browser {
             testTask {
                 useKarma {
-                    useFirefox()
+                    useChromiumHeadless()
                 }
             }
         }
         nodejs {
             testTask {
                 useKarma {
-                    useFirefox()
+                    useChromiumHeadless()
                 }
             }
         }
@@ -87,6 +87,7 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kompress.core)
             implementation(libs.file)
+            implementation(libs.kotlinx.datetime)
         }
     }
 }

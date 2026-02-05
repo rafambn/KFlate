@@ -14,6 +14,9 @@ import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.time.DurationUnit
 import kotlin.time.measureTime
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 fun formatDecimal(value: Double, decimals: Int = 2): String {
     val multiplier = 10.0.pow(decimals.toDouble()).toLong()
@@ -42,9 +45,11 @@ data class CompressionBenchmark(
     val kflateCompressionRatio: Double,
     val kompressCompressionRatio: Double,
     val sizeDifference: Long,
-    val sizeDifferencePercent: Double
+    val sizeDifferencePercent: Double,
+    val testDate: String
 ) {
     fun toReadable(): String = """
+        Test Date: $testDate
         File: $fileName
         Original Size: ${formatBytes(originalSize)}
 
@@ -67,16 +72,18 @@ data class CompressionBenchmark(
 
 class PerformanceComparisonTest {
 
-    private val testFilesPath = "/mnt/MeuSSD/MyProjects/KFlate/kflate/src/commonTest/resources"
-    private val resultsPath = "/mnt/MeuSSD/MyProjects/KFlate/performance"
+    private val testFilesPath = "/mnt/Arquivos/MyProjects/KFlate/kflate/src/commonTest/resources"
+    private val resultsPath = "/mnt/Arquivos/MyProjects/KFlate/performance"
     private val iterations = 10
 
     @Test
     fun compressionBenchmark() {
         val results = mutableListOf<CompressionBenchmark>()
+        val testDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).toString()
 
         println("\n=== KFlate vs Kompress Compression Benchmark ===")
         println("File: Sunrise.bmp")
+        println("Test Date: $testDate")
         println("Iterations: $iterations\n")
 
         val filePath = "$testFilesPath/Sunrise.bmp"
@@ -176,7 +183,8 @@ class PerformanceComparisonTest {
             kflateCompressionRatio = (kflateSize.toDouble() / originalSize) * 100,
             kompressCompressionRatio = (kompressSize.toDouble() / originalSize) * 100,
             sizeDifference = kompressSize - kflateSize,
-            sizeDifferencePercent = ((kompressSize - kflateSize).toDouble() / kompressSize) * 100
+            sizeDifferencePercent = ((kompressSize - kflateSize).toDouble() / kompressSize) * 100,
+            testDate = testDate
         )
 
         results.add(benchmark)
