@@ -4,7 +4,6 @@ import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import java.time.Duration
 
 plugins {
     alias(libs.plugins.multiplatform)
@@ -62,7 +61,12 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
     mingwX64()
-    linuxX64()
+    linuxX64{
+        binaries.test("release") {
+            optimized = true
+            debuggable = false
+        }
+    }
     linuxArm64()
     macosX64()
     macosArm64()

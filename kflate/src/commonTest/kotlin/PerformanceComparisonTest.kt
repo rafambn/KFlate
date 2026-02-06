@@ -102,12 +102,27 @@ class PerformanceComparisonTest {
         val originalSize = data.size.toLong()
         println("Original Size: ${formatBytes(originalSize)}\n")
 
+        // Warmup iterations (excluded from timing)
+        println("Warming up KFlate (3 iterations - excluded from results)...")
+        repeat(3) {
+            KFlate.compress(data, RAW())
+            val compressed = KFlate.compress(data, RAW())
+            KFlate.decompress(compressed, Raw())
+        }
+
+        println("Warming up Kompress (3 iterations - excluded from results)...")
+        repeat(3) {
+            Deflater.deflate(data)
+            val compressed = Deflater.deflate(data)
+            Inflater.inflate(compressed)
+        }
+
         // Test KFlate compression/decompression multiple times
         val kflateCompressionTimes = mutableListOf<Double>()
         val kflateDecompressionTimes = mutableListOf<Double>()
         var kflateCompressed: ByteArray? = null
 
-        println("Testing KFlate ($iterations iterations)...")
+        println("\nTesting KFlate ($iterations iterations)...")
         repeat(iterations) { iteration ->
             var compressed: ByteArray
             val compTime = measureTime {
