@@ -96,6 +96,54 @@ kotlin {
     }
 }
 
+// Performance benchmark tasks
+tasks.register<Exec>("benchmarkNativeRelease") {
+    group = "benchmark"
+    description = "Run native release performance benchmark"
+    dependsOn("linkReleaseReleaseTestLinuxX64")
+    workingDir = project.rootDir
+    val binaryPath = project.layout.buildDirectory.file("bin/linuxX64/releaseReleaseTest/release.kexe").get().asFile.absolutePath
+    commandLine = listOf(binaryPath)
+    doFirst {
+        println("\n=== Running KFlate Native Release Benchmark ===\n")
+    }
+}
+
+tasks.register("benchmarkJvmRelease") {
+    group = "benchmark"
+    description = "Run JVM release performance benchmark"
+    dependsOn("jvmTest")
+    doFirst {
+        println("\n=== Running KFlate JVM Benchmark ===\n")
+    }
+}
+
+tasks.register("benchmarkWasmJs") {
+    group = "benchmark"
+    description = "Run WASM/JS (Node.js) performance benchmark"
+    dependsOn("cleanWasmJsNodeTest", "wasmJsNodeTest")
+    doFirst {
+        println("\n=== Running KFlate WASM/JS (Node.js) Benchmark ===\n")
+    }
+}
+
+tasks.register("benchmarkAll") {
+    group = "benchmark"
+    description = "Run all performance benchmarks (JVM + Native Release + WASM/JS)"
+    dependsOn("benchmarkJvmRelease", "benchmarkNativeRelease", "benchmarkWasmJs")
+    doFirst {
+        println("\n" + "=".repeat(60))
+        println("Running KFlate Performance Benchmarks (All Platforms)")
+        println("=".repeat(60) + "\n")
+    }
+    doLast {
+        println("\n" + "=".repeat(60))
+        println("Benchmark Results")
+        println("Check performance/ directory for detailed results")
+        println("=".repeat(60) + "\n")
+    }
+}
+
 mavenPublishing {
     coordinates(
         groupId = "com.rafambn",
