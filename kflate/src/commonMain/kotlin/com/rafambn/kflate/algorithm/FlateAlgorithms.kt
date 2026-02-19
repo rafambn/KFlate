@@ -431,7 +431,8 @@ internal fun deflate(
         var blockStart = maxOf(state.inputOffset, waitIndex)
 
         while (i + 2 < dataSize) {
-            val hashValue = ((data[i].toInt() and 0xFF) xor ((data[i + 1].toInt() and 0xFF) shl baseShift1) xor ((data[i + 2].toInt() and 0xFF) shl baseShift2)) and mask
+            val hashValue =
+                ((data[i].toInt() and 0xFF) xor ((data[i + 1].toInt() and 0xFF) shl baseShift1) xor ((data[i + 2].toInt() and 0xFF) shl baseShift2)) and mask
             var iMod = i and 32767
             var pIMod = head[hashValue].toInt() and 0xFFFF
             prev[iMod] = pIMod.toShort()
@@ -465,7 +466,8 @@ internal fun deflate(
                     while (diff <= maxD && --currentChain != 0 && iMod != pIMod) {
                         if (data[i + length] == data[i + length - diff] &&
                             data[i] == data[i - diff] &&
-                            data[i + 1] == data[i + 1 - diff]) {
+                            data[i + 1] == data[i + 1 - diff]
+                        ) {
                             var newLength = 2
                             while (newLength < maxLength && data[i + newLength] == data[i + newLength - diff]) {
                                 newLength++
@@ -595,17 +597,25 @@ internal fun deflateWithOptions(
         }
     }
 
-        val compressionLevel = level
-
-        val memoryUsage = if (workingState.isLastChunk && mem == 8) {
-            ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt()
-        } else {
-            mem + 12
-        }
+    // Cap hash table size per compression level for better CPU cache utilization.
+    // Lower levels search few chain links and don't need large tables.
+    val maxHashBitsForLevel = when (level) {
+        0, 1 -> 12  // 4K entries = 8KB (L1 cache)
+        2, 3 -> 13  // 8K entries = 16KB (L1 cache)
+        4, 5 -> 14  // 16K entries = 32KB (L1 cache)
+        6, 7 -> 15  // 32K entries = 64KB (L2 cache)
+        8 -> 16  // 64K entries = 128KB (L2 cache)
+        else -> 20  // 1M entries (level 9: max quality, current default)
+    }
+    val memoryUsage = if (workingState.isLastChunk && mem == 8) {
+        minOf(maxHashBitsForLevel, ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt())
+    } else {
+        mem + 12
+    }
 
     return deflate(
         workingData,
-        compressionLevel,
+        level,
         memoryUsage,
         prefixSize,
         suffixSize,

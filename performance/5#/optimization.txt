@@ -1,0 +1,19 @@
+OPTIMIZATION: LEVEL-AWARE HASH TABLE SIZING (PLAN 2)
+=============================================================
+
+CHANGES MADE:
+
+1. Level-aware hash table cap (FlateAlgorithms.kt, deflateWithOptions())
+   - Added maxHashBitsForLevel when-expression before memoryUsage calculation
+   - Hash table exponent is now capped per compression level:
+       Level 0-1 → 12 bits  (4K entries,  8KB — fits L1)
+       Level 2-3 → 13 bits  (8K entries, 16KB — fits L1)
+       Level 4-5 → 14 bits (16K entries, 32KB — fits L1)
+       Level 6-7 → 15 bits (32K entries, 64KB — fits L2)
+       Level 8   → 16 bits (64K entries,128KB — fits L2)
+       Level 9   → 20 bits  (1M entries,  2MB — unchanged)
+   - Applied via minOf(maxHashBitsForLevel, computed size) in the
+     isLastChunk && mem==8 branch; explicit mem settings untouched
+
+   FILE: kflate/src/commonMain/kotlin/com/rafambn/kflate/algorithm/FlateAlgorithms.kt
+   LINES: 598-612

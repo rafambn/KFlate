@@ -1,0 +1,49 @@
+OPTIMIZATION: NATIVE RELEASE BUILD + BENCHMARK INFRASTRUCTURE
+=============================================================
+
+COMMITS:
+  aeb5529 - 4# - Improve testing
+  365fe46 - Feat: add Gradle tasks for multiplatform performance benchmarks
+
+CHANGES MADE:
+
+1. Enabled native release build (kflate/build.gradle.kts)
+   - Added binaries.test("release") block to linuxX64 target
+     with optimized = true and debuggable = false
+   - Produces release.kexe with full compiler optimizations
+   - This was the critical change: without it all native benchmarks
+     ran in debug mode with bounds checks, GC safepoints, etc.
+
+2. Added warmup iterations to compressionBenchmark()
+   - 3 warmup compress+decompress cycles for both KFlate and Kompress
+   - Excluded from timing results
+   - Prevents JIT warm-up effects from contaminating measurements
+
+3. Added Gradle benchmark tasks (kflate/build.gradle.kts)
+   - benchmarkNativeRelease: builds and runs release.kexe
+   - benchmarkJvmRelease: runs JVM performance tests
+   - benchmarkWasmJs: runs WASM/JS benchmark via Node.js
+   - benchmarkAll: aggregate task running all three sequentially
+
+FILE: kflate/build.gradle.kts
+LINES: linuxX64 block (binaries.test section)
+
+PERFORMANCE DELTA (3# → 4#, Native Release, Sunrise.bmp 49.91MB):
+  Compression:   4533.70ms → 1240.12ms   (-72.6%, 3.65x faster)
+  Decompression: 1313.74ms →  333.96ms   (-74.6%, 3.94x faster)
+  Compressed size: 23.78MB (47.64%) — unchanged
+
+NOTE: The entire speedup came from enabling the release build.
+      No algorithm was changed. 3# was measured in debug mode,
+      which inflated times by ~3.7x due to array bounds checks
+      (28.6% of debug samples) and GC safepoints (7.6%).
+
+PERFORMANCE DELTA (3# → 4#, JVM, Sunrise.bmp 49.91MB):
+  Compression:   n/a → 1377.49ms
+  Decompression: n/a →  326.89ms
+  (JVM baseline established in this iteration)
+
+PERFORMANCE DELTA (3# → 4#, WASM/JS, Sunrise.bmp 49.91MB):
+  Compression:   2085.17ms (4#)
+  Decompression:  491.25ms (4#)
+  (WASM baseline established in this iteration)

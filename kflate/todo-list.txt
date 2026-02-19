@@ -1,2 +1,0 @@
-examine jvm impl for improvements on this lib;
-Improve stream chunk reader;
