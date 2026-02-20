@@ -1,12 +1,16 @@
 # KFlate
 
-KFlate is a Kotlin Multiplatform port of the npm `fflate` library. It provides pure Kotlin DEFLATE, GZIP, and ZLIB compression and decompression with configurable options and dictionary support.
+Pure Kotlin Multiplatform DEFLATE, GZIP, and ZLIB compression.
+
+[Try the web demo](https://kflate.rafambn.com)
+
+KFlate is a Kotlin Multiplatform port of the npm [`fflate`](https://github.com/101arrowz/fflate) library. It provides compression and decompression with configurable levels, dictionary support, and both blocking and streaming APIs.
 
 ## Features
 
 - Pure Kotlin implementation (no native dependencies)
-- Raw DEFLATE compress/inflate
-- GZIP and ZLIB wrappers
+- Raw DEFLATE, GZIP, and ZLIB compression/decompression
+- Blocking and streaming (kotlinx-io) APIs
 - Optional GZIP header fields (filename, comment, extra fields, header CRC)
 - Dictionary support for DEFLATE/ZLIB
 - Kotlin Multiplatform targets: JVM, Android, JS (Browser/Node), WASM, iOS

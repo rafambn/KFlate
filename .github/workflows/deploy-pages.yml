@@ -44,5 +44,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./deploy
           publish_branch: gh-pages
-          cname: kflate.rafambn.br
+          cname: kflate.rafambn.com
           force_orphan: true    # keeps gh-pages as a single clean commit
