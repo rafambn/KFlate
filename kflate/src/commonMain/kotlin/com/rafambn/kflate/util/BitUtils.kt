@@ -59,22 +59,26 @@ internal fun shiftToNextByte(bitPosition: Int): Int {
     return (bitPosition + 7) / 8
 }
 
-internal fun writeBits(data: ByteArray, bitPosition: Int, value: Int) {
-    val shiftedValue = value shl (bitPosition and 7)
-    val byteIndex = bitPosition / 8
+internal fun shiftToNextByte(bitPosition: Long): Int {
+    return ((bitPosition + 7) / 8).toInt()
+}
+
+internal fun writeBits(data: ByteArray, bitPosition: Long, value: Int) {
+    val shiftedValue = value shl (bitPosition and 7L).toInt()
+    val byteIndex = (bitPosition / 8).toInt()
     data[byteIndex] = ((data[byteIndex].toInt() and 0xFF) or shiftedValue).toByte()
     data[byteIndex + 1] = ((data[byteIndex + 1].toInt() and 0xFF) or (shiftedValue shr 8)).toByte()
 }
 
-internal fun writeBits16(data: ByteArray, bitPosition: Int, value: Int) {
-    val shiftedValue = value shl (bitPosition and 7)
-    val byteIndex = bitPosition / 8
+internal fun writeBits16(data: ByteArray, bitPosition: Long, value: Int) {
+    val shiftedValue = value shl (bitPosition and 7L).toInt()
+    val byteIndex = (bitPosition / 8).toInt()
     data[byteIndex] = ((data[byteIndex].toInt() and 0xFF) or shiftedValue).toByte()
     data[byteIndex + 1] = ((data[byteIndex + 1].toInt() and 0xFF) or (shiftedValue shr 8)).toByte()
     data[byteIndex + 2] = ((data[byteIndex + 2].toInt() and 0xFF) or (shiftedValue shr 16)).toByte()
 }
 
-internal fun writeFixedBlock(output: ByteArray, bitPosition: Int, data: ByteArray): Int {
+internal fun writeFixedBlock(output: ByteArray, bitPosition: Long, data: ByteArray): Long {
     val dataLength = data.size
     val bytePosition = shiftToNextByte(bitPosition + 2)
     output[bytePosition] = (dataLength and 255).toByte()
@@ -84,7 +88,7 @@ internal fun writeFixedBlock(output: ByteArray, bitPosition: Int, data: ByteArra
     for (i in data.indices) {
         output[bytePosition + i + 4] = data[i]
     }
-    return (bytePosition + 4 + dataLength) * 8
+    return (bytePosition.toLong() + 4 + dataLength) * 8L
 }
 
 internal fun writeBlock(
@@ -98,8 +102,8 @@ internal fun writeBlock(
     symbolCount: Int,
     blockStart: Int,
     blockLength: Int,
-    bitPosition: Int
-): Int {
+    bitPosition: Long
+): Long {
     var currentBitPosition = bitPosition
     writeBits(output, currentBitPosition++, if (isFinal) 1 else 0)
     literalFrequencies[256]++

@@ -1,0 +1,46 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # required to push to gh-pages branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The kflate library targets Android (compileSdk 36); ensure the platform is installed.
+      - name: Install Android platform 36
+        run: |
+          yes | "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-36" 2>/dev/null || true
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build WASM + assemble demo
+        run: ./gradlew :web-demo:assembleWebDemo
+
+      - name: Assemble deploy directory
+        run: |
+          mkdir -p deploy
+          cp web-demo/build/webDemo/* deploy/
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy
+          publish_branch: gh-pages
+          cname: kflate.rafambn.br
+          force_orphan: true    # keeps gh-pages as a single clean commit

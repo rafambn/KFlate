@@ -405,10 +405,10 @@ internal fun deflate(
     val output = ByteArray(prefixSize + dataSize + bufferMargin + postfixSize)
     val writeBuffer = ByteArray(output.size - prefixSize - postfixSize)
     val isLastBlock = state.isLastChunk
-    var bitPosition = state.bitBuffer and 7
+    var bitPosition: Long = (state.bitBuffer and 7).toLong()
 
     if (level > 0) {
-        if (bitPosition != 0) {
+        if (bitPosition != 0L) {
             writeBuffer[0] = (state.bitBuffer shr 3).toByte()
         }
         val option = DEFLATE_OPTIONS[level - 1]
@@ -531,7 +531,7 @@ internal fun deflate(
         )
 
         if (!isLastBlock) {
-            state.bitBuffer = (bitPosition and 7) or ((writeBuffer[bitPosition / 8].toInt() and 0xFF) shl 3)
+            state.bitBuffer = (bitPosition and 7L).toInt() or ((writeBuffer[(bitPosition / 8).toInt()].toInt() and 0xFF) shl 3)
             bitPosition -= 7
             state.head = head
             state.prev = prev
@@ -544,7 +544,7 @@ internal fun deflate(
         while (i < dataSize + lastBlockFlag) {
             var end = i + 65535
             if (end >= dataSize) {
-                writeBuffer[bitPosition / 8] = lastBlockFlag.toByte()
+                writeBuffer[(bitPosition / 8).toInt()] = lastBlockFlag.toByte()
                 end = dataSize
             }
             bitPosition = writeFixedBlock(writeBuffer, bitPosition + 1, data.sliceArray(i until end))

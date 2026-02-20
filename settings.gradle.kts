@@ -1,5 +1,6 @@
 rootProject.name = "KFlate"
 include(":kflate")
+include(":web-demo")
 
 pluginManagement {
     repositories {
