@@ -79,6 +79,11 @@ internal fun inflate(
 
     do {
         if (literalLengthMap == null) {
+            // Need at least 3 bits for block header (1 BFINAL + 2 BTYPE)
+            if (currentBitPosition + 3 > totalAvailableBits) {
+                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                break
+            }
             isFinalBlock = readBits(inputData, currentBitPosition, 1) != 0
             val blockType = readBits(inputData, currentBitPosition + 1, 3)
             currentBitPosition += 3

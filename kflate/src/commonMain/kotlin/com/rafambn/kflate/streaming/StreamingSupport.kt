@@ -1,8 +1,6 @@
 package com.rafambn.kflate.streaming
 
 import com.rafambn.kflate.algorithm.inflate
-import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
 
 internal const val STREAM_CHUNK_SIZE = 65536
 internal const val STREAM_HISTORY_SIZE = 32768
@@ -54,7 +52,7 @@ internal fun inflateStreamChunk(
     return try {
         inflate(input, state, null, history)
     } catch (e: com.rafambn.kflate.error.FlateError) {
-        if (e.code == FlateErrorCode.UNEXPECTED_EOF && !sourceExhausted) {
+        if (!sourceExhausted) {
             restoreInflateState(state, snapshot)
             null
         } else {
