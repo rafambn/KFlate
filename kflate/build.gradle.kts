@@ -148,13 +148,14 @@ mavenPublishing {
     coordinates(
         groupId = "com.rafambn",
         artifactId = "KFlate",
-        version = "0.1.0"
+        version = "1.0.0"
     )
 
 // Configure POM metadata for the published artifact
     pom {
         name.set("KFlate")
-        description.set("KFlate is a pure Kotlin implementation of DEFLATE, GZIP, and ZLIB compression algorithms. It provides multiplatform compression/decompression with configurable compression levels and dictionary support, working seamlessly across JVM, JavaScript, WebAssembly, iOS, and other Kotlin Multiplatform targets.")
+        description.set("KFlate is a pure Kotlin implementation of DEFLATE, GZIP, and ZLIB compression algorithms. It provides multiplatform " +
+                "compression/decompression with configurable compression levels and dictionary support, working seamlessly across all targets.")
         url.set("https://kflate.rafambn.com")
 
         licenses {

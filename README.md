@@ -2,40 +2,46 @@
 
 Pure Kotlin Multiplatform DEFLATE, GZIP, and ZLIB compression.
 
-[Try the web demo](https://kflate.rafambn.com)
+<p align="center">
+  <img src="KFlate-Logo.svg" alt="KFlate-Logo" width="200" height="200">
+</p>
+
+[![Maven Central](https://img.shields.io/maven-central/v/com.rafambn/KFlate?style=flat-square)](https://central.sonatype.com/artifact/com.rafambn/KFlate)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)](https://opensource.org/licenses/Apache-2.0)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.0+-7F52FF?style=flat-square)](https://kotlinlang.org)
+[![Multiplatform](https://img.shields.io/badge/Multiplatform-JVM%20%7C%20Native%20%7C%20JS%20%7C%20WASM-green?style=flat-square)](#)
 
 KFlate is a Kotlin Multiplatform port of the npm [`fflate`](https://github.com/101arrowz/fflate) library. It provides compression and decompression with configurable levels, dictionary support, and both blocking and streaming APIs.
 
-## Features
+## Check out the demo app on web: [**KFlate Demo**](https://kflate.rafambn.com)
 
-- Pure Kotlin implementation (no native dependencies)
-- Raw DEFLATE, GZIP, and ZLIB compression/decompression
-- Blocking and streaming (kotlinx-io) APIs
-- Optional GZIP header fields (filename, comment, extra fields, header CRC)
-- Dictionary support for DEFLATE/ZLIB
-- Kotlin Multiplatform targets: JVM, Android, JS (Browser/Node), WASM, iOS
+Current version [1.0.0](https://github.com/rafambn/KFlate/releases).
+
+### Key Features
+
+- **Pure Kotlin Implementation**: No native dependencies, works everywhere Kotlin runs
+- **Multiplatform Support**: JVM, Android, JS (Browser/Node), WASM, and all native targets (iOS, macOS, Linux, Windows)
+- **Multiple Compression Formats**: Raw DEFLATE, GZIP with optional headers, and ZLIB with dictionary support
+- **Flexible APIs**: Both blocking and streaming (kotlinx-io) interfaces for your use case
+- **Configurable Compression**: Compression levels 0-9 with intelligent hash table sizing per level
+- **Dictionary Support**: Full preset dictionary support for DEFLATE/ZLIB (max 32 KB)
+- **Production Ready**: Fully tested against standard tools and libraries
+
+### Performance
+
+KFlate delivers performance comparable to standard implementations across all platforms:
+
+- **Native targets**: Matches **zlib**
+- **JVM**: Matches **Java standard library**
+- **Web**: Matches **fflate**
+
+For detailed benchmark results, see the [performance/](performance/) folder.
 
 ## Installation
 
-Kotlin Multiplatform (commonMain):
-
-```kotlin
-kotlin {
-    sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation("com.rafambn:KFlate:0.1.0")
-            }
-        }
-    }
-}
-```
-
-JVM or Android (if you prefer platform-specific source sets):
-
 ```kotlin
 dependencies {
-    implementation("com.rafambn:KFlate:0.1.0")
+    implementation("com.rafambn:KFlate:1.0.0")
 }
 ```
 
@@ -92,17 +98,26 @@ val options = ZLIB(dictionary = dict)
 val zWithDict = KFlate.compress(input, options)
 ```
 
-## Options
+## Configuration Options
 
-- `CompressionType` (`RAW`, `GZIP`, `ZLIB`)
-  - `level`: 0..9 compression level
-  - `bufferSize`: optional internal buffer size (for hash table)
-  - `dictionary`: optional preset dictionary (max 32 KB)
-  - `GZIP` specific: `filename`, `comment`, `extraFields`, `mtime`, `includeHeaderCrc`
-- `DecompressionType` (`Raw`, `Gzip`, `Zlib`)
-  - All support optional `dictionary` (max 32 KB)
+### Compression Options
 
-## Project Notes
+- **`level`**: Compression level 0–9 (default: 6)
+  - 0: No compression
+  - 1–3: Fast compression
+  - 4–6: Balanced (6 is default)
+  - 7–9: Maximum compression (9 uses full 1M entry hash table)
+- **`bufferSize`**: Internal hash table size (optional, auto-sized per level)
+- **`dictionary`**: Preset dictionary up to 32 KB (DEFLATE/ZLIB only)
 
-- API uses standard `ByteArray` for binary data.
-- This project focuses on compatibility with standard gzip/zlib tools and the DEFLATE spec.
+### GZIP-Specific Options
+
+- `filename`: Original filename
+- `comment`: File comment
+- `extraFields`: Custom header fields
+- `mtime`: Modification time
+- `includeHeaderCrc`: Include CRC16 of header
+
+### Decompression Options
+
+- **`dictionary`**: Preset dictionary for DEFLATE/ZLIB (required if compression used one)

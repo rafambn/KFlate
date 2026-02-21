@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <title>KFlate Abstract Logo</title>
+  <desc>A modern, minimalist abstract logo for KFlate representing data compression</desc>
+
+  <defs>
+    <!-- Foreground Pillar Gradient (Top to Bottom) -->
+    <linearGradient id="pillarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00B4DB" />
+      <stop offset="100%" stop-color="#1E88E5" />
+    </linearGradient>
+
+    <!-- Top Data Funnel Gradient (Right to Left) -->
+    <!-- Starts Mint Green, compresses into Cyan/Light Blue to match the pillar top -->
+    <linearGradient id="topArmGrad" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#00E676" />
+      <stop offset="100%" stop-color="#00B4DB" />
+    </linearGradient>
+
+    <!-- Bottom Data Funnel Gradient (Right to Left) -->
+    <!-- Starts Deep Blue, compresses into Primary Blue to match the pillar bottom -->
+    <linearGradient id="botArmGrad" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#004080" />
+      <stop offset="100%" stop-color="#1E88E5" />
+    </linearGradient>
+
+    <!-- Drop shadow to create a modern 3D layering effect on the pillar -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="4" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+  </defs>
+
+  <!-- ========================================== -->
+  <!-- CENTERED ICON GRAPHIC                      -->
+  <!-- ========================================== -->
+  <!-- Group translated down by 66px to perfectly center the 300px tall icon in the 512px canvas -->
+  <g id="kflate-icon" transform="translate(0, 66)">
+    
+    <!-- 1. Background Pillar Layer (Dark Blue Core) -->
+    <rect x="148" y="70" width="32" height="240" rx="16" fill="#003D7A" />
+
+    <!-- 2. The Funneling Data Lines (The arms of the 'K') -->
+    <g stroke-width="16" stroke-linecap="round">
+      <!-- Top compression arm -->
+      <g stroke="url(#topArmGrad)">
+        <line x1="315" y1="40" x2="175" y2="140" />
+        <line x1="335" y1="68" x2="175" y2="165" />
+        <line x1="355" y1="96" x2="175" y2="190" />
+      </g>
+      
+      <!-- Bottom compression arm -->
+      <g stroke="url(#botArmGrad)">
+        <line x1="355" y1="284" x2="175" y2="190" />
+        <line x1="335" y1="312" x2="175" y2="215" />
+        <line x1="315" y1="340" x2="175" y2="240" />
+      </g>
+    </g>
+
+    <!-- 3. Foreground Pillar Layer (Optimized Output Core) -->
+    <rect x="164" y="90" width="32" height="200" rx="16" fill="url(#pillarGrad)" filter="url(#shadow)" />
+
+    <!-- 4. Visual Compression / Deflation Cues -->
+    <!-- Left Compressing Arrow -->
+    <path d="M 90 170 L 110 190 L 90 210" 
+          stroke="#00B4DB" stroke-width="12" 
+          stroke-linecap="round" stroke-linejoin="round" fill="none" />
+          
+    <!-- Right Compressing Arrow -->
+    <path d="M 422 170 L 402 190 L 422 210" 
+          stroke="#0066CC" stroke-width="12" 
+          stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  </g>
+</svg>
