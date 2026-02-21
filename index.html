@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KFlate — DEFLATE/GZIP/ZLIB in your browser</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --accent: #818cf8;
+      --accent-hover: #6366f1;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --success: #4ade80;
+      --error: #f87171;
+      --radius: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    header { text-align: center; margin-bottom: 2rem; }
+
+    header h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    header h1 span { color: var(--accent); }
+
+    header p {
+      color: var(--muted);
+      margin-top: 0.4rem;
+      font-size: 0.9rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .wasm-status {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.35rem;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .dot.ready { background: var(--success); }
+    .dot.error { background: var(--error); }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-btn {
+      padding: 0.55rem 1.2rem;
+      border: none;
+      background: none;
+      color: var(--muted);
+      font-size: 0.95rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    input[type=radio] { accent-color: var(--accent); cursor: pointer; }
+
+    #level-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    #level-group .section-label { margin-bottom: 0; white-space: nowrap; }
+
+    #level-value {
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 1ch;
+    }
+
+    input[type=range] {
+      flex: 1;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 1.25rem;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(129, 140, 248, 0.05);
+    }
+
+    .drop-zone .hint { color: var(--muted); font-size: 0.9rem; }
+    .drop-zone .hint u { cursor: pointer; }
+    .drop-zone .fname { color: var(--text); font-weight: 600; font-size: 0.95rem; }
+    .drop-zone .fsize { color: var(--muted); font-size: 0.8rem; }
+
+    button.primary {
+      width: 100%;
+      padding: 0.65rem 1.25rem;
+      background: var(--accent);
+      color: #1e1b4b;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      margin-bottom: 1rem;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      color: #fff;
+    }
+
+    button.primary:disabled { opacity: 0.38; cursor: not-allowed; }
+
+    /* ── Spinner ─────────────────────────────────────────────────────────── */
+    .spinner {
+      display: none;
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(129, 140, 248, 0.25);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-msg {
+      display: none;
+      color: var(--error);
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      background: rgba(248, 113, 113, 0.07);
+      border: 1px solid rgba(248, 113, 113, 0.25);
+      border-radius: var(--radius);
+      line-height: 1.5;
+    }
+
+    /* ── Modal ───────────────────────────────────────────────────────────── */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(3px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) * 1.5);
+      padding: 2rem;
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      animation: pop-in 0.18s ease-out;
+    }
+
+    @keyframes pop-in {
+      from { opacity: 0; transform: scale(0.94); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 0.85rem;
+      right: 0.85rem;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .modal-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      padding-right: 2rem;
+    }
+
+    .modal-title span { color: var(--accent); }
+
+    .modal-stats {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.35rem 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-stats .val { color: var(--text); font-weight: 500; }
+
+    .modal-dl {
+      display: block;
+      width: 100%;
+      padding: 0.7rem 1.25rem;
+      background: var(--success);
+      color: #052e16;
+      border: none;
+      border-radius: var(--radius);
+      text-align: center;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .modal-dl:hover { opacity: 0.88; }
+
+    .modal-error-text {
+      display: none;
+      color: var(--error);
+      font-size: 0.85rem;
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
+      word-break: break-word;
+    }
+
+    .modal-backdrop.error .modal-title span { color: var(--error); }
+    .modal-backdrop.error .modal-stats { display: none; }
+    .modal-backdrop.error .modal-error-text { display: block; }
+    .modal-backdrop.error .modal-dl { display: none; }
+
+    footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>K<span>Flate</span></h1>
+    <p>Pure Kotlin DEFLATE · GZIP · ZLIB — running in WebAssembly</p>
+  </header>
+
+  <div class="card">
+    <div class="wasm-status">
+      <span class="dot" id="wasm-dot"></span>
+      <span id="wasm-status-text">Loading WASM…</span>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-mode="compress">Compress</button>
+      <button class="tab-btn" data-mode="decompress">Decompress</button>
+    </div>
+
+    <div class="section-label">Format</div>
+    <div class="radio-group">
+      <label><input type="radio" name="format" value="raw"> Raw (DEFLATE)</label>
+      <label><input type="radio" name="format" value="gzip" checked> GZIP</label>
+      <label><input type="radio" name="format" value="zlib"> ZLIB</label>
+    </div>
+
+    <div id="level-group">
+      <span class="section-label">Level: <span id="level-value">6</span></span>
+      <input type="range" id="level-input" min="0" max="9" value="6">
+    </div>
+
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" style="display:none">
+      <p class="hint" id="drop-hint">Drop a file here or <u>click to choose</u></p>
+      <p class="fname" id="file-name" style="display:none"></p>
+      <p class="fsize" id="file-size" style="display:none"></p>
+    </div>
+
+    <button class="primary" id="process-btn" disabled>Compress</button>
+
+    <div class="spinner" id="spinner"></div>
+
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <!-- Result modal -->
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      <div class="modal-title" id="modal-title">Done!</div>
+      <p class="modal-error-text" id="modal-error-text"></p>
+      <div class="modal-stats">
+        <span>Input</span>  <span class="val" id="modal-in"></span>
+        <span>Output</span> <span class="val" id="modal-out"></span>
+        <span>Ratio</span>  <span class="val" id="modal-ratio"></span>
+        <span>Time</span>   <span class="val" id="modal-time"></span>
+      </div>
+      <a class="modal-dl" id="modal-dl">⬇ Save file</a>
+    </div>
+  </div>
+
+  <footer>
+    <a href="https://github.com/rafambn/KFlate" target="_blank">GitHub</a> ·
+    Pure Kotlin DEFLATE ·
+    <a href="https://kotlinlang.org/docs/wasm-overview.html" target="_blank">Kotlin/WASM</a>
+  </footer>
+
+  <script type="module">
+    // Base URL so the blob-URL worker can resolve absolute imports
+    const BASE_URL = new URL('.', location.href).href;
+
+    // ── Web Worker (inline, loaded as ESM via blob URL) ──────────────────────
+    const workerSrc = `
+import * as kflate from '${BASE_URL}kflate-demo.mjs';
+
+// Run Kotlin top-level initializers (required before calling any Kotlin exports)
+kflate._initialize();
+
+// Signal that the WASM module is initialised (top-level await has resolved)
+self.postMessage({ type: 'ready' });
+
+self.onmessage = ({ data: msg }) => {
+  const { id, action, input, format, level } = msg;
+  try {
+    kflate.loadInput(new Uint8Array(input));
+    const size = action === 'compress'
+      ? kflate.runCompress(format, level ?? 6)
+      : kflate.runDecompress(format);
+    if (size < 0) {
+      self.postMessage({ id, error: kflate.getLastError() || 'Operation failed' });
+      return;
+    }
+    const out = kflate.getOutput();
+    self.postMessage({ id, result: out.buffer }, [out.buffer]);
+  } catch (e) {
+    self.postMessage({ id, error: e.message || String(e) });
+  }
+};
+`;
+
+    const blobUrl = URL.createObjectURL(
+      new Blob([workerSrc], { type: 'application/javascript' })
+    );
+    const worker = new Worker(blobUrl, { type: 'module' });
+
+    const pending = new Map();
+    let nextId = 1;
+    let wasmReady = false;
+
+    worker.onmessage = ({ data }) => {
+      if (data.type === 'ready') {
+        wasmReady = true;
+        dot.className = 'dot ready';
+        statusText.textContent = 'WASM ready';
+        updateBtn();
+        return;
+      }
+      const cb = pending.get(data.id);
+      if (cb) { pending.delete(data.id); cb(data); }
+    };
+
+    worker.onerror = (e) => {
+      dot.className = 'dot error';
+      statusText.textContent = 'WASM load failed';
+      showError('Failed to initialise WebAssembly: ' + (e.message || 'unknown error'));
+    };
+
+    function callWorker(msg) {
+      return new Promise(resolve => {
+        const id = nextId++;
+        pending.set(id, resolve);
+        const transfer = msg.input instanceof ArrayBuffer ? [msg.input] : [];
+        worker.postMessage({ ...msg, id }, transfer);
+      });
+    }
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const dot          = document.getElementById('wasm-dot');
+    const statusText   = document.getElementById('wasm-status-text');
+    const tabs         = document.querySelectorAll('.tab-btn');
+    const levelGroup   = document.getElementById('level-group');
+    const levelInput   = document.getElementById('level-input');
+    const levelValue   = document.getElementById('level-value');
+    const dropZone     = document.getElementById('drop-zone');
+    const fileInputEl  = document.getElementById('file-input');
+    const dropHint     = document.getElementById('drop-hint');
+    const fileNameEl   = document.getElementById('file-name');
+    const fileSizeEl   = document.getElementById('file-size');
+    const processBtn   = document.getElementById('process-btn');
+    const spinner      = document.getElementById('spinner');
+    const errorMsg     = document.getElementById('error-msg');
+    const modalBackdrop = document.getElementById('modal-backdrop');
+    const modalClose   = document.getElementById('modal-close');
+
+    let mode = 'compress';
+    let selectedFile = null;
+    let currentObjectUrl = null;
+
+    // ── Tab switching ─────────────────────────────────────────────────────────
+    tabs.forEach(btn => btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      levelGroup.style.display = mode === 'compress' ? '' : 'none';
+      processBtn.textContent = mode === 'compress' ? 'Compress' : 'Decompress';
+      updateBtn();
+    }));
+
+    // ── Level slider ──────────────────────────────────────────────────────────
+    levelInput.addEventListener('input', () => {
+      levelValue.textContent = levelInput.value;
+    });
+
+    // ── File drag / drop / pick ───────────────────────────────────────────────
+    const MAX_BYTES = 500 * 1024 * 1024; // 500 MB
+
+    dropZone.addEventListener('click', () => fileInputEl.click());
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f) setFile(f);
+    });
+
+    fileInputEl.addEventListener('change', () => {
+      if (fileInputEl.files[0]) setFile(fileInputEl.files[0]);
+    });
+
+    function setFile(f) {
+      hideError();
+      if (f.size > MAX_BYTES) {
+        showError(`File is too large (${fmtSize(f.size)}). Maximum allowed size is 500 MB.`);
+        return;
+      }
+      selectedFile = f;
+      dropHint.style.display = 'none';
+      fileNameEl.style.display = '';
+      fileSizeEl.style.display = '';
+      fileNameEl.textContent = f.name;
+      fileSizeEl.textContent = fmtSize(f.size);
+      updateBtn();
+    }
+
+    // ── Process ───────────────────────────────────────────────────────────────
+    processBtn.addEventListener('click', async () => {
+      if (!selectedFile || !wasmReady) return;
+      hideError();
+      setProcessing(true);
+
+      const t0 = performance.now();
+      try {
+        const buf = await selectedFile.arrayBuffer();
+        const format = document.querySelector('input[name=format]:checked').value;
+        const level  = parseInt(levelInput.value, 10);
+
+        const reply = await callWorker({ action: mode, input: buf, format, level });
+
+        if (reply.error) {
+          showErrorModal(reply.error);
+          return;
+        }
+
+        const elapsed = performance.now() - t0;
+        showResult(reply.result, selectedFile.size, reply.result.byteLength, elapsed, selectedFile.name, format);
+      } catch (e) {
+        showErrorModal(e.message || String(e));
+      } finally {
+        setProcessing(false);
+      }
+    });
+
+    // ── Result modal ──────────────────────────────────────────────────────────
+    function showResult(buffer, inBytes, outBytes, ms, origName, format) {
+      if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+      const blob = new Blob([buffer]);
+      currentObjectUrl = URL.createObjectURL(blob);
+      const dlName = outFilename(origName, format, mode);
+
+      document.getElementById('modal-title').innerHTML =
+        mode === 'compress' ? '<span>Compressed</span> successfully' : '<span>Decompressed</span> successfully';
+      document.getElementById('modal-in').textContent    = fmtSize(inBytes);
+      document.getElementById('modal-out').textContent   = fmtSize(outBytes);
+      document.getElementById('modal-ratio').textContent =
+        inBytes > 0 ? ((outBytes / inBytes) * 100).toFixed(1) + '%' : '—';
+      document.getElementById('modal-time').textContent  =
+        ms >= 1000 ? (ms / 1000).toFixed(2) + ' s' : Math.round(ms) + ' ms';
+
+      const dl = document.getElementById('modal-dl');
+      dl.href     = currentObjectUrl;
+      dl.download = dlName;
+      dl.textContent = '⬇ Save  ' + dlName;
+
+      modalBackdrop.classList.remove('error');
+      modalBackdrop.classList.add('open');
+    }
+
+    function showErrorModal(msg) {
+      document.getElementById('modal-title').innerHTML =
+        mode === 'compress' ? '<span>Compression</span> failed' : '<span>Decompression</span> failed';
+      document.getElementById('modal-error-text').textContent = msg;
+      modalBackdrop.classList.add('error');
+      modalBackdrop.classList.add('open');
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove('open');
+      modalBackdrop.classList.remove('error');
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    modalBackdrop.addEventListener('click', e => { if (e.target === modalBackdrop) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function outFilename(name, format, mode) {
+      if (mode === 'compress') {
+        const ext = { raw: '.deflate', gzip: '.gz', zlib: '.zlib' }[format] ?? '.bin';
+        return name + ext;
+      }
+      return name.replace(/\.(gz|gzip|zlib|deflate|zz)$/i, '') || name + '.out';
+    }
+
+    function setProcessing(on) {
+      processBtn.disabled = on;
+      spinner.style.display = on ? 'block' : 'none';
+    }
+
+    function updateBtn() {
+      processBtn.disabled = !(wasmReady && selectedFile);
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = '';
+    }
+
+    function hideError() {
+      errorMsg.style.display = 'none';
+    }
+
+    // ── Utilities ─────────────────────────────────────────────────────────────
+    function fmtSize(bytes) {
+      if (bytes < 1024)         return bytes + ' B';
+      if (bytes < 1024 ** 2)    return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1024 ** 3)    return (bytes / 1024 ** 2).toFixed(2) + ' MB';
+      return (bytes / 1024 ** 3).toFixed(2) + ' GB';
+    }
+  </script>
+</body>
+</html>
