@@ -1,30 +1,42 @@
-# KFlate
+<h1 align="center">KFlate</h1>
 
-Pure Kotlin Multiplatform DEFLATE, GZIP, and ZLIB compression.
+<p align="center">Pure Kotlin Multiplatform DEFLATE, GZIP, and ZLIB compression.</p>
 
 <p align="center">
   <img src="KFlate-Logo.svg" alt="KFlate-Logo" width="200" height="200">
 </p>
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.rafambn/KFlate?style=flat-square)](https://central.sonatype.com/artifact/com.rafambn/KFlate)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)](https://opensource.org/licenses/Apache-2.0)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.3.0-7F52FF?style=flat-square)](https://kotlinlang.org)
+<p align="center">
+  <a href="https://central.sonatype.com/artifact/com.rafambn/KFlate">
+    <img alt="Maven Central" src="https://img.shields.io/maven-central/v/com.rafambn/KFlate?label=Maven%20Central">
+  </a>
+  <a href="https://opensource.org/licenses/Apache-2.0">
+    <img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg">
+  </a>
+  <img alt="Platform Targets" src="https://img.shields.io/badge/targets-android%20%7C%20jvm%20%7C%20js%20%7C%20wasm%20%7C%20ios%20%7C%20macos%20%7C%20linux%20%7C%20windows-0A7EA4">
+</p>
 
-KFlate is a Kotlin Multiplatform port of the npm [`fflate`](https://github.com/101arrowz/fflate) library. It provides compression and decompression with configurable levels, dictionary support, and both blocking and streaming APIs.
+<p align="center">
+  KFlate is a Kotlin Multiplatform port of the npm <a href="https://github.com/101arrowz/fflate"><code>fflate</code></a> library. It provides compression and decompression with configurable levels, dictionary support, and both blocking and streaming APIs across KMP targets.
+</p>
 
-## Check out the demo app on web: [**KFlate Demo**](https://kflate.rafambn.com)
-
-Current version [1.0.0](https://github.com/rafambn/KFlate/releases).
+<table align="center">
+  <tr>
+    <td align="center">
+      <a href="https://kflate.rafambn.com"><strong>KFlate Web Compressor (Powered by WASM)</strong></a>
+    </td>
+  </tr>
+</table>
 
 ### Key Features
 
-- **Pure Kotlin Implementation**: No native dependencies, works everywhere Kotlin runs
-- **Multiplatform Support**: JVM, Android, JS (Browser/Node), WASM, and all native targets (iOS, macOS, Linux, Windows)
-- **Multiple Compression Formats**: Raw DEFLATE, GZIP with optional headers, and ZLIB with dictionary support
-- **Flexible APIs**: Both blocking and streaming (kotlinx-io) interfaces for your use case
-- **Configurable Compression**: Compression levels 0-9 with intelligent hash table sizing per level
-- **Dictionary Support**: Full preset dictionary support for DEFLATE/ZLIB (max 32 KB)
-- **Production Ready**: Fully tested against standard tools and libraries
+- **Pure Kotlin Implementation**: No native dependencies, works everywhere Kotlin runs.
+- **Multiplatform Support**: JVM, Android, JS (Browser/Node), WASM, and native targets.
+- **Multiple Compression Formats**: Raw DEFLATE, GZIP with optional headers, and ZLIB with dictionary support.
+- **Flexible APIs**: Both blocking and streaming (`kotlinx-io`) interfaces.
+- **Configurable Compression**: Compression levels 0-9 with intelligent hash table sizing.
+- **Dictionary Support**: Full preset dictionary support for DEFLATE/ZLIB (max 32 KB).
+- **Production Ready**: Tested against standard tools and libraries.
 
 ### Performance
 
@@ -34,17 +46,26 @@ KFlate delivers performance comparable to standard implementations across all pl
 - **JVM**: Matches **Java standard library**
 - **Web**: Matches **fflate**
 
-For detailed benchmark results, see the [performance/](performance/) folder.
+For detailed benchmark results of each iteration, see the [performance](performance/) folder.
 
-## Installation
+
+### Setup
+
+Add KFlate to your `commonMain` dependencies:
 
 ```kotlin
-dependencies {
-    implementation("com.rafambn:KFlate:1.0.0")
+kotlin {
+    sourceSets {
+        commonMain.dependencies {
+            implementation("com.rafambn:KFlate:1.0.0")
+        }
+    }
 }
 ```
 
-## Usage
+### Usage
+
+With KFlate, you select a format config and call the same API to compress/decompress:
 
 ### Raw DEFLATE
 
@@ -54,7 +75,6 @@ import com.rafambn.kflate.RAW
 import com.rafambn.kflate.Raw
 
 val input = "hello".encodeToByteArray()
-
 val deflated = KFlate.compress(input, RAW())
 val inflated = KFlate.decompress(deflated, Raw())
 ```
@@ -87,19 +107,14 @@ import com.rafambn.kflate.ZLIB
 import com.rafambn.kflate.Zlib
 
 val input = "hello".encodeToByteArray()
-
 val z = KFlate.compress(input, ZLIB())
 val out = KFlate.decompress(z, Zlib())
 
-// With a preset dictionary
 val dict = "common".encodeToByteArray()
-val options = ZLIB(dictionary = dict)
-val zWithDict = KFlate.compress(input, options)
+val zWithDict = KFlate.compress(input, ZLIB(dictionary = dict))
 ```
 
-## Configuration Options
-
-### Compression Options
+### Configuration Options
 
 - **`level`**: Compression level 0–9 (default: 6)
   - 0: No compression
