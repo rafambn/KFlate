@@ -65,10 +65,6 @@ With KFlate, you select a format config and call the same API to compress/decomp
 ### Raw DEFLATE
 
 ```kotlin
-import com.rafambn.kflate.KFlate
-import com.rafambn.kflate.RAW
-import com.rafambn.kflate.Raw
-
 val input = "hello".encodeToByteArray()
 val deflated = KFlate.compress(input, RAW())
 val inflated = KFlate.decompress(deflated, Raw())
@@ -93,10 +89,6 @@ val roundTrip = KFlate.decompress(gz, Gzip())
 ### ZLIB
 
 ```kotlin
-import com.rafambn.kflate.KFlate
-import com.rafambn.kflate.ZLIB
-import com.rafambn.kflate.Zlib
-
 val input = "hello".encodeToByteArray()
 val z = KFlate.compress(input, ZLIB())
 val out = KFlate.decompress(z, Zlib())
