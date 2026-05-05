@@ -40,14 +40,9 @@
 
 ### Performance
 
-KFlate delivers performance comparable to standard implementations across all platforms:
+KFlate includes JVM, Linux Native, and Wasm benchmark tasks for RAW DEFLATE. The comparison baseline is Kompress, which maps to `java.util.zip`, platform `zlib`, and npm `fflate`.
 
-- **Native targets**: Matches **zlib**
-- **JVM**: Matches **Java standard library**
-- **Web**: Matches **fflate**
-
-For detailed benchmark results of each iteration, see the [performance](performance/) folder.
-
+For benchmark scope, result interpretation, and comparison guidance, see [BENCHMARKING.md](BENCHMARKING.md).
 
 ### Setup
 
@@ -57,7 +52,7 @@ Add KFlate to your `commonMain` dependencies:
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("com.rafambn:KFlate:1.0.0")
+            implementation("com.rafambn:KFlate:1.1.0")
         }
     }
 }

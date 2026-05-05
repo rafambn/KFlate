@@ -1,53 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <title>KFlate Abstract Logo</title>
-  <desc>A modern, minimalist abstract logo for KFlate representing data compression</desc>
+    <defs>
+        <linearGradient id="flow-gradient" x1="0" y1="16" x2="0" y2="496"
+            gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#00E676" />
+            <stop offset="33.33%" stop-color="#00B4DB" />
+            <stop offset="66.66%" stop-color="#1E88E5" />
+            <stop offset="100%" stop-color="#004080" />
+        </linearGradient>
+        <style>
+            .core {
+            fill: #1E293B;
+            }
+        </style>
+    </defs>
 
-  <defs>
-    <linearGradient id="pillarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#00B4DB" />
-      <stop offset="100%" stop-color="#1E88E5" />
-    </linearGradient>
-
-    <linearGradient id="topArmGrad" x1="100%" y1="0%" x2="0%" y2="0%">
-      <stop offset="0%" stop-color="#00E676" />
-      <stop offset="100%" stop-color="#00B4DB" />
-    </linearGradient>
-
-    <linearGradient id="botArmGrad" x1="100%" y1="0%" x2="0%" y2="0%">
-      <stop offset="0%" stop-color="#004080" />
-      <stop offset="100%" stop-color="#1E88E5" />
-    </linearGradient>
-
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="4" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.15" />
-    </filter>
-  </defs>
-
-  <g id="kflate-icon" transform="translate(0, 66)">
-    <rect x="148" y="70" width="32" height="240" rx="16" fill="#003D7A" />
-
-    <g stroke-width="16" stroke-linecap="round">
-      <g stroke="url(#topArmGrad)">
-        <line x1="315" y1="40" x2="175" y2="140" />
-        <line x1="335" y1="68" x2="175" y2="165" />
-        <line x1="355" y1="96" x2="175" y2="190" />
-      </g>
-
-      <g stroke="url(#botArmGrad)">
-        <line x1="355" y1="284" x2="175" y2="190" />
-        <line x1="335" y1="312" x2="175" y2="215" />
-        <line x1="315" y1="340" x2="175" y2="240" />
-      </g>
+    <g id="kflate-logo">
+        <g id="compressed-core-stem">
+            <rect id="stem-block-1" x="64" y="36" width="80" height="92" rx="16" class="core" />
+            <rect id="stem-block-2" x="64" y="152" width="80" height="92" rx="16" class="core" />
+            <rect id="stem-block-3" x="64" y="268" width="80" height="92" rx="16" class="core" />
+            <rect id="stem-block-4" x="64" y="384" width="80" height="92" rx="16" class="core" />
+        </g>
+        <g id="uncompressed-input-flow" fill="url(#flow-gradient)">
+            <g id="flow-upper">
+                <rect id="upper-outer" x="336" y="16" width="80" height="80" rx="16"
+                    fill="url(#flow-gradient)" />
+                <path id="upper-arrow"
+                    d="M 321.46 127.51 L 298.83 150.14 L 310.14 161.46 L 270.54 161.46 L 270.54 121.86 L 281.86 133.17 L 304.49 110.54 Z"
+                    stroke="url(#flow-gradient)" stroke-width="6" stroke-linejoin="round" />
+                <rect id="upper-inner" x="200" y="200" width="32" height="32" rx="8"
+                    fill="url(#flow-gradient)" />
+            </g>
+            <g id="flow-lower">
+                <rect id="lower-outer" x="336" y="416" width="80" height="80" rx="16"
+                    fill="url(#flow-gradient)" />
+                <path id="lower-arrow"
+                    d="M 304.49 401.46 L 281.86 378.83 L 270.54 390.14 L 270.54 350.54 L 310.14 350.54 L 298.83 361.86 L 321.46 384.49 Z"
+                    stroke="url(#flow-gradient)" stroke-width="6" stroke-linejoin="round" />
+                <rect id="lower-inner" x="200" y="280" width="32" height="32" rx="8"
+                    fill="url(#flow-gradient)" />
+            </g>
+        </g>
     </g>
-
-    <rect x="164" y="90" width="32" height="200" rx="16" fill="url(#pillarGrad)" filter="url(#shadow)" />
-
-    <path d="M 90 170 L 110 190 L 90 210"
-          stroke="#00B4DB" stroke-width="12"
-          stroke-linecap="round" stroke-linejoin="round" fill="none" />
-
-    <path d="M 422 170 L 402 190 L 422 210"
-          stroke="#0066CC" stroke-width="12"
-          stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  </g>
 </svg>

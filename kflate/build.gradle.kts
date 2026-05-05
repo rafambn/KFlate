@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.multiplatform)
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.benchmark)
 }
 
 group = "com.rafambn"
@@ -22,7 +23,12 @@ kotlin {
         compileSdk = 36
         minSdk = 24
     }
-    jvm()
+    jvm {
+        val mainCompilation = compilations.getByName("main")
+        compilations.create("benchmark") {
+            associateWith(mainCompilation)
+        }
+    }
     js(IR) {
         useEsModules()
         browser {
@@ -42,6 +48,10 @@ kotlin {
     }
     wasmJs {
         useEsModules()
+        val mainCompilation = compilations.getByName("main")
+        compilations.create("benchmark") {
+            associateWith(mainCompilation)
+        }
         browser {
             testTask {
                 useKarma {
@@ -62,75 +72,79 @@ kotlin {
     iosSimulatorArm64()
     mingwX64()
     linuxX64{
+        val mainCompilation = compilations.getByName("main")
+        compilations.create("benchmark") {
+            associateWith(mainCompilation)
+        }
         binaries.test("release") {
             optimized = true
             debuggable = false
         }
     }
     linuxArm64()
-    macosX64()
     macosArm64()
     androidNativeArm32()
     androidNativeArm64()
     androidNativeX64()
     androidNativeX86()
     tvosArm64()
-    tvosX64()
     tvosSimulatorArm64()
     watchosArm32()
     watchosArm64()
-    watchosX64()
     watchosSimulatorArm64()
 
     sourceSets {
+        val commonBenchmark by creating {
+            dependencies {
+                implementation(libs.kotlinx.benchmark.runtime)
+                implementation(libs.kompress.core)
+            }
+        }
+        val jvmBenchmark by getting {
+            dependsOn(commonBenchmark)
+        }
+        val linuxX64Benchmark by getting {
+            dependsOn(commonBenchmark)
+        }
+        val wasmJsBenchmark by getting {
+            dependsOn(commonBenchmark)
+            dependencies {
+                implementation(npm("fflate", "0.8.2"))
+            }
+        }
+
         commonMain.dependencies {
             implementation(libs.kotlinx.io)
         }
 
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation(libs.kompress.core)
-            implementation(libs.file)
-            implementation(libs.kotlinx.datetime)
         }
     }
 }
 
-// Performance benchmark tasks
-tasks.register<Exec>("benchmarkNativeRelease") {
-    group = "benchmark"
-    description = "Run native release performance benchmark"
-    dependsOn("linkReleaseReleaseTestLinuxX64")
-    workingDir = project.rootDir
-    val binaryPath = project.layout.buildDirectory.file("bin/linuxX64/releaseReleaseTest/release.kexe").get().asFile.absolutePath
-    commandLine = listOf(binaryPath)
-    doFirst {
-        println("\n=== Running KFlate Native Release Benchmark ===\n")
+benchmark {
+    targets {
+        register("jvmBenchmark")
+        register("linuxX64Benchmark")
+        register("wasmJsBenchmark")
     }
-}
 
-tasks.register("benchmarkJvmRelease") {
-    group = "benchmark"
-    description = "Run JVM release performance benchmark"
-    dependsOn("jvmTest")
-    doFirst {
-        println("\n=== Running KFlate JVM Benchmark ===\n")
-    }
-}
-
-tasks.register("benchmarkWasmJs") {
-    group = "benchmark"
-    description = "Run WASM/JS (Node.js) performance benchmark"
-    dependsOn("cleanWasmJsNodeTest", "wasmJsNodeTest")
-    doFirst {
-        println("\n=== Running KFlate WASM/JS (Node.js) Benchmark ===\n")
+    configurations {
+        named("main") {
+            warmups = 5
+            iterations = 10
+            iterationTime = 1
+            iterationTimeUnit = "s"
+            reportFormat = "json"
+        }
     }
 }
 
 tasks.register("benchmarkAll") {
     group = "benchmark"
     description = "Run all performance benchmarks (JVM + Native Release + WASM/JS)"
-    dependsOn("benchmarkJvmRelease", "benchmarkNativeRelease", "benchmarkWasmJs")
+    dependsOn("jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchmark", "wasmJsBenchmarkBenchmark")
     doFirst {
         println("\n" + "=".repeat(60))
         println("Running KFlate Performance Benchmarks (All Platforms)")
@@ -139,7 +153,7 @@ tasks.register("benchmarkAll") {
     doLast {
         println("\n" + "=".repeat(60))
         println("Benchmark Results")
-        println("Check performance/ directory for detailed results")
+        println("Check kflate/build/reports/benchmarks for detailed results")
         println("=".repeat(60) + "\n")
     }
 }
