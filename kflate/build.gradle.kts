@@ -132,8 +132,8 @@ benchmark {
 
     configurations {
         named("main") {
-            warmups = 5
-            iterations = 10
+            warmups = 8
+            iterations = 15
             iterationTime = 1
             iterationTimeUnit = "s"
             reportFormat = "json"
@@ -178,12 +178,47 @@ tasks.matching { it.name in benchmarkTaskNames }.configureEach {
         mustRunAfter(prepareBenchmarkAll)
 }
 
+val collectBenchmarkMetadata by tasks.registering(Exec::class) {
+    group = "benchmark"
+    description = "Consolidate platform metadata into kflate/performance/benchmark-metadata.jsonl."
+    mustRunAfter(benchmarkTaskNames)
+    workingDir = rootProject.projectDir
+    commandLine(
+        "bash",
+        "-lc",
+        """
+        set -euo pipefail
+        dest="kflate/performance/benchmark-metadata.jsonl"
+        tmp="${'$'}{dest}.tmp"
+        mkdir -p "$(dirname "${'$'}dest")"
+        : > "${'$'}tmp"
+        if [ -f "${'$'}dest" ]; then cat "${'$'}dest" >> "${'$'}tmp"; fi
+        if [ -f "performance/benchmark-metadata.jsonl" ]; then cat "performance/benchmark-metadata.jsonl" >> "${'$'}tmp"; fi
+        for dir in build/wasm/packages kflate/build/wasm/packages; do
+            if [ -d "${'$'}dir" ]; then
+                find "${'$'}dir" -type f -name benchmark-metadata.jsonl -print \
+                    | while IFS= read -r file; do cat "${'$'}file" >> "${'$'}tmp"; done
+            fi
+        done
+        awk 'NF && !seen[${'$'}0]++' "${'$'}tmp" > "${'$'}dest"
+        rm -f "${'$'}tmp"
+        echo "Merged benchmark metadata rows: $(wc -l < "${'$'}dest") -> ${'$'}dest"
+        """.trimIndent()
+    )
+}
+
 tasks.register<Exec>("benchmarkComparison") {
     group = "benchmark"
     description = "Generate benchmark markdown/json comparison tables."
     mustRunAfter(benchmarkTaskNames)
+    dependsOn(collectBenchmarkMetadata)
     workingDir = rootProject.projectDir
-    commandLine("python3", "scripts/benchmark_comparison.py")
+    commandLine(
+        "python3",
+        "scripts/benchmark_comparison.py",
+        "--metadata",
+        "kflate/performance/benchmark-metadata.jsonl"
+    )
 }
 
 mavenPublishing {

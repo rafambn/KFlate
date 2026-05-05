@@ -17,6 +17,7 @@ Run every configured benchmark target:
 ```
 
 `benchmarkAll` now also runs `python3 scripts/benchmark_comparison.py` automatically after the three platform benchmarks finish.
+Before generating the comparison, `benchmarkAll` consolidates metadata from JVM/Native and Wasm paths into `kflate/performance/benchmark-metadata.jsonl`.
 
 Run one target at a time:
 
@@ -41,6 +42,7 @@ kflate/build/reports/benchmarks/main/<timestamp>/
 ## How The Suite Is Built
 
 The benchmark suite uses `kotlinx-benchmark` with average-time mode and JSON output. The same common benchmark source runs on JVM, Linux x64 Native, and Wasm/JS.
+Main benchmark config uses 3 forks, 8 warmup iterations, and 15 measurement iterations (1 second each).
 
 KFlate benchmark class:
 
@@ -169,10 +171,10 @@ Use `--output <path>` to write the Markdown file somewhere else. Use `--json-out
 Use `--run-dir <path>` to force a specific timestamp folder under `kflate/build/reports/benchmarks/main/`.
 Without `--run-dir`, the script selects one timestamp folder and does not mix platform JSON from different runs.
 
-The script reads timing data from kotlinx-benchmark JSON. It reads compressed sizes from benchmark metadata JSONL.
-It checks `kflate/performance/benchmark-metadata.jsonl`, `performance/benchmark-metadata.jsonl`, and Wasm package metadata paths under `build/wasm/packages/*/performance/`.
+The script reads timing data from kotlinx-benchmark JSON. It reads compressed sizes from one explicit metadata JSONL path.
+By default this is `kflate/performance/benchmark-metadata.jsonl`.
 
-Without size metadata for a platform/library/corpus row, the script fails instead of silently reusing another platform size.
+Without size metadata for a platform/library/corpus row, the script fails.
 Use `--metadata <path>` to point to a specific metadata file.
 
 The decompression benchmarks use the same canonical RAW compressed payload for KFlate and Kompress. Compression benchmarks still time each library's own compressor output.

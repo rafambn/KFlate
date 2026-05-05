@@ -50,7 +50,7 @@ def parse_args():
         "--metadata",
         type=Path,
         default=Path("kflate/performance/benchmark-metadata.jsonl"),
-        help="JSONL file written by benchmark setup with corpus sizes.",
+        help="JSONL file written by benchmark setup with corpus sizes. Exactly this file is used.",
     )
     parser.add_argument(
         "--allow-missing-sizes",
@@ -108,46 +108,28 @@ def library_name(benchmark):
     return None
 
 
-def metadata_candidates(metadata):
-    candidates = [
-        metadata,
-        Path("kflate/performance/benchmark-metadata.jsonl"),
-        Path("performance/benchmark-metadata.jsonl"),
-    ]
-    candidates.extend(Path(".").glob("build/wasm/packages/*/performance/benchmark-metadata.jsonl"))
-    candidates.extend(Path(".").glob("kflate/build/wasm/packages/*/performance/benchmark-metadata.jsonl"))
-
-    seen = set()
-    unique = []
-    for candidate in candidates:
-        resolved = str(candidate)
-        if resolved in seen:
-            continue
-        seen.add(resolved)
-        unique.append(candidate)
-    return unique
-
-
 def read_size_metadata(metadata):
     sizes = {}
-    for metadata_path in metadata_candidates(metadata):
-        if not metadata_path.exists():
+    if not metadata.exists():
+        raise SystemExit(
+            f"Metadata file not found: '{metadata}'.\n"
+            "Run benchmarks first so benchmark setup writes metadata, or pass --metadata <path>."
+        )
+
+    for line in metadata.read_text().splitlines():
+        if not line.strip():
             continue
 
-        for line in metadata_path.read_text().splitlines():
-            if not line.strip():
-                continue
+        values = json.loads(line)
+        platform = values.get("platform")
+        library = values.get("library")
+        corpus = values.get("corpus")
+        compressed_size = values.get("compressedSizeBytes")
 
-            values = json.loads(line)
-            platform = values.get("platform")
-            library = values.get("library")
-            corpus = values.get("corpus")
-            compressed_size = values.get("compressedSizeBytes")
+        if platform is None or library is None or corpus is None or compressed_size is None:
+            continue
 
-            if platform is None or library is None or corpus is None or compressed_size is None:
-                continue
-
-            sizes[(platform, library, corpus)] = int(compressed_size)
+        sizes[(platform, library, corpus)] = int(compressed_size)
 
     return sizes
 
