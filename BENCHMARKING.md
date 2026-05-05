@@ -150,7 +150,7 @@ For a local experiment, change as little as possible:
 
 1. Add a deterministic corpus shape to `BenchmarkCorpus`.
 2. Add its name to `BenchmarkCorpora`.
-3. Add the corpus constant to `CorpusBenchmarkState`.
+3. Add the corpus constant to `RawBenchmarkState`.
 4. Run `./gradlew :kflate:assembleBenchmarks`.
 5. Run the target benchmark task you care about.
 6. Compare JSON entries with the same platform, corpus, operation, and format.

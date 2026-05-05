@@ -5,7 +5,7 @@ import kotlinx.benchmark.Scope
 import kotlinx.benchmark.State
 
 @State(Scope.Benchmark)
-abstract class CorpusBenchmarkState {
+abstract class RawBenchmarkState {
     @Param(
         BenchmarkCorpora.SimpleText,
         BenchmarkCorpora.Text,
@@ -17,68 +17,61 @@ abstract class CorpusBenchmarkState {
     )
     var corpus: String = BenchmarkCorpora.SimpleText
 
-    private lateinit var benchmarkData: PreparedBenchmarkData
-
     protected val input: ByteArray
-        get() = benchmarkData.input
+        get() = rawInput
 
-    protected fun compressed(format: BenchmarkFormat): ByteArray {
-        return benchmarkData.compressed(format)
-    }
+    protected val compressed: ByteArray
+        get() = rawCompressed
 
-    protected fun setupBenchmarkData(
-        codec: BenchmarkCodec,
-        formats: List<BenchmarkFormat>,
-        reportPrefix: String
+    private lateinit var rawInput: ByteArray
+    private lateinit var rawCompressed: ByteArray
+
+    protected fun setupRawBenchmark(
+        libraryName: String,
+        reportPrefix: String,
+        compress: (ByteArray) -> ByteArray,
+        decompress: (ByteArray) -> ByteArray
     ) {
-        benchmarkData = PreparedBenchmarkData.create(
-            corpusName = corpus,
-            codec = codec,
-            formats = formats,
-            reportPrefix = reportPrefix
-        )
+        rawInput = BenchmarkCorpus.load(corpus)
+        rawCompressed = compress(rawInput)
+
+        require(decompress(rawCompressed).contentEquals(rawInput)) {
+            "$libraryName RAW roundtrip failed for benchmark corpus '$corpus'"
+        }
+
+        println(rawBenchmarkReportLine(reportPrefix, libraryName, corpus, rawInput.size, rawCompressed.size))
     }
 }
 
-private class PreparedBenchmarkData(
-    val input: ByteArray,
-    private val compressedByFormat: Map<BenchmarkFormat, ByteArray>
-) {
-    fun compressed(format: BenchmarkFormat): ByteArray {
-        return compressedByFormat[format]
-            ?: error("No ${format.displayName} compressed data was prepared for this benchmark")
+private fun rawBenchmarkReportLine(
+    prefix: String,
+    libraryName: String,
+    corpusName: String,
+    originalSize: Int,
+    compressedSize: Int
+): String {
+    val originalMiB = originalSize / BYTES_PER_MIB
+    return buildString {
+        append(prefix)
+        append(" library=")
+        append(libraryName)
+        append(" name=")
+        append(corpusName)
+        append(" originalBytes=")
+        append(originalSize)
+        append(" originalMiB=")
+        append(formatDouble(originalMiB))
+        append(" operationMiB=")
+        append(formatDouble(originalMiB))
+        append(" rawBytes=")
+        append(compressedSize)
+        append(" rawRatio=")
+        append(formatDouble(compressedSize.toDouble() / originalSize))
     }
+}
 
-    companion object {
-        fun create(
-            corpusName: String,
-            codec: BenchmarkCodec,
-            formats: List<BenchmarkFormat>,
-            reportPrefix: String
-        ): PreparedBenchmarkData {
-            val input = BenchmarkCorpus.load(corpusName)
-            val compressedByFormat = formats.associateWith { format ->
-                codec.compress(format, input)
-            }
+private const val BYTES_PER_MIB = 1024.0 * 1024.0
 
-            for ((format, compressed) in compressedByFormat) {
-                require(codec.decompress(format, compressed).contentEquals(input)) {
-                    "${codec.libraryName} ${format.displayName} roundtrip failed for benchmark corpus '$corpusName'"
-                }
-            }
-
-            val metrics = BenchmarkCorpusMetrics(
-                libraryName = codec.libraryName,
-                corpusName = corpusName,
-                originalSize = input.size,
-                compressedSizes = compressedByFormat.mapValues { (_, compressed) -> compressed.size }
-            )
-            println(metrics.toReportLine(reportPrefix))
-
-            return PreparedBenchmarkData(
-                input = input,
-                compressedByFormat = compressedByFormat
-            )
-        }
-    }
+private fun formatDouble(value: Double): Double {
+    return (value * 10_000).toInt() / 10_000.0
 }

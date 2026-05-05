@@ -77,10 +77,6 @@ val inflated = KFlate.decompress(deflated, Raw())
 ### GZIP
 
 ```kotlin
-import com.rafambn.kflate.KFlate
-import com.rafambn.kflate.GZIP
-import com.rafambn.kflate.Gzip
-
 val input = "hello".encodeToByteArray()
 
 val options = GZIP(

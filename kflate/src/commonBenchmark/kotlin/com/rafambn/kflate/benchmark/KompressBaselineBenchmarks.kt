@@ -1,5 +1,7 @@
 package com.rafambn.kflate.benchmark
 
+import dev.karmakrafts.kompress.Deflater
+import dev.karmakrafts.kompress.Inflater
 import kotlinx.benchmark.Benchmark
 import kotlinx.benchmark.BenchmarkMode
 import kotlinx.benchmark.BenchmarkTimeUnit
@@ -12,23 +14,24 @@ import kotlinx.benchmark.State
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(BenchmarkTimeUnit.SECONDS)
-open class KompressBaselineBenchmarks : CorpusBenchmarkState() {
+open class KompressBaselineBenchmarks : RawBenchmarkState() {
     @Setup
     open fun setup() {
-        setupBenchmarkData(
-            codec = KompressBenchmarkCodec,
-            formats = listOf(BenchmarkFormat.Raw),
-            reportPrefix = "BENCHMARK_BASELINE_CORPUS"
+        setupRawBenchmark(
+            libraryName = "Kompress",
+            reportPrefix = "BENCHMARK_BASELINE_CORPUS",
+            compress = { Deflater.deflate(it, raw = true) },
+            decompress = { Inflater.inflate(it, raw = true) }
         )
     }
 
     @Benchmark
     open fun rawDeflateCompression(): ByteArray {
-        return KompressBenchmarkCodec.compress(BenchmarkFormat.Raw, input)
+        return Deflater.deflate(input, raw = true)
     }
 
     @Benchmark
     open fun rawDeflateDecompression(): ByteArray {
-        return KompressBenchmarkCodec.decompress(BenchmarkFormat.Raw, compressed(BenchmarkFormat.Raw))
+        return Inflater.inflate(compressed, raw = true)
     }
 }
