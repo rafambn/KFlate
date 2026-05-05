@@ -16,6 +16,8 @@ Run every configured benchmark target:
 ./gradlew :kflate:benchmarkAll
 ```
 
+`benchmarkAll` now also runs `python3 scripts/benchmark_comparison.py` automatically after the three platform benchmarks finish.
+
 Run one target at a time:
 
 ```bash
@@ -136,12 +138,41 @@ For each platform, compare rows with:
 - RAW DEFLATE format
 - KFlate class vs Kompress class
 
-Recommended comparison table:
+Recommended compression table:
 
-| Platform | Corpus | Operation | KFlate avg s/op | Kompress avg s/op | KFlate MiB/s | Kompress MiB/s | KFlate vs Kompress |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| JVM | `text` | `rawDeflateCompression` | from JSON | from JSON | computed | computed | computed |
-| Linux x64 Native | `text` | `rawDeflateCompression` | from JSON | from JSON | computed | computed | computed |
-| Wasm/JS | `text` | `rawDeflateCompression` | from JSON | from JSON | computed | computed | computed |
+| Platform | Corpus | Original size | KFlate compressed size | Kompress compressed size | KFlate avg ms | Kompress avg ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| JVM | `text` | from metadata | from metadata | from metadata | from JSON | from JSON |
 
+Recommended decompression table:
 
+| Platform | Corpus | KFlate avg ms | Kompress avg ms |
+| --- | --- | --- | --- |
+| JVM | `text` | from JSON | from JSON |
+
+Generate the Markdown tables and cleaned JSON summary from a benchmark run:
+
+```bash
+mkdir -p performance
+rm -f performance/benchmark-metadata.jsonl
+./gradlew :kflate:benchmarkAll
+```
+
+By default this writes:
+
+```text
+performance/benchmark-comparison-<timestamp>.md
+performance/benchmark-comparison-<timestamp>.json
+```
+
+Use `--output <path>` to write the Markdown file somewhere else. Use `--json-output <path>` to write the cleaned JSON somewhere else.
+Use `--run-dir <path>` to force a specific timestamp folder under `kflate/build/reports/benchmarks/main/`.
+Without `--run-dir`, the script selects one timestamp folder and does not mix platform JSON from different runs.
+
+The script reads timing data from kotlinx-benchmark JSON. It reads compressed sizes from benchmark metadata JSONL.
+It checks `kflate/performance/benchmark-metadata.jsonl`, `performance/benchmark-metadata.jsonl`, and Wasm package metadata paths under `build/wasm/packages/*/performance/`.
+
+Without size metadata for a platform/library/corpus row, the script fails instead of silently reusing another platform size.
+Use `--metadata <path>` to point to a specific metadata file.
+
+The decompression benchmarks use the same canonical RAW compressed payload for KFlate and Kompress. Compression benchmarks still time each library's own compressor output.

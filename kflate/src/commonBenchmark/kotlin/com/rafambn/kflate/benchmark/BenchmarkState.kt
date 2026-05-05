@@ -30,16 +30,60 @@ abstract class RawBenchmarkState {
         libraryName: String,
         reportPrefix: String,
         compress: (ByteArray) -> ByteArray,
+        decompressionInput: (ByteArray) -> ByteArray,
         decompress: (ByteArray) -> ByteArray
     ) {
         rawInput = BenchmarkCorpus.load(corpus)
-        rawCompressed = compress(rawInput)
+        val libraryCompressed = compress(rawInput)
+        rawCompressed = decompressionInput(rawInput)
 
         require(decompress(rawCompressed).contentEquals(rawInput)) {
             "$libraryName RAW roundtrip failed for benchmark corpus '$corpus'"
         }
+        require(decompress(libraryCompressed).contentEquals(rawInput)) {
+            "$libraryName RAW compression output failed roundtrip for benchmark corpus '$corpus'"
+        }
 
-        println(rawBenchmarkReportLine(reportPrefix, libraryName, corpus, rawInput.size, rawCompressed.size))
+        println(rawBenchmarkReportLine(reportPrefix, libraryName, corpus, rawInput.size, libraryCompressed.size))
+        appendBenchmarkMetadata(
+            benchmarkMetadataJsonLine(
+                platform = benchmarkPlatformName(),
+                libraryName = libraryName,
+                corpusName = corpus,
+                originalSize = rawInput.size,
+                compressedSize = libraryCompressed.size
+            )
+        )
+    }
+}
+
+expect fun appendBenchmarkMetadata(line: String)
+
+expect fun benchmarkMetadataPath(): String
+
+expect fun benchmarkPlatformName(): String
+
+private fun benchmarkMetadataJsonLine(
+    platform: String,
+    libraryName: String,
+    corpusName: String,
+    originalSize: Int,
+    compressedSize: Int
+): String {
+    return buildString {
+        append('{')
+        append("\"platform\":\"")
+        append(platform)
+        append("\",")
+        append("\"library\":\"")
+        append(libraryName)
+        append("\",\"corpus\":\"")
+        append(corpusName)
+        append("\",\"originalSizeBytes\":")
+        append(originalSize)
+        append(",\"compressedSizeBytes\":")
+        append(compressedSize)
+        append('}')
     }
 }
 

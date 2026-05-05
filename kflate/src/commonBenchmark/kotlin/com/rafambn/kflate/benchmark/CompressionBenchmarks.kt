@@ -22,6 +22,7 @@ open class CompressionBenchmarks : RawBenchmarkState() {
             libraryName = "KFlate",
             reportPrefix = "BENCHMARK_CORPUS",
             compress = { KFlate.compress(it, RAW()) },
+            decompressionInput = { KFlate.compress(it, RAW()) },
             decompress = { KFlate.decompress(it, Raw()) }
         )
     }

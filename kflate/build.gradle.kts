@@ -143,8 +143,8 @@ benchmark {
 
 tasks.register("benchmarkAll") {
     group = "benchmark"
-    description = "Run all performance benchmarks (JVM + Native Release + WASM/JS)"
-    dependsOn("jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchmark", "wasmJsBenchmarkBenchmark")
+    description = "Run all performance benchmarks (JVM + Native Release + WASM/JS) and generate comparison tables"
+    dependsOn("prepareBenchmarkAll", "jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchmark", "wasmJsBenchmarkBenchmark")
     doFirst {
         println("\n" + "=".repeat(60))
         println("Running KFlate Performance Benchmarks (All Platforms)")
@@ -156,6 +156,34 @@ tasks.register("benchmarkAll") {
         println("Check kflate/build/reports/benchmarks for detailed results")
         println("=".repeat(60) + "\n")
     }
+    finalizedBy("benchmarkComparison")
+}
+
+val prepareBenchmarkAll by tasks.registering(Delete::class) {
+    group = "benchmark"
+    description = "Delete previous benchmark reports and metadata before benchmarkAll."
+    delete(layout.buildDirectory.dir("reports/benchmarks/main"))
+    delete(projectDir.resolve("performance/benchmark-metadata.jsonl"))
+    delete(rootProject.projectDir.resolve("performance/benchmark-metadata.jsonl"))
+    delete(
+        rootProject.fileTree(rootProject.projectDir.resolve("build/wasm/packages")) {
+            include("**/performance/benchmark-metadata.jsonl")
+        }
+    )
+}
+
+val benchmarkTaskNames = setOf("jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchmark", "wasmJsBenchmarkBenchmark")
+
+tasks.matching { it.name in benchmarkTaskNames }.configureEach {
+        mustRunAfter(prepareBenchmarkAll)
+}
+
+tasks.register<Exec>("benchmarkComparison") {
+    group = "benchmark"
+    description = "Generate benchmark markdown/json comparison tables."
+    mustRunAfter(benchmarkTaskNames)
+    workingDir = rootProject.projectDir
+    commandLine("python3", "scripts/benchmark_comparison.py")
 }
 
 mavenPublishing {
