@@ -1,6 +1,6 @@
 package com.rafambn.kflate.decompression
 
-import com.rafambn.kflate.Gzip
+import com.rafambn.kflate.GzipDecompression
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
@@ -20,13 +20,14 @@ import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.write
 
-internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
+internal fun decompressGzip(data: ByteArray, type: GzipDecompression): ByteArray {
     if (data.size < 20) {
         createFlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
 
     val decompressedChunks = mutableListOf<ByteArray>()
     var currentPosition = 0
+    var totalOutputSize = 0
 
     while (currentPosition < data.size) {
         // Check if enough bytes for header
@@ -42,8 +43,11 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
         }
 
         // Process member
-        val result = processSingleGzipMember(data, currentPosition, type.dictionary)
+        val outputLimit = type.maxOutputSize ?: Int.MAX_VALUE
+        val remainingOutputSize = outputLimit - totalOutputSize
+        val result = processSingleGzipMember(data, currentPosition, remainingOutputSize)
         decompressedChunks.add(result.decompressed)
+        totalOutputSize += result.decompressed.size
         currentPosition += result.bytesConsumed
     }
 
@@ -58,8 +62,7 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
     }
 
     // Concatenate multiple members
-    val totalSize = decompressedChunks.sumOf { it.size }
-    val result = ByteArray(totalSize)
+    val result = ByteArray(totalOutputSize)
     var offset = 0
     for (chunk in decompressedChunks) {
         chunk.copyInto(result, destinationOffset = offset)
@@ -69,7 +72,7 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
     return result
 }
 
-internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) {
+internal fun decompressStreamGzip(type: GzipDecompression, source: RawSource, sink: RawSink) {
     val bufferedSource = source.buffered()
     val bufferedSink = sink.buffered()
 
@@ -79,10 +82,11 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
     var headerParsed = false
     var awaitingTrailer = false
     var inflateState = InflateState(validationMode = 0)
-    var history = type.dictionary ?: ByteArray(0)
+    var history = ByteArray(0)
     var crc = Crc32Checksum()
     var uncompressedSize = 0L
     var members = 0
+    var totalOutputSize = 0
 
     while (true) {
         if (!sourceExhausted) {
@@ -110,7 +114,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
                 headerParsed = true
                 awaitingTrailer = false
                 inflateState = InflateState(validationMode = 0)
-                history = type.dictionary ?: ByteArray(0)
+                history = ByteArray(0)
                 crc = Crc32Checksum()
                 uncompressedSize = 0L
                 members++
@@ -134,11 +138,19 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
             }
 
             inflateState.outputOffset = 0
-            val output = inflateStreamChunk(inputBuffer, inflateState, history, sourceExhausted) ?: continue
+            val remainingOutputSize = (type.maxOutputSize ?: Int.MAX_VALUE) - totalOutputSize
+            val output = inflateStreamChunk(
+                inputBuffer,
+                inflateState,
+                history,
+                sourceExhausted,
+                remainingOutputSize,
+            ) ?: continue
             if (output.isNotEmpty()) {
                 bufferedSink.write(output)
                 crc.update(output)
                 uncompressedSize += output.size.toLong()
+                totalOutputSize += output.size
                 history = updateHistory(history, output)
             }
 

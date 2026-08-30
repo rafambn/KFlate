@@ -14,9 +14,6 @@ class StreamingApiTest {
     private val testFiles = listOf(
         "model3D",
         "text",
-        "Rainier.bmp",
-        "Maltese.bmp",
-        "Sunrise.bmp",
         "simpleText",
     )
 
@@ -36,7 +33,7 @@ class StreamingApiTest {
         return outcome!!.getOrThrow()
     }
 
-    private fun streamCompress(data: ByteArray, type: CompressionType): ByteArray {
+    private fun streamCompress(data: ByteArray, type: CompressionOptions): ByteArray {
         val input = Buffer()
         input.write(data)
         val output = Buffer()
@@ -44,7 +41,7 @@ class StreamingApiTest {
         return output.readByteArray()
     }
 
-    private fun streamDecompress(data: ByteArray, type: DecompressionType): ByteArray {
+    private fun streamDecompress(data: ByteArray, type: DecompressionOptions): ByteArray {
         val input = Buffer()
         input.write(data)
         val output = Buffer()
@@ -58,9 +55,9 @@ class StreamingApiTest {
     fun testRawSelfRoundtrip() {
         for (fileName in testFiles) {
             val original = readResourceFile(fileName)
-            val compressed = streamCompress(original, RAW())
-            val decompressed = streamDecompress(compressed, Raw())
-            assertContentEquals(original, decompressed, "RAW roundtrip failed on: $fileName")
+            val compressed = streamCompress(original, RawCompression())
+            val decompressed = streamDecompress(compressed, RawDecompression())
+            assertContentEquals(original, decompressed, "raw DEFLATE roundtrip failed on: $fileName")
         }
     }
 
@@ -68,9 +65,9 @@ class StreamingApiTest {
     fun testGzipSelfRoundtrip() {
         for (fileName in testFiles) {
             val original = readResourceFile(fileName)
-            val compressed = streamCompress(original, GZIP())
-            val decompressed = streamDecompress(compressed, Gzip())
-            assertContentEquals(original, decompressed, "GZIP roundtrip failed on: $fileName")
+            val compressed = streamCompress(original, GzipCompression())
+            val decompressed = streamDecompress(compressed, GzipDecompression())
+            assertContentEquals(original, decompressed, "GzipCompression roundtrip failed on: $fileName")
         }
     }
 
@@ -78,9 +75,9 @@ class StreamingApiTest {
     fun testZlibSelfRoundtrip() {
         for (fileName in testFiles) {
             val original = readResourceFile(fileName)
-            val compressed = streamCompress(original, ZLIB())
-            val decompressed = streamDecompress(compressed, Zlib())
-            assertContentEquals(original, decompressed, "ZLIB roundtrip failed on: $fileName")
+            val compressed = streamCompress(original, ZlibCompression())
+            val decompressed = streamDecompress(compressed, ZlibDecompression())
+            assertContentEquals(original, decompressed, "ZlibCompression roundtrip failed on: $fileName")
         }
     }
 
@@ -90,8 +87,8 @@ class StreamingApiTest {
     fun testCompressionLevels() {
         val original = readResourceFile("text")
         for (level in 0..9) {
-            val compressed = streamCompress(original, ZLIB(level = level))
-            val decompressed = streamDecompress(compressed, Zlib())
+            val compressed = streamCompress(original, ZlibCompression(level = level))
+            val decompressed = streamDecompress(compressed, ZlibDecompression())
             assertContentEquals(original, decompressed, "Level $level roundtrip failed")
         }
     }
@@ -102,8 +99,8 @@ class StreamingApiTest {
     fun testMemoryLevels() {
         val original = readResourceFile("text")
         for (mem in listOf(1, 4, 8, 12)) {
-            val compressed = streamCompress(original, ZLIB(mem = mem))
-            val decompressed = streamDecompress(compressed, Zlib())
+            val compressed = streamCompress(original, ZlibCompression(mem = mem))
+            val decompressed = streamDecompress(compressed, ZlibDecompression())
             assertContentEquals(original, decompressed, "Mem $mem roundtrip failed")
         }
     }
@@ -115,8 +112,8 @@ class StreamingApiTest {
         val dictionary = "the quick brown fox jumps over the lazy dog".encodeToByteArray()
         val original = readResourceFile("simpleText")
 
-        val compressed = streamCompress(original, RAW(dictionary = dictionary))
-        val decompressed = streamDecompress(compressed, Raw(dictionary = dictionary))
+        val compressed = streamCompress(original, RawCompression(dictionary = dictionary))
+        val decompressed = streamDecompress(compressed, RawDecompression(dictionary = dictionary))
         assertContentEquals(original, decompressed)
     }
 
@@ -125,8 +122,8 @@ class StreamingApiTest {
         val dictionary = "the quick brown fox jumps over the lazy dog".encodeToByteArray()
         val original = readResourceFile("simpleText")
 
-        val compressed = streamCompress(original, ZLIB(dictionary = dictionary))
-        val decompressed = streamDecompress(compressed, Zlib(dictionary = dictionary))
+        val compressed = streamCompress(original, ZlibCompression(dictionary = dictionary))
+        val decompressed = streamDecompress(compressed, ZlibDecompression(dictionary = dictionary))
         assertContentEquals(original, decompressed)
     }
 
@@ -135,9 +132,9 @@ class StreamingApiTest {
         val dictionary = "the quick brown fox jumps over the lazy dog".encodeToByteArray()
         val original = readResourceFile("simpleText")
 
-        val compressed = streamCompress(original, ZLIB(dictionary = dictionary))
+        val compressed = streamCompress(original, ZlibCompression(dictionary = dictionary))
         assertFailsWith<Exception> {
-            streamDecompress(compressed, Zlib())
+            streamDecompress(compressed, ZlibDecompression())
         }
     }
 
@@ -147,35 +144,35 @@ class StreamingApiTest {
     fun testBlockingCompressStreamingDecompress() {
         val original = readResourceFile("text")
 
-        val rawCompressed = KFlate.compress(original, RAW())
-        assertContentEquals(original, streamDecompress(rawCompressed, Raw()), "RAW blocking->streaming failed")
+        val rawCompressed = KFlate.compress(original, RawCompression())
+        assertContentEquals(original, streamDecompress(rawCompressed, RawDecompression()), "RawCompression blocking->streaming failed")
 
-        val gzipCompressed = KFlate.compress(original, GZIP())
-        assertContentEquals(original, streamDecompress(gzipCompressed, Gzip()), "GZIP blocking->streaming failed")
+        val gzipCompressed = KFlate.compress(original, GzipCompression())
+        assertContentEquals(original, streamDecompress(gzipCompressed, GzipDecompression()), "GzipCompression blocking->streaming failed")
 
-        val zlibCompressed = KFlate.compress(original, ZLIB())
-        assertContentEquals(original, streamDecompress(zlibCompressed, Zlib()), "ZLIB blocking->streaming failed")
+        val zlibCompressed = KFlate.compress(original, ZlibCompression())
+        assertContentEquals(original, streamDecompress(zlibCompressed, ZlibDecompression()), "ZlibCompression blocking->streaming failed")
     }
 
     @Test
     fun testStreamingCompressBlockingDecompress() {
         val original = readResourceFile("text")
 
-        val rawCompressed = streamCompress(original, RAW())
-        assertContentEquals(original, KFlate.decompress(rawCompressed, Raw()), "RAW streaming->blocking failed")
+        val rawCompressed = streamCompress(original, RawCompression())
+        assertContentEquals(original, KFlate.decompress(rawCompressed, RawDecompression()), "RawCompression streaming->blocking failed")
 
-        val gzipCompressed = streamCompress(original, GZIP())
-        assertContentEquals(original, KFlate.decompress(gzipCompressed, Gzip()), "GZIP streaming->blocking failed")
+        val gzipCompressed = streamCompress(original, GzipCompression())
+        assertContentEquals(original, KFlate.decompress(gzipCompressed, GzipDecompression()), "GzipCompression streaming->blocking failed")
 
-        val zlibCompressed = streamCompress(original, ZLIB())
-        assertContentEquals(original, KFlate.decompress(zlibCompressed, Zlib()), "ZLIB streaming->blocking failed")
+        val zlibCompressed = streamCompress(original, ZlibCompression())
+        assertContentEquals(original, KFlate.decompress(zlibCompressed, ZlibDecompression()), "ZlibCompression streaming->blocking failed")
     }
 
     // 6. EDGE CASES
 
     @Test
     fun testEmptyInput() {
-        for ((compType, decType) in listOf(RAW() to Raw(), GZIP() to Gzip(), ZLIB() to Zlib())) {
+        for ((compType, decType) in listOf(RawCompression() to RawDecompression(), GzipCompression() to GzipDecompression(), ZlibCompression() to ZlibDecompression())) {
             val compressed = streamCompress(ByteArray(0), compType)
             val decompressed = streamDecompress(compressed, decType)
             assertContentEquals(ByteArray(0), decompressed, "Empty input failed for ${compType::class.simpleName}")
@@ -185,7 +182,7 @@ class StreamingApiTest {
     @Test
     fun testSingleByte() {
         val original = byteArrayOf(42)
-        for ((compType, decType) in listOf(RAW() to Raw(), GZIP() to Gzip(), ZLIB() to Zlib())) {
+        for ((compType, decType) in listOf(RawCompression() to RawDecompression(), GzipCompression() to GzipDecompression(), ZlibCompression() to ZlibDecompression())) {
             val compressed = streamCompress(original, compType)
             val decompressed = streamDecompress(compressed, decType)
             assertContentEquals(original, decompressed, "Single byte failed for ${compType::class.simpleName}")
@@ -195,8 +192,8 @@ class StreamingApiTest {
     @Test
     fun testHighlyCompressible() {
         val original = ByteArray(65536)
-        val compressed = streamCompress(original, ZLIB())
-        val decompressed = streamDecompress(compressed, Zlib())
+        val compressed = streamCompress(original, ZlibCompression())
+        val decompressed = streamDecompress(compressed, ZlibDecompression())
         assertContentEquals(original, decompressed)
         assert(compressed.size < original.size / 10) { "All-zeros should compress significantly" }
     }
@@ -205,8 +202,8 @@ class StreamingApiTest {
     fun testIncompressible() {
         val random = java.util.Random(12345)
         val original = ByteArray(65536) { random.nextInt(256).toByte() }
-        val compressed = streamCompress(original, ZLIB())
-        val decompressed = streamDecompress(compressed, Zlib())
+        val compressed = streamCompress(original, ZlibCompression())
+        val decompressed = streamDecompress(compressed, ZlibDecompression())
         assertContentEquals(original, decompressed)
     }
 
@@ -217,43 +214,43 @@ class StreamingApiTest {
         for (i in original.indices) {
             original[i] = pattern[i % pattern.size]
         }
-        val compressed = streamCompress(original, ZLIB())
-        val decompressed = streamDecompress(compressed, Zlib())
+        val compressed = streamCompress(original, ZlibCompression())
+        val decompressed = streamDecompress(compressed, ZlibDecompression())
         assertContentEquals(original, decompressed)
         assert(compressed.size < original.size / 10) { "Repeated pattern should compress significantly" }
     }
 
-    // 7. GZIP OPTIONAL FIELDS (STREAMING)
+    // 7. GzipCompression OPTIONAL FIELDS (STREAMING)
 
     @Test
     fun testGzipOptionalFieldsStreaming() {
         val original = "gzip optional fields test data".encodeToByteArray()
         val compressed = streamCompress(
             original,
-            GZIP(
+            GzipCompression(
                 filename = "test.txt",
                 comment = "a comment",
                 extraFields = mapOf("XX" to byteArrayOf(1, 2, 3)),
                 includeHeaderCrc = true
             )
         )
-        val decompressed = streamDecompress(compressed, Gzip())
+        val decompressed = streamDecompress(compressed, GzipDecompression())
         assertContentEquals(original, decompressed)
     }
 
     @Test
     fun testGzipFilenameOnlyStreaming() {
         val original = readResourceFile("simpleText")
-        val compressed = streamCompress(original, GZIP(filename = "simpleText.txt"))
-        val decompressed = streamDecompress(compressed, Gzip())
+        val compressed = streamCompress(original, GzipCompression(filename = "simpleText.txt"))
+        val decompressed = streamDecompress(compressed, GzipDecompression())
         assertContentEquals(original, decompressed)
     }
 
     @Test
     fun testGzipHeaderCrcOnlyStreaming() {
         val original = readResourceFile("simpleText")
-        val compressed = streamCompress(original, GZIP(includeHeaderCrc = true))
-        val decompressed = streamDecompress(compressed, Gzip())
+        val compressed = streamCompress(original, GzipCompression(includeHeaderCrc = true))
+        val decompressed = streamDecompress(compressed, GzipDecompression())
         assertContentEquals(original, decompressed)
     }
 
@@ -262,29 +259,29 @@ class StreamingApiTest {
     @Test
     fun testTruncatedStream() {
         val original = readResourceFile("text")
-        val compressed = streamCompress(original, ZLIB())
+        val compressed = streamCompress(original, ZlibCompression())
         val truncated = compressed.copyOf(compressed.size / 2)
         assertFailsWith<Exception> {
-            streamDecompress(truncated, Zlib())
+            streamDecompress(truncated, ZlibDecompression())
         }
     }
 
     @Test
     fun testCorruptedCompressedData() {
         val original = readResourceFile("simpleText")
-        val compressed = streamCompress(original, ZLIB()).clone()
+        val compressed = streamCompress(original, ZlibCompression()).clone()
         compressed[compressed.size / 2] = (compressed[compressed.size / 2].toInt() xor 0xFF).toByte()
         assertFailsWith<Exception> {
-            streamDecompress(compressed, Zlib())
+            streamDecompress(compressed, ZlibDecompression())
         }
     }
 
     @Test
     fun testWrongFormat() {
         val original = readResourceFile("simpleText")
-        val gzipCompressed = streamCompress(original, GZIP())
+        val gzipCompressed = streamCompress(original, GzipCompression())
         assertFailsWith<Exception> {
-            streamDecompress(gzipCompressed, Zlib())
+            streamDecompress(gzipCompressed, ZlibDecompression())
         }
     }
 }

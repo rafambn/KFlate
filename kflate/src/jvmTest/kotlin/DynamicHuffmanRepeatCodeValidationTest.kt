@@ -15,7 +15,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
      */
     private fun deflateData(data: ByteArray, level: Int = 6): ByteArray {
         val outputStream = ByteArrayOutputStream()
-        val deflater = Deflater(level, true)  // true = raw DEFLATE (no ZLIB wrapper)
+        val deflater = Deflater(level, true)  // true = raw DEFLATE (no ZlibCompression wrapper)
         val deflaterStream = DeflaterOutputStream(outputStream, deflater)
 
         deflaterStream.write(data)
@@ -37,7 +37,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
         val deflated = deflateData(originalData, level = 6)
 
         // Decompress using KFlate
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Valid dynamic Huffman block should decompress correctly"
@@ -53,7 +53,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
         val originalData = "abc".encodeToByteArray()
 
         val deflated = deflateData(originalData, level = 6)
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Small data with dynamic Huffman should decompress correctly"
@@ -70,7 +70,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
         val originalData = ByteArray(1000) { pattern[it % 3] }
 
         val deflated = deflateData(originalData, level = 6)
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Repeating pattern should decompress correctly with dynamic Huffman"
@@ -86,7 +86,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
         val originalData = ByteArray(500) { (it xor (it shr 3) xor (it shr 5)).toByte() }
 
         val deflated = deflateData(originalData, level = 9)  // Maximum compression
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Diverse binary data should decompress correctly with maximum compression"
@@ -107,7 +107,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
         val deflated = deflateData(originalData, level = 6)
 
         // Verify the deflated data is valid (sanity check)
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
         assert(decompressed.contentEquals(originalData)) {
             "Sanity check: Valid deflated data should decompress correctly"
         }
@@ -122,7 +122,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
         val originalData = ByteArray(100000) { (it xor (it shr 8)).toByte() }
 
         val deflated = deflateData(originalData, level = 6)
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Large data should decompress correctly with dynamic Huffman"
@@ -141,7 +141,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
 
         val combined = data1 + data2 + data3
         val deflated = deflateData(combined, level = 6)
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
 
         assert(decompressed.contentEquals(combined)) {
             "Data with multiple blocks should decompress correctly"
@@ -156,7 +156,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
         val originalData = "a".encodeToByteArray()
 
         val deflated = deflateData(originalData, level = 6)
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Single character should decompress correctly"
@@ -173,7 +173,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
         val originalDataRepeated = ByteArray(256 * 10) { originalData[it % 256] }
 
         val deflated = deflateData(originalDataRepeated, level = 6)
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
 
         assert(decompressed.contentEquals(originalDataRepeated)) {
             "Data with all byte values should decompress correctly"
@@ -190,7 +190,7 @@ class DynamicHuffmanRepeatCodeValidationTest {
         val originalData = ByteArray(5000) { pattern[it % pattern.size] }
 
         val deflated = deflateData(originalData, level = 9)
-        val decompressed = KFlate.decompress(deflated, Raw())
+        val decompressed = KFlate.decompress(deflated, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Highly compressible data should decompress correctly"

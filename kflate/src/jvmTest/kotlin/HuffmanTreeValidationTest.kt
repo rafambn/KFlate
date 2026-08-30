@@ -164,7 +164,7 @@ class HuffmanTreeValidationTest {
         deflaterStream.close()
 
         val compressed = outputStream.toByteArray()
-        val decompressed = KFlate.decompress(compressed, Raw())
+        val decompressed = KFlate.decompress(compressed, RawDecompression())
 
         assert(decompressed.contentEquals(originalData.encodeToByteArray())) {
             "Valid DEFLATE from Java Deflater should still decompress"
@@ -188,7 +188,7 @@ class HuffmanTreeValidationTest {
         deflaterStream.close()
 
         val compressed = outputStream.toByteArray()
-        val decompressed = KFlate.decompress(compressed, Raw())
+        val decompressed = KFlate.decompress(compressed, RawDecompression())
 
         assert(decompressed.contentEquals(originalData.encodeToByteArray())) {
             "Small data with dynamic Huffman should decompress correctly"
@@ -212,7 +212,7 @@ class HuffmanTreeValidationTest {
         deflaterStream.close()
 
         val compressed = outputStream.toByteArray()
-        val decompressed = KFlate.decompress(compressed, Raw())
+        val decompressed = KFlate.decompress(compressed, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Large diverse data should decompress correctly"
@@ -237,7 +237,7 @@ class HuffmanTreeValidationTest {
         deflaterStream.close()
 
         val compressed = outputStream.toByteArray()
-        val decompressed = KFlate.decompress(compressed, Raw())
+        val decompressed = KFlate.decompress(compressed, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Repeating pattern should decompress correctly"
@@ -263,7 +263,7 @@ class HuffmanTreeValidationTest {
         deflaterStream.close()
 
         val compressed = outputStream.toByteArray()
-        val decompressed = KFlate.decompress(compressed, Raw())
+        val decompressed = KFlate.decompress(compressed, RawDecompression())
 
         assert(decompressed.contentEquals(originalDataRepeated)) {
             "Full byte range should decompress correctly"
@@ -289,7 +289,7 @@ class HuffmanTreeValidationTest {
             deflaterStream.close()
 
             val compressed = outputStream.toByteArray()
-            val decompressed = KFlate.decompress(compressed, Raw())
+            val decompressed = KFlate.decompress(compressed, RawDecompression())
 
             assert(decompressed.contentEquals(originalData)) {
                 "Data compressed at level $level should decompress correctly"
@@ -315,7 +315,7 @@ class HuffmanTreeValidationTest {
         deflaterStream.close()
 
         val compressed = outputStream.toByteArray()
-        val decompressed = KFlate.decompress(compressed, Raw())
+        val decompressed = KFlate.decompress(compressed, RawDecompression())
 
         assert(decompressed.contentEquals(originalData)) {
             "Fixed Huffman blocks should still decompress correctly"

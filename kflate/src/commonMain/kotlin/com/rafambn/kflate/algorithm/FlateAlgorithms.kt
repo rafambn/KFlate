@@ -1,11 +1,9 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.rafambn.kflate.algorithm
 
-import com.rafambn.kflate.CompressionType
-import com.rafambn.kflate.RAW
-import com.rafambn.kflate.GZIP
-import com.rafambn.kflate.ZLIB
+import com.rafambn.kflate.CompressionOptions
+import com.rafambn.kflate.RawCompression
+import com.rafambn.kflate.GzipCompression
+import com.rafambn.kflate.ZlibCompression
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_BASE
@@ -33,34 +31,54 @@ import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.time.ExperimentalTime
 
 internal fun inflate(
     inputData: ByteArray,
     inflateState: InflateState,
-    outputBuffer: ByteArray? = null,
-    dictionary: ByteArray? = null
+    dictionary: ByteArray? = null,
+    maxOutputSize: Int? = null,
 ): ByteArray {
     val sourceLength = inputData.size
     val dictionaryLength = dictionary?.size ?: 0
 
-    if (sourceLength == 0 || (inflateState.isFinalBlock && inflateState.literalMap == null)) {
-        return outputBuffer ?: ByteArray(0)
+    if (inflateState.isFinalBlock && inflateState.literalMap == null) {
+        return ByteArray(0)
+    }
+    if (sourceLength == 0) {
+        if (inflateState.validationMode != 0) {
+            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        }
+        return ByteArray(0)
+    }
+    if (sourceLength > (Int.MAX_VALUE - 64) / 8) {
+        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
     }
 
-    var workingBuffer = outputBuffer
-    val isBufferProvided = workingBuffer != null
-
-    val needsResize = !isBufferProvided || inflateState.validationMode != 2
     val hasNoStoredState = inflateState.validationMode != 0
+    val suggestedCapacity = minOf(
+        maxOf(sourceLength.toLong() * 3L, 32_768L),
+        1_048_576L,
+    ).toInt()
+    val initialCapacity = maxOutputSize?.let { minOf(it, suggestedCapacity) } ?: suggestedCapacity
+    var workingBuffer = ByteArray(initialCapacity)
 
-    if (!isBufferProvided)
-        workingBuffer = ByteArray(maxOf(sourceLength * 3, 32768))
-
-    fun ensureCapacity(requiredSize: Int) {
-        val currentBuffer = workingBuffer!!
+    fun ensureCapacity(additionalBytes: Int, bytesWritten: Int) {
+        val requiredSizeLong = bytesWritten.toLong() + additionalBytes.toLong()
+        if (maxOutputSize != null && requiredSizeLong > maxOutputSize.toLong()) {
+            createFlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
+        }
+        if (requiredSizeLong > Int.MAX_VALUE.toLong()) {
+            createFlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
+        }
+        val requiredSize = requiredSizeLong.toInt()
+        val currentBuffer = workingBuffer
         if (requiredSize > currentBuffer.size) {
-            val newSize = maxOf(currentBuffer.size * 2, requiredSize)
+            val doubledSize = minOf(
+                maxOf(currentBuffer.size.toLong() * 2L, 1L),
+                Int.MAX_VALUE.toLong(),
+            ).toInt()
+            val grownSize = maxOf(doubledSize, requiredSize)
+            val newSize = maxOutputSize?.let { minOf(grownSize, it) } ?: grownSize
             val newBuffer = ByteArray(newSize)
             currentBuffer.copyInto(newBuffer)
             workingBuffer = newBuffer
@@ -114,7 +132,7 @@ internal fun inflate(
                         break
                     }
 
-                    if (needsResize) ensureCapacity(bytesWrittenToOutput + blockLength)
+                    ensureCapacity(blockLength, bytesWrittenToOutput)
 
                     inputData.copyInto(
                         workingBuffer,
@@ -287,13 +305,11 @@ internal fun inflate(
             }
         }
 
-        if (needsResize) ensureCapacity(bytesWrittenToOutput + 131072)
-
         val literalBitMask = (1 shl literalMaxBits) - 1
         val distanceBitMask = (1 shl distanceMaxBits) - 1
         var lastBitPosition = currentBitPosition
-        val currentLitMap = literalLengthMap!!
-        val currentDistMap = distanceMap!!
+        val currentLitMap = literalLengthMap
+        val currentDistMap = distanceMap ?: createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
 
         while (true) {
             val literalCode = (currentLitMap[readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
@@ -305,10 +321,13 @@ internal fun inflate(
                 break
             }
 
-            if (literalCode == 0) createFlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
+            if (literalCode == 0 || symbol > 285) {
+                createFlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
+            }
 
             when {
                 symbol < 256 -> {
+                    ensureCapacity(1, bytesWrittenToOutput)
                     workingBuffer[bytesWrittenToOutput++] = symbol.toByte()
                     lastBitPosition = currentBitPosition
                 }
@@ -349,10 +368,10 @@ internal fun inflate(
                         break
                     }
 
-                    if (needsResize) ensureCapacity(bytesWrittenToOutput + matchLength)
+                    ensureCapacity(matchLength, bytesWrittenToOutput)
 
                     val copyEndIndex = bytesWrittenToOutput + matchLength
-                    val buffer = workingBuffer!!
+                    val buffer = workingBuffer
 
                     if (bytesWrittenToOutput < matchDistance) {
                         val dictionaryOffset = dictionaryLength - matchDistance
@@ -361,7 +380,8 @@ internal fun inflate(
                             createFlateError(FlateErrorCode.INVALID_DISTANCE)
                         }
 
-                        dictionary!!.copyInto(
+                        val currentDictionary = dictionary ?: createFlateError(FlateErrorCode.INVALID_DISTANCE)
+                        currentDictionary.copyInto(
                             buffer,
                             destinationOffset = bytesWrittenToOutput,
                             startIndex = dictionaryOffset + bytesWrittenToOutput,
@@ -393,7 +413,7 @@ internal fun inflate(
 
     } while (!isFinalBlock)
 
-    return workingBuffer!!.copyOfRange(0, bytesWrittenToOutput)
+    return workingBuffer.copyOfRange(0, bytesWrittenToOutput)
 }
 
 internal fun deflate(
@@ -406,9 +426,12 @@ internal fun deflate(
 ): ByteArray {
     val dataSize = state.inputEndIndex.takeIf { it != 0 } ?: data.size
     // Heuristic: dataSize + 1/8th of dataSize (for expansion) + 256 (for tree/header overhead) + 5 per block
-    val bufferMargin = (dataSize shr 3) + 256 + 5 * (1 + (dataSize / 7000))
-    val output = ByteArray(prefixSize + dataSize + bufferMargin + postfixSize)
-    val writeBuffer = ByteArray(output.size - prefixSize - postfixSize)
+    val bufferMargin = (dataSize.toLong() shr 3) + 256L + 5L * (1L + dataSize / 7_000L)
+    val writeBufferSize = dataSize.toLong() + bufferMargin
+    if (writeBufferSize > Int.MAX_VALUE.toLong()) {
+        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+    val writeBuffer = ByteArray(writeBufferSize.toInt())
     val isLastBlock = state.isLastChunk
     var bitPosition: Long = (state.bitBuffer and 7).toLong()
 
@@ -557,13 +580,24 @@ internal fun deflate(
         }
         state.inputOffset = dataSize
     }
-    writeBuffer.copyInto(output, destinationOffset = prefixSize)
-    return output.sliceArray(0 until prefixSize + shiftToNextByte(bitPosition) + postfixSize)
+    val compressedSize = shiftToNextByte(bitPosition)
+    val outputSize = prefixSize.toLong() + compressedSize.toLong() + postfixSize.toLong()
+    if (outputSize > Int.MAX_VALUE.toLong()) {
+        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+    val output = ByteArray(outputSize.toInt())
+    writeBuffer.copyInto(
+        output,
+        destinationOffset = prefixSize,
+        startIndex = 0,
+        endIndex = compressedSize,
+    )
+    return output
 }
 
 internal fun deflateWithOptions(
     inputData: ByteArray,
-    type: CompressionType = RAW(),
+    type: CompressionOptions = RawCompression(),
     prefixSize: Int,
     suffixSize: Int,
     deflateState: DeflateState? = null
@@ -572,26 +606,30 @@ internal fun deflateWithOptions(
     var workingData = inputData
 
     val level = when (type) {
-        is RAW -> type.level
-        is GZIP -> type.level
-        is ZLIB -> type.level
+        is RawCompression -> type.level
+        is GzipCompression -> type.level
+        is ZlibCompression -> type.level
     }
     val mem = when (type) {
-        is RAW -> type.mem
-        is GZIP -> type.mem
-        is ZLIB -> type.mem
+        is RawCompression -> type.mem
+        is GzipCompression -> type.mem
+        is ZlibCompression -> type.mem
     }
     val dictionary = when (type) {
-        is RAW -> type.dictionary
-        is GZIP -> type.dictionary
-        is ZLIB -> type.dictionary
+        is RawCompression -> type.dictionary
+        is GzipCompression -> null
+        is ZlibCompression -> type.dictionary
     }
 
     if (workingState == null) {
         workingState = DeflateState(isLastChunk = true)
 
         if (dictionary != null) {
-            val combinedData = ByteArray(dictionary.size + inputData.size)
+            val combinedSize = dictionary.size.toLong() + inputData.size.toLong()
+            if (combinedSize > Int.MAX_VALUE.toLong()) {
+                createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+            }
+            val combinedData = ByteArray(combinedSize.toInt())
 
             dictionary.copyInto(combinedData, destinationOffset = 0)
 

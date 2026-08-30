@@ -46,13 +46,14 @@ internal fun inflateStreamChunk(
     input: ByteArray,
     state: InflateState,
     history: ByteArray,
-    sourceExhausted: Boolean
+    sourceExhausted: Boolean,
+    maxOutputSize: Int?,
 ): ByteArray? {
     val snapshot = state.copy()
     return try {
-        inflate(input, state, null, history)
+        inflate(input, state, history, maxOutputSize)
     } catch (e: com.rafambn.kflate.error.FlateError) {
-        if (!sourceExhausted) {
+        if (e.code == com.rafambn.kflate.error.FlateErrorCode.UNEXPECTED_EOF && !sourceExhausted) {
             restoreInflateState(state, snapshot)
             null
         } else {

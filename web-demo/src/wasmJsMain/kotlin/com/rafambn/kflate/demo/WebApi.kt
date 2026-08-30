@@ -1,15 +1,16 @@
-@file:OptIn(ExperimentalJsExport::class)
+@file:OptIn(ExperimentalJsExport::class, ExperimentalWasmJsInterop::class)
 
 package com.rafambn.kflate.demo
 
-import com.rafambn.kflate.GZIP
-import com.rafambn.kflate.Gzip
+import com.rafambn.kflate.GzipCompression
+import com.rafambn.kflate.GzipDecompression
 import com.rafambn.kflate.KFlate
-import com.rafambn.kflate.RAW
-import com.rafambn.kflate.Raw
-import com.rafambn.kflate.ZLIB
-import com.rafambn.kflate.Zlib
+import com.rafambn.kflate.RawCompression
+import com.rafambn.kflate.RawDecompression
+import com.rafambn.kflate.ZlibCompression
+import com.rafambn.kflate.ZlibDecompression
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.JsExport
 
 // Kotlin/WASM JS interop helpers — these run as inline JS, called from WASM
@@ -32,7 +33,9 @@ private var lastError = ""
 @JsExport
 fun loadInput(arr: JsAny) {
     val len = jsLength(arr)
+    require(len <= MAX_INPUT_SIZE) { "Input exceeds the 64 MiB demo limit" }
     inputData = ByteArray(len) { i -> jsGet(arr, i).toByte() }
+    outputData = ByteArray(0)
 }
 
 @JsExport
@@ -42,15 +45,18 @@ fun runCompress(format: String, level: Int): Int {
         outputData = KFlate.compress(
             inputData,
             when (format) {
-                "raw"  -> RAW(level = level)
-                "gzip" -> GZIP(level = level)
-                else   -> ZLIB(level = level)
+                "raw" -> RawCompression(level = level)
+                "gzip" -> GzipCompression(level = level)
+                "zlib" -> ZlibCompression(level = level)
+                else -> error("Unsupported format: $format")
             }
         )
         outputData.size
     } catch (e: Exception) {
         lastError = e.message ?: "Unknown error"
         -1
+    } finally {
+        inputData = ByteArray(0)
     }
 }
 
@@ -61,15 +67,18 @@ fun runDecompress(format: String): Int {
         outputData = KFlate.decompress(
             inputData,
             when (format) {
-                "raw"  -> Raw()
-                "gzip" -> Gzip()
-                else   -> Zlib()
+                "raw" -> RawDecompression(maxOutputSize = MAX_OUTPUT_SIZE)
+                "gzip" -> GzipDecompression(maxOutputSize = MAX_OUTPUT_SIZE)
+                "zlib" -> ZlibDecompression(maxOutputSize = MAX_OUTPUT_SIZE)
+                else -> error("Unsupported format: $format")
             }
         )
         outputData.size
     } catch (e: Exception) {
         lastError = e.message ?: "Unknown error"
         -1
+    } finally {
+        inputData = ByteArray(0)
     }
 }
 
@@ -79,8 +88,12 @@ fun getOutput(): JsAny {
     for (i in outputData.indices) {
         jsSet(arr, i, outputData[i].toInt() and 0xFF)
     }
+    outputData = ByteArray(0)
     return arr
 }
 
 @JsExport
 fun getLastError(): String = lastError
+
+private const val MAX_INPUT_SIZE = 64 * 1_024 * 1_024
+private const val MAX_OUTPUT_SIZE = 128 * 1_024 * 1_024

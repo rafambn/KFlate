@@ -1,14 +1,14 @@
 
 package com.rafambn.kflate.format
 
-import com.rafambn.kflate.ZLIB
+import com.rafambn.kflate.ZlibCompression
 import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
 import com.rafambn.kflate.util.readFourBytesBE
 import com.rafambn.kflate.util.writeBytesBE
 
-internal fun writeZlibHeader(output: ByteArray, options: ZLIB) {
+internal fun writeZlibHeader(output: ByteArray, options: ZlibCompression) {
     val level = options.level
     val compressionLevelFlag = when {
         level == 0 -> 0
@@ -30,6 +30,9 @@ internal fun writeZlibHeader(output: ByteArray, options: ZLIB) {
 }
 
 internal fun writeZlibStart(data: ByteArray, hasDictionary: Boolean, dictionary: ByteArray? = null): Int {
+    if (data.size < 2) {
+        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+    }
     val cmf = data[0].toInt() and 0xFF
     val flg = data[1].toInt() and 0xFF
     if ((cmf and 15) != 8 || (cmf ushr 4) > 7 || ((cmf shl 8 or flg) % 31 != 0))

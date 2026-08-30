@@ -1,6 +1,6 @@
 package com.rafambn.kflate.decompression
 
-import com.rafambn.kflate.Zlib
+import com.rafambn.kflate.ZlibDecompression
 import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
@@ -19,7 +19,7 @@ import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.write
 
-internal fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
+internal fun decompressZlib(data: ByteArray, type: ZlibDecompression): ByteArray {
     if (data.size < 6) {
         createFlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
@@ -32,8 +32,8 @@ internal fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
     val decompressedData = inflate(
         inputData,
         InflateState(validationMode = 2),
-        null,
-        type.dictionary
+        type.dictionary,
+        type.maxOutputSize,
     )
 
     val computedAdler32 = Adler32Checksum().apply {
@@ -47,7 +47,7 @@ internal fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
     return decompressedData
 }
 
-internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) {
+internal fun decompressStreamZlib(type: ZlibDecompression, source: RawSource, sink: RawSink) {
     val bufferedSource = source.buffered()
     val bufferedSink = sink.buffered()
 
@@ -59,6 +59,7 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
     var sourceExhausted = false
     var headerParsed = false
     var awaitingTrailer = false
+    var totalOutputSize = 0
 
     while (true) {
         if (!sourceExhausted) {
@@ -98,11 +99,19 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
             }
 
             state.outputOffset = 0
-            val output = inflateStreamChunk(inputBuffer, state, history, sourceExhausted) ?: continue
+            val remainingOutputSize = (type.maxOutputSize ?: Int.MAX_VALUE) - totalOutputSize
+            val output = inflateStreamChunk(
+                inputBuffer,
+                state,
+                history,
+                sourceExhausted,
+                remainingOutputSize,
+            ) ?: continue
             if (output.isNotEmpty()) {
                 bufferedSink.write(output)
                 adler.update(output)
                 history = updateHistory(history, output)
+                totalOutputSize += output.size
             }
 
             if (state.isFinalBlock && state.literalMap == null) {

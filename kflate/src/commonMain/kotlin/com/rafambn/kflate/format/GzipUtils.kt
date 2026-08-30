@@ -2,9 +2,8 @@
 
 package com.rafambn.kflate.format
 
-import com.rafambn.kflate.GZIP
+import com.rafambn.kflate.GzipCompression
 import com.rafambn.kflate.algorithm.inflate
-import com.rafambn.kflate.checksum.CRC32_TABLE
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
@@ -12,7 +11,6 @@ import com.rafambn.kflate.streaming.InflateState
 import com.rafambn.kflate.util.readFourBytes
 import com.rafambn.kflate.util.toIsoStringBytes
 import com.rafambn.kflate.util.writeBytes
-import kotlin.math.floor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -34,11 +32,12 @@ internal fun buildExtraFields(extraFields: Map<String, ByteArray>): ByteArray {
     var offset = 0
 
     for ((key, data) in extraFields) {
-        require(key.length == 2) { "Extra field ID must be exactly 2 bytes, got: '$key'" }
+        val keyBytes = key.toIsoStringBytes()
+        require(keyBytes.size == 2) { "Extra field ID must be exactly 2 bytes, got: '$key'" }
         require(data.size <= 65535) { "Extra field data cannot exceed 65535 bytes" }
 
-        output[offset] = key[0].code.toByte()  // SI1
-        output[offset + 1] = key[1].code.toByte()  // SI2
+        output[offset] = keyBytes[0]  // SI1
+        output[offset + 1] = keyBytes[1]  // SI2
         output[offset + 2] = (data.size and 0xFF).toByte()  // LEN low byte
         output[offset + 3] = (data.size shr 8).toByte()     // LEN high byte
         data.copyInto(output, offset + 4)
@@ -48,7 +47,7 @@ internal fun buildExtraFields(extraFields: Map<String, ByteArray>): ByteArray {
     return output
 }
 
-internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
+internal fun writeGzipHeader(output: ByteArray, options: GzipCompression) {
     output[0] = 31
     output[1] = -117 // 139 as signed byte
     output[2] = 8
@@ -68,15 +67,10 @@ internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
     }.toByte()
     output[9] = -1 // 255 as signed byte
 
-    val mtime = options.mtime
-    val timeInMillis = when (mtime) {
-        is Number -> mtime.toLong()
-        is String -> mtime.toLongOrNull() ?: Clock.System.now().toEpochMilliseconds()
-        else -> Clock.System.now().toEpochMilliseconds()
+    val timestamp = options.mtime?.epochSeconds ?: Clock.System.now().epochSeconds
+    if (timestamp != 0L) {
+        writeBytes(output, 4, timestamp)
     }
-
-    if (timeInMillis != 0L)
-        writeBytes(output, 4, floor(timeInMillis / 1000.0).toLong())
 
     var headerOffset = 10
 
@@ -192,7 +186,7 @@ internal fun getGzipUncompressedSize(data: ByteArray): Long {
     return readFourBytes(data, length - 4)
 }
 
-internal fun getGzipHeaderSize(options: GZIP): Int {
+internal fun getGzipHeaderSize(options: GzipCompression): Int {
     var size = 10
 
     options.extraFields?.let { fields ->
@@ -217,26 +211,10 @@ internal fun getGzipHeaderSize(options: GZIP): Int {
     return size
 }
 
-internal data class GzipMemberResult(
-    val decompressed: ByteArray,
-    val bytesConsumed: Int
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is GzipMemberResult) return false
-        if (!decompressed.contentEquals(other.decompressed)) return false
-        return bytesConsumed == other.bytesConsumed
-    }
-
-    override fun hashCode(): Int {
-        return 31 * decompressed.contentHashCode() + bytesConsumed
-    }
-}
-
 internal fun processSingleGzipMember(
     data: ByteArray,
     startOffset: Int,
-    dictionary: ByteArray? = null
+    maxOutputSize: Int?,
 ): GzipMemberResult {
     // Validate minimum size: 10 bytes header + at least 2 bytes compressed data + 8 bytes trailer (CRC32 + ISIZE)
     if (startOffset + 20 > data.size) {
@@ -250,7 +228,7 @@ internal fun processSingleGzipMember(
     // Inflate with state tracking
     val inflateState = InflateState(validationMode = 2)
     inflateState.inputBitPosition = compressedDataStart * 8
-    val decompressed = inflate(data, inflateState, null, dictionary)
+    val decompressed = inflate(data, inflateState, maxOutputSize = maxOutputSize)
 
     // Calculate bytes consumed by inflate
     val bitsConsumed = inflateState.inputBitPosition - (compressedDataStart * 8)

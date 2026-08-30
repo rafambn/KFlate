@@ -38,10 +38,10 @@ abstract class RawBenchmarkState {
         rawCompressed = decompressionInput(rawInput)
 
         require(decompress(rawCompressed).contentEquals(rawInput)) {
-            "$libraryName RAW roundtrip failed for benchmark corpus '$corpus'"
+            "$libraryName raw DEFLATE roundtrip failed for benchmark corpus '$corpus'"
         }
         require(decompress(libraryCompressed).contentEquals(rawInput)) {
-            "$libraryName RAW compression output failed roundtrip for benchmark corpus '$corpus'"
+            "$libraryName RawCompression compression output failed roundtrip for benchmark corpus '$corpus'"
         }
 
         println(rawBenchmarkReportLine(reportPrefix, libraryName, corpus, rawInput.size, libraryCompressed.size))
