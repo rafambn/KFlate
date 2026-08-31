@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  KFlate is a Kotlin Multiplatform port of the npm <a href="https://github.com/101arrowz/fflate"><code>fflate</code></a> library. It provides compression and decompression with configurable levels, dictionary support, and both blocking and streaming APIs across KMP targets.
+  KFlate is an independently written Kotlin implementation based on the design and API ideas of the npm <a href="https://github.com/101arrowz/fflate"><code>fflate</code></a> library. It provides compression and decompression with configurable levels, dictionary support, and both blocking and streaming APIs across KMP targets.
 </p>
 
 <table align="center">
