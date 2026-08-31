@@ -11,7 +11,6 @@ import com.rafambn.kflate.streaming.InflateState
 import com.rafambn.kflate.util.readFourBytes
 import com.rafambn.kflate.util.toIsoStringBytes
 import com.rafambn.kflate.util.writeBytes
-import kotlin.math.floor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -23,21 +22,14 @@ internal fun computeGzipHeaderCrc16(data: ByteArray, start: Int, end: Int): Int 
 }
 
 internal fun buildExtraFields(extraFields: Map<String, ByteArray>): ByteArray {
-    // Each subfield: SI1 (1 byte) + SI2 (1 byte) + LEN (2 bytes LE) + data
-    val totalSize = extraFields.values.sumOf { it.size + 4 }
-    // RFC 1952: XLEN is a 2-byte little-endian value, so total extra field size must fit in 16 bits
-    require(totalSize <= 65535) {
-        "Total extra field size ($totalSize bytes) exceeds maximum XLEN of 65535 bytes"
-    }
+    val totalSize = getGzipExtraFieldsSize(extraFields)
     val output = ByteArray(totalSize)
     var offset = 0
 
     for ((key, data) in extraFields) {
-        require(key.length == 2) { "Extra field ID must be exactly 2 bytes, got: '$key'" }
-        require(data.size <= 65535) { "Extra field data cannot exceed 65535 bytes" }
-
-        output[offset] = key[0].code.toByte()  // SI1
-        output[offset + 1] = key[1].code.toByte()  // SI2
+        val keyBytes = key.toIsoStringBytes()
+        output[offset] = keyBytes[0]  // SI1
+        output[offset + 1] = keyBytes[1]  // SI2
         output[offset + 2] = (data.size and 0xFF).toByte()  // LEN low byte
         output[offset + 3] = (data.size shr 8).toByte()     // LEN high byte
         data.copyInto(output, offset + 4)
@@ -45,6 +37,23 @@ internal fun buildExtraFields(extraFields: Map<String, ByteArray>): ByteArray {
     }
 
     return output
+}
+
+private fun getGzipExtraFieldsSize(extraFields: Map<String, ByteArray>): Int {
+    var totalSize = 0L
+    for ((key, data) in extraFields) {
+        val keyBytes = key.toIsoStringBytes()
+        require(keyBytes.size == 2) { "Extra field ID must be exactly 2 bytes, got: '$key'" }
+        require(keyBytes[1] != 0.toByte()) {
+            "Extra field ID second byte is reserved and cannot be zero"
+        }
+        require(data.size <= 65_535) { "Extra field data cannot exceed 65535 bytes" }
+        totalSize += 4 + data.size
+        require(totalSize <= 65_535) {
+            "Total extra field size ($totalSize bytes) exceeds maximum XLEN of 65535 bytes"
+        }
+    }
+    return totalSize.toInt()
 }
 
 internal fun writeGzipHeader(output: ByteArray, options: Gzip) {
@@ -67,15 +76,10 @@ internal fun writeGzipHeader(output: ByteArray, options: Gzip) {
     }.toByte()
     output[9] = -1 // 255 as signed byte
 
-    val mtime = options.mtime
-    val timeInMillis = when (mtime) {
-        is Number -> mtime.toLong()
-        is String -> mtime.toLongOrNull() ?: Clock.System.now().toEpochMilliseconds()
-        else -> Clock.System.now().toEpochMilliseconds()
+    val timestamp = options.mtime?.epochSeconds ?: Clock.System.now().epochSeconds
+    if (timestamp != 0L) {
+        writeBytes(output, 4, timestamp)
     }
-
-    if (timeInMillis != 0L)
-        writeBytes(output, 4, floor(timeInMillis / 1000.0).toLong())
 
     var headerOffset = 10
 
@@ -195,10 +199,7 @@ internal fun getGzipHeaderSize(options: Gzip): Int {
     var size = 10
 
     options.extraFields?.let { fields ->
-        size += 2
-        for ((_, data) in fields) {
-            size += 4 + data.size
-        }
+        size += 2 + getGzipExtraFieldsSize(fields)
     }
 
     options.filename?.let {

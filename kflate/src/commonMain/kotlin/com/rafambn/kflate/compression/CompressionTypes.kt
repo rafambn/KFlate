@@ -2,6 +2,9 @@ package com.rafambn.kflate.compression
 
 import com.rafambn.kflate.util.toIsoStringBytes
 import kotlin.collections.iterator
+import kotlin.time.Instant
+
+private const val MAX_GZIP_TIMESTAMP = 0xFFFF_FFFFL
 
 /**
  * Base interface for compression configuration options.
@@ -75,7 +78,7 @@ data class Gzip(
     override val level: Int = 6,
     override val mem: Int = 8,
     val filename: String? = null,
-    val mtime: Any? = null,
+    val mtime: Instant? = null,
     val comment: String? = null,
     val extraFields: Map<String, ByteArray>? = null,
     val includeHeaderCrc: Boolean = false
@@ -83,22 +86,36 @@ data class Gzip(
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
         require(mem in 0..12) { "mem must be in range 0..12, but was $mem" }
-        filename?.let {
-            require(it.length <= 65535) { "Filename cannot exceed 65535 bytes" }
-            it.toIsoStringBytes()
+        require(mtime == null || mtime.epochSeconds in 0..MAX_GZIP_TIMESTAMP) {
+            "mtime must fit the unsigned 32-bit GZIP timestamp field"
         }
-        comment?.let {
-            require(it.length <= 65535) { "Comment cannot exceed 65535 bytes" }
-            it.toIsoStringBytes()
-        }
+        validateHeaderText(filename, "filename")
+        validateHeaderText(comment, "comment")
         extraFields?.let { fields ->
-            var totalXlen = 0
+            var totalSize = 0L
             for ((key, data) in fields) {
-                require(key.length == 2) { "Extra field ID must be exactly 2 bytes, got: '$key'" }
-                require(data.size <= 65535) { "Extra field data cannot exceed 65535 bytes" }
-                totalXlen += 4 + data.size  // 4 bytes header (ID + length) + data
+                val keyBytes = key.toIsoStringBytes()
+                require(keyBytes.size == 2) {
+                    "Extra field ID must be exactly 2 ISO-8859-1 bytes, got: '$key'"
+                }
+                require(keyBytes[1] != 0.toByte()) {
+                    "Extra field ID second byte is reserved and cannot be zero"
+                }
+                require(data.size <= 65_535) { "Extra field data cannot exceed 65535 bytes" }
+                totalSize += 4 + data.size
+                require(totalSize <= 65_535) {
+                    "Total extra fields size (XLEN) cannot exceed 65535 bytes, got: $totalSize"
+                }
             }
-            require(totalXlen <= 65535) { "Total extra fields size (XLEN) cannot exceed 65535 bytes, got: $totalXlen" }
+        }
+    }
+
+    private fun validateHeaderText(value: String?, fieldName: String) {
+        if (value == null) return
+        require('\u0000' !in value) { "$fieldName cannot contain a NUL character" }
+        val bytes = value.toIsoStringBytes()
+        require(bytes.size <= 65_535) {
+            "$fieldName cannot exceed 65535 bytes, but was ${bytes.size} bytes"
         }
     }
 
