@@ -44,7 +44,13 @@ internal fun inflate(
     val sourceLength = inputData.size
     val dictionaryLength = dictionary?.size ?: 0
 
-    if (sourceLength == 0 || (inflateState.isFinalBlock && inflateState.literalMap == null)) {
+    if (inflateState.isFinalBlock && inflateState.literalMap == null) {
+        return outputBuffer ?: ByteArray(0)
+    }
+    if (sourceLength == 0) {
+        if (inflateState.validationMode != 0) {
+            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        }
         return outputBuffer ?: ByteArray(0)
     }
 
