@@ -305,7 +305,10 @@ internal fun inflate(
                 break
             }
 
-            if (literalCode == 0) createFlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
+            // Symbols 0..285 are valid. Fixed Huffman symbols 286 and 287 are reserved by RFC 1951.
+            if (literalCode == 0 || symbol > 285) {
+                createFlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
+            }
 
             when {
                 symbol < 256 -> {
