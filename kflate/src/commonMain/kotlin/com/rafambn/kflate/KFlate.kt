@@ -17,35 +17,35 @@ import kotlinx.io.RawSource
 
 object KFlate {
 
-    fun compress(data: ByteArray, type: CompressionType): ByteArray {
+    fun compress(data: ByteArray, type: CompressionOptions): ByteArray {
         return when (type) {
-            is RAW -> compressRaw(data, type)
-            is GZIP -> compressGzip(data, type)
-            is ZLIB -> compressZlib(data, type)
+            is RawCompression -> compressRaw(data, type)
+            is GzipCompression -> compressGzip(data, type)
+            is ZlibCompression -> compressZlib(data, type)
         }
     }
 
-    fun decompress(data: ByteArray, type: DecompressionType): ByteArray {
+    fun decompress(data: ByteArray, type: DecompressionOptions): ByteArray {
         return when (type) {
-            is Raw -> decompressRaw(data, type)
-            is Gzip -> decompressGzip(data, type)
-            is Zlib -> decompressZlib(data, type)
+            is RawDecompression -> decompressRaw(data, type)
+            is GzipDecompression -> decompressGzip(data, type)
+            is ZlibDecompression -> decompressZlib(data, type)
         }
     }
 
-    fun compress(type: CompressionType, source: RawSource, sink: RawSink) {
+    fun compress(type: CompressionOptions, source: RawSource, sink: RawSink) {
         when (type) {
-            is RAW -> compressStreamRaw(type, source, sink)
-            is GZIP -> compressStreamGzip(type, source, sink)
-            is ZLIB -> compressStreamZlib(type, source, sink)
+            is RawCompression -> compressStreamRaw(type, source, sink)
+            is GzipCompression -> compressStreamGzip(type, source, sink)
+            is ZlibCompression -> compressStreamZlib(type, source, sink)
         }
     }
 
-    fun decompress(type: DecompressionType, source: RawSource, sink: RawSink) {
+    fun decompress(type: DecompressionOptions, source: RawSource, sink: RawSink) {
         when (type) {
-            is Raw -> decompressStreamRaw(type, source, sink)
-            is Gzip -> decompressStreamGzip(type, source, sink)
-            is Zlib -> decompressStreamZlib(type, source, sink)
+            is RawDecompression -> decompressStreamRaw(type, source, sink)
+            is GzipDecompression -> decompressStreamGzip(type, source, sink)
+            is ZlibDecompression -> decompressStreamZlib(type, source, sink)
         }
     }
 }

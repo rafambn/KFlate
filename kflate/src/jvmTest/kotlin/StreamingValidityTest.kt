@@ -52,7 +52,7 @@ class StreamingValidityTest {
         return outcome!!.getOrThrow()
     }
 
-    private fun streamCompress(data: ByteArray, type: CompressionType): ByteArray {
+    private fun streamCompress(data: ByteArray, type: CompressionOptions): ByteArray {
         val input = Buffer()
         input.write(data)
         val output = Buffer()
@@ -60,7 +60,7 @@ class StreamingValidityTest {
         return output.readByteArray()
     }
 
-    private fun streamDecompress(data: ByteArray, type: DecompressionType): ByteArray {
+    private fun streamDecompress(data: ByteArray, type: DecompressionOptions): ByteArray {
         val input = Buffer()
         input.write(data)
         val output = Buffer()
@@ -83,14 +83,14 @@ class StreamingValidityTest {
         }
     }
 
-    // RAW TESTS
+    // RawCompression TESTS
 
     @Test
     fun testFlateCompress() {
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
 
-            val compressedData = streamCompress(originalData, RAW())
+            val compressedData = streamCompress(originalData, RawCompression())
 
             val inflater = Inflater(true)
             val inputStream = ByteArrayInputStream(compressedData)
@@ -121,7 +121,7 @@ class StreamingValidityTest {
 
             val compressedData = outputStream.toByteArray()
 
-            val decompressedData = streamDecompress(compressedData, Raw())
+            val decompressedData = streamDecompress(compressedData, RawDecompression())
 
             assertContentEquals(originalData, decompressedData, "Failed on file: $fileName")
 
@@ -129,14 +129,14 @@ class StreamingValidityTest {
         }
     }
 
-    // GZIP TESTS
+    // GzipCompression TESTS
 
     @Test
     fun testGzipCompress() {
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
 
-            val compressedData = streamCompress(originalData, GZIP())
+            val compressedData = streamCompress(originalData, GzipCompression())
 
             val inputStream = ByteArrayInputStream(compressedData)
             val gzipInputStream = GZIPInputStream(inputStream)
@@ -163,7 +163,7 @@ class StreamingValidityTest {
 
             val compressedData = outputStream.toByteArray()
 
-            val decompressedData = streamDecompress(compressedData, Gzip())
+            val decompressedData = streamDecompress(compressedData, GzipDecompression())
 
             assertContentEquals(originalData, decompressedData, "Failed on file: $fileName")
         }
@@ -173,31 +173,31 @@ class StreamingValidityTest {
     fun testGzipXflFlags() {
         val testData = readResourceFile("simpleText")
 
-        val compressed0 = streamCompress(testData, GZIP(level = 0))
+        val compressed0 = streamCompress(testData, GzipCompression(level = 0))
         assert(compressed0[8] == 4.toByte()) { "Level 0 should set XFL = 4 (max speed)" }
 
-        val compressed1 = streamCompress(testData, GZIP(level = 1))
+        val compressed1 = streamCompress(testData, GzipCompression(level = 1))
         assert(compressed1[8] == 4.toByte()) { "Level 1 should set XFL = 4 (max speed)" }
 
         for (level in 2..8) {
-            val compressed = streamCompress(testData, GZIP(level = level))
+            val compressed = streamCompress(testData, GzipCompression(level = level))
             assert(compressed[8] == 0.toByte()) {
                 "Level $level should set XFL = 0 (default), but got ${compressed[8]}"
             }
         }
 
-        val compressed9 = streamCompress(testData, GZIP(level = 9))
+        val compressed9 = streamCompress(testData, GzipCompression(level = 9))
         assert(compressed9[8] == 2.toByte()) { "Level 9 should set XFL = 2 (max compression)" }
     }
 
-    // ZLIB TESTS
+    // ZlibCompression TESTS
 
     @Test
     fun testZlibCompress() {
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
 
-            val compressedData = streamCompress(originalData, ZLIB())
+            val compressedData = streamCompress(originalData, ZlibCompression())
 
             val inflater = Inflater()
             val inputStream = ByteArrayInputStream(compressedData)
@@ -228,7 +228,7 @@ class StreamingValidityTest {
 
             val compressedData = outputStream.toByteArray()
 
-            val decompressedData = streamDecompress(compressedData, Zlib())
+            val decompressedData = streamDecompress(compressedData, ZlibDecompression())
 
             assertContentEquals(originalData, decompressedData, "Failed on file: $fileName")
 
@@ -242,9 +242,9 @@ class StreamingValidityTest {
     fun testZlibDecompressValidChecksumAccepted() {
         val originalData = readResourceFile("simpleText")
 
-        val compressedData = streamCompress(originalData, ZLIB())
+        val compressedData = streamCompress(originalData, ZlibCompression())
 
-        val decompressedData = streamDecompress(compressedData, Zlib())
+        val decompressedData = streamDecompress(compressedData, ZlibDecompression())
 
         assertContentEquals(originalData, decompressedData)
     }
@@ -253,13 +253,13 @@ class StreamingValidityTest {
     fun testZlibDecompressCorruptedChecksumRejected() {
         val originalData = readResourceFile("simpleText")
 
-        val compressedData = streamCompress(originalData, ZLIB()).toMutableList()
+        val compressedData = streamCompress(originalData, ZlibCompression()).toMutableList()
 
         val checksumStartIndex = compressedData.size - 4
         compressedData[checksumStartIndex] = (compressedData[checksumStartIndex].toInt() xor 0xFF).toByte()
 
         try {
-            streamDecompress(compressedData.toByteArray(), Zlib())
+            streamDecompress(compressedData.toByteArray(), ZlibDecompression())
             assert(false) { "Expected checksum validation error but none was thrown" }
         } catch (e: Exception) {
             assert(e.message?.contains("checksum", ignoreCase = true) == true) {
@@ -272,14 +272,14 @@ class StreamingValidityTest {
     fun testZlibDecompressCorruptedDataRejected() {
         val originalData = readResourceFile("simpleText")
 
-        val compressedData = streamCompress(originalData, ZLIB()).toMutableList()
+        val compressedData = streamCompress(originalData, ZlibCompression()).toMutableList()
 
         if (compressedData.size > 10) {
             compressedData[5] = (compressedData[5].toInt() xor 0xFF).toByte()
         }
 
         try {
-            streamDecompress(compressedData.toByteArray(), Zlib())
+            streamDecompress(compressedData.toByteArray(), ZlibDecompression())
             assert(false) { "Expected checksum validation error but none was thrown" }
         } catch (e: Exception) {
             assert(e.message?.contains("checksum", ignoreCase = true) == true) {
@@ -295,7 +295,7 @@ class StreamingValidityTest {
             0x03.toByte(), 0x00.toByte(), 0x00.toByte(), 0x00.toByte(), 0x00.toByte(), 0x01.toByte()
         )
 
-        val decompressedData = streamDecompress(emptyData, Zlib())
+        val decompressedData = streamDecompress(emptyData, ZlibDecompression())
 
         assertContentEquals(ByteArray(0), decompressedData)
     }

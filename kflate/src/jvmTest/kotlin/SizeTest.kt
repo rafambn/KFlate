@@ -29,7 +29,7 @@ class SizeTest {
         println("Flate Size Test")
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
-            val compressedData = KFlate.compress(originalData, RAW())
+            val compressedData = KFlate.compress(originalData, RawCompression())
 
             val deflater = Deflater(6, true)
             val outputStream = ByteArrayOutputStream()
@@ -47,10 +47,10 @@ class SizeTest {
 
     @Test
     fun testGzipSize() {
-        println("Gzip Size Test")
+        println("GzipDecompression Size Test")
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
-            val compressedData = KFlate.compress(originalData, GZIP())
+            val compressedData = KFlate.compress(originalData, GzipCompression())
 
             val outputStream = ByteArrayOutputStream()
             val gzipOutputStream = GZIPOutputStream(outputStream)
@@ -67,10 +67,10 @@ class SizeTest {
 
     @Test
     fun testZlibSize() {
-        println("Zlib Size Test")
+        println("ZlibDecompression Size Test")
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
-            val compressedData = KFlate.compress(originalData, ZLIB())
+            val compressedData = KFlate.compress(originalData, ZlibCompression())
 
             val deflater = Deflater(Deflater.DEFAULT_COMPRESSION)
             val outputStream = ByteArrayOutputStream()

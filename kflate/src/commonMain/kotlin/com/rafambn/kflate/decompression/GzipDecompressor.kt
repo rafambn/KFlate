@@ -1,6 +1,6 @@
 package com.rafambn.kflate.decompression
 
-import com.rafambn.kflate.Gzip
+import com.rafambn.kflate.GzipDecompression
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
@@ -20,7 +20,7 @@ import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.write
 
-internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
+internal fun decompressGzip(data: ByteArray, type: GzipDecompression): ByteArray {
     if (data.size < 20) {
         createFlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
@@ -69,7 +69,7 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
     return result
 }
 
-internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) {
+internal fun decompressStreamGzip(type: GzipDecompression, source: RawSource, sink: RawSink) {
     val bufferedSource = source.buffered()
     val bufferedSink = sink.buffered()
 

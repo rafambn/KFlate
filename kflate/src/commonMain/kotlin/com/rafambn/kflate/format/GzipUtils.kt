@@ -2,7 +2,7 @@
 
 package com.rafambn.kflate.format
 
-import com.rafambn.kflate.GZIP
+import com.rafambn.kflate.GzipCompression
 import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.checksum.CRC32_TABLE
 import com.rafambn.kflate.checksum.Crc32Checksum
@@ -48,7 +48,7 @@ internal fun buildExtraFields(extraFields: Map<String, ByteArray>): ByteArray {
     return output
 }
 
-internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
+internal fun writeGzipHeader(output: ByteArray, options: GzipCompression) {
     output[0] = 31
     output[1] = -117 // 139 as signed byte
     output[2] = 8
@@ -192,7 +192,7 @@ internal fun getGzipUncompressedSize(data: ByteArray): Long {
     return readFourBytes(data, length - 4)
 }
 
-internal fun getGzipHeaderSize(options: GZIP): Int {
+internal fun getGzipHeaderSize(options: GzipCompression): Int {
     var size = 10
 
     options.extraFields?.let { fields ->

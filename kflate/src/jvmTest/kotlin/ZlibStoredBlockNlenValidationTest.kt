@@ -27,9 +27,9 @@ class ZlibStoredBlockNlenValidationTest {
         deflateStream[4] = 0xFF.toByte()
         data.copyInto(deflateStream, 5)
 
-        // Wrap in ZLIB
+        // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZLIB header (CMF=0x78, FLG=0x9C)
+        zlib[0] = 0x78.toByte()  // ZlibCompression header (CMF=0x78, FLG=0x9C)
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -48,7 +48,7 @@ class ZlibStoredBlockNlenValidationTest {
         zlib[5 + deflateStream.size] = (adler32 and 0xFF).toByte()
 
         // This should decompress successfully
-        val result = KFlate.decompress(zlib, Zlib())
+        val result = KFlate.decompress(zlib, ZlibDecompression())
         assert(result.contentEquals(data)) { "Decompressed data should match original" }
     }
 
@@ -68,9 +68,9 @@ class ZlibStoredBlockNlenValidationTest {
         deflateStream[4] = 0xFF.toByte()
         data.copyInto(deflateStream, 5)
 
-        // Wrap in ZLIB
+        // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZLIB header
+        zlib[0] = 0x78.toByte()  // ZlibCompression header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -82,7 +82,7 @@ class ZlibStoredBlockNlenValidationTest {
 
         // This should fail with an error
         assertFailsWith<Exception> {
-            KFlate.decompress(zlib, Zlib())
+            KFlate.decompress(zlib, ZlibDecompression())
         }
     }
 
@@ -98,9 +98,9 @@ class ZlibStoredBlockNlenValidationTest {
         deflateStream[1] = 0x05.toByte()  // LEN = 5
         deflateStream[2] = 0x00.toByte()  // But missing NLEN (only 3 bytes total, need 4)
 
-        // Wrap in ZLIB
+        // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZLIB header
+        zlib[0] = 0x78.toByte()  // ZlibCompression header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -112,7 +112,7 @@ class ZlibStoredBlockNlenValidationTest {
 
         // This should fail with EOF error
         assertFailsWith<Exception> {
-            KFlate.decompress(zlib, Zlib())
+            KFlate.decompress(zlib, ZlibDecompression())
         }
     }
 
@@ -132,9 +132,9 @@ class ZlibStoredBlockNlenValidationTest {
         deflateStream[6] = 0x65.toByte()  // 'e'
         deflateStream[7] = 0x6C.toByte()  // 'l' (Only "hel" instead of "hello")
 
-        // Wrap in ZLIB
+        // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZLIB header
+        zlib[0] = 0x78.toByte()  // ZlibCompression header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -146,7 +146,7 @@ class ZlibStoredBlockNlenValidationTest {
 
         // This should fail with EOF error
         assertFailsWith<Exception> {
-            KFlate.decompress(zlib, Zlib())
+            KFlate.decompress(zlib, ZlibDecompression())
         }
     }
 
@@ -164,9 +164,9 @@ class ZlibStoredBlockNlenValidationTest {
         deflateStream[3] = 0xFF.toByte()  // NLEN = 0xFFFF (one's complement of 0)
         deflateStream[4] = 0xFF.toByte()
 
-        // Wrap in ZLIB
+        // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZLIB header
+        zlib[0] = 0x78.toByte()  // ZlibCompression header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -177,7 +177,7 @@ class ZlibStoredBlockNlenValidationTest {
         zlib[5 + deflateStream.size] = 0x01.toByte()
 
         // This should decompress successfully to empty data
-        val result = KFlate.decompress(zlib, Zlib())
+        val result = KFlate.decompress(zlib, ZlibDecompression())
         assert(result.isEmpty()) { "Empty block should decompress to empty data" }
     }
 
@@ -198,9 +198,9 @@ class ZlibStoredBlockNlenValidationTest {
         deflateStream[4] = 0x00.toByte()
         data.copyInto(deflateStream, 5)
 
-        // Wrap in ZLIB
+        // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZLIB header
+        zlib[0] = 0x78.toByte()  // ZlibCompression header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -219,7 +219,7 @@ class ZlibStoredBlockNlenValidationTest {
         zlib[5 + deflateStream.size] = (adler32 and 0xFF).toByte()
 
         // This should decompress successfully
-        val result = KFlate.decompress(zlib, Zlib())
+        val result = KFlate.decompress(zlib, ZlibDecompression())
         assert(result.contentEquals(data)) { "Decompressed data should match original" }
     }
 }

@@ -1,6 +1,6 @@
 package com.rafambn.kflate.decompression
 
-import com.rafambn.kflate.Zlib
+import com.rafambn.kflate.ZlibDecompression
 import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
@@ -19,7 +19,7 @@ import kotlinx.io.Source
 import kotlinx.io.buffered
 import kotlinx.io.write
 
-internal fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
+internal fun decompressZlib(data: ByteArray, type: ZlibDecompression): ByteArray {
     if (data.size < 6) {
         createFlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
@@ -47,7 +47,7 @@ internal fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
     return decompressedData
 }
 
-internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) {
+internal fun decompressStreamZlib(type: ZlibDecompression, source: RawSource, sink: RawSink) {
     val bufferedSource = source.buffered()
     val bufferedSink = sink.buffered()
 
