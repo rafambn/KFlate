@@ -35,23 +35,12 @@ sealed interface CompressionType {
      */
     val mem: Int
 
-    /**
-     * A buffer containing common byte sequences in the input data that can be used to significantly improve compression ratios.
-     *
-     * Dictionaries should be 32kB or smaller and include strings or byte sequences likely to appear in the input.
-     * The decompressor must supply the same dictionary as the compressor to extract the original data.
-     *
-     * Dictionaries only improve aggregate compression ratio when reused across multiple small inputs. They should typically not be used otherwise.
-     *
-     * Avoid using dictionaries with GZIP and ZIP to maximize software compatibility.
-     */
-    val dictionary: ByteArray?
 }
 
 data class Raw(
     override val level: Int = 6,
     override val mem: Int = 8,
-    override val dictionary: ByteArray? = null
+    val dictionary: ByteArray? = null
 ) : CompressionType {
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
@@ -85,7 +74,6 @@ data class Raw(
 data class Gzip(
     override val level: Int = 6,
     override val mem: Int = 8,
-    override val dictionary: ByteArray? = null,
     val filename: String? = null,
     val mtime: Any? = null,
     val comment: String? = null,
@@ -95,9 +83,6 @@ data class Gzip(
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
         require(mem in 0..12) { "mem must be in range 0..12, but was $mem" }
-        dictionary?.let {
-            require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
-        }
         filename?.let {
             require(it.length <= 65535) { "Filename cannot exceed 65535 bytes" }
             it.toIsoStringBytes()
@@ -125,7 +110,6 @@ data class Gzip(
 
         if (level != other.level) return false
         if (mem != other.mem) return false
-        if (!dictionary.contentEquals(other.dictionary)) return false
         if (filename != other.filename) return false
         if (mtime != other.mtime) return false
         if (comment != other.comment) return false
@@ -138,7 +122,6 @@ data class Gzip(
     override fun hashCode(): Int {
         var result = level
         result = 31 * result + mem
-        result = 31 * result + (dictionary?.contentHashCode() ?: 0)
         result = 31 * result + (filename?.hashCode() ?: 0)
         result = 31 * result + (mtime?.hashCode() ?: 0)
         result = 31 * result + (comment?.hashCode() ?: 0)
@@ -151,7 +134,7 @@ data class Gzip(
 data class Zlib(
     override val level: Int = 6,
     override val mem: Int = 8,
-    override val dictionary: ByteArray? = null
+    val dictionary: ByteArray? = null
 ) : CompressionType {
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }

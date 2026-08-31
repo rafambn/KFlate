@@ -235,7 +235,6 @@ internal data class GzipMemberResult(
 internal fun processSingleGzipMember(
     data: ByteArray,
     startOffset: Int,
-    dictionary: ByteArray? = null
 ): GzipMemberResult {
     // Validate minimum size: 10 bytes header + at least 2 bytes compressed data + 8 bytes trailer (CRC32 + ISIZE)
     if (startOffset + 20 > data.size) {
@@ -249,7 +248,7 @@ internal fun processSingleGzipMember(
     // Inflate with state tracking
     val inflateState = InflateState(validationMode = 2)
     inflateState.inputBitPosition = compressedDataStart * 8
-    val decompressed = inflate(data, inflateState, null, dictionary)
+    val decompressed = inflate(data, inflateState)
 
     // Calculate bytes consumed by inflate
     val bitsConsumed = inflateState.inputBitPosition - (compressedDataStart * 8)

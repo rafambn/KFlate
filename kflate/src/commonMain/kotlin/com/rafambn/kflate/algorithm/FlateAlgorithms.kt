@@ -586,7 +586,7 @@ internal fun deflateWithOptions(
     }
     val dictionary = when (type) {
         is Raw -> type.dictionary
-        is Gzip -> type.dictionary
+        is Gzip -> null
         is Zlib -> type.dictionary
     }
 
