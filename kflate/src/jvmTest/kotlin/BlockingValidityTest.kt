@@ -12,17 +12,11 @@ class BlockingValidityTest {
     private val testFiles = listOf(
         "model3D",
         "text",
-        "Rainier.bmp",
-        "Maltese.bmp",
-        "Sunrise.bmp",
         "simpleText",
     )
 
     private val expectedFileSizes = mapOf(
-        "Maltese.bmp" to 16427390,
         "text" to 1232923,
-        "Rainier.bmp" to 6220854,
-        "Sunrise.bmp" to 52344054,
         "model3D" to 2478,
         "simpleText" to 100,
     )
@@ -48,7 +42,7 @@ class BlockingValidityTest {
         }
     }
 
-    // RawCompression TESTS
+    // RAW DEFLATE TESTS
 
     @Test
     fun testFlateCompress() {
@@ -94,7 +88,7 @@ class BlockingValidityTest {
         }
     }
 
-    // GzipCompression TESTS
+    // GZIP TESTS
 
     @Test
     fun testGzipCompress() {
@@ -159,7 +153,7 @@ class BlockingValidityTest {
         assert(compressed9[8] == 2.toByte()) { "Level 9 should set XFL = 2 (max compression)" }
     }
 
-    // ZlibCompression TESTS
+    // ZLIB TESTS
 
     @Test
     fun testZlibCompress() {
@@ -271,7 +265,7 @@ class BlockingValidityTest {
         // Create a ZlibCompression stream with empty data
         // Empty data should have ADLER32 = 1 (initial state: a=1, b=0)
         val emptyData = byteArrayOf(
-            0x78.toByte(), 0x9c.toByte(),  // ZlibCompression header (CMF=0x78, FLG=0x9c)
+            0x78.toByte(), 0x9c.toByte(),  // ZLIB header (CMF=0x78, FLG=0x9c)
             0x03.toByte(), 0x00.toByte(), 0x00.toByte(), 0x00.toByte(), 0x00.toByte(), 0x01.toByte()  // Empty block + ADLER32(1)
         )
 

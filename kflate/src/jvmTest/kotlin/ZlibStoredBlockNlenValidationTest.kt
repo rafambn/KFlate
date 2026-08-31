@@ -29,7 +29,7 @@ class ZlibStoredBlockNlenValidationTest {
 
         // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZlibCompression header (CMF=0x78, FLG=0x9C)
+        zlib[0] = 0x78.toByte()  // ZLIB header (CMF=0x78, FLG=0x9C)
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -70,7 +70,7 @@ class ZlibStoredBlockNlenValidationTest {
 
         // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZlibCompression header
+        zlib[0] = 0x78.toByte()  // ZLIB header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -100,7 +100,7 @@ class ZlibStoredBlockNlenValidationTest {
 
         // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZlibCompression header
+        zlib[0] = 0x78.toByte()  // ZLIB header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -134,7 +134,7 @@ class ZlibStoredBlockNlenValidationTest {
 
         // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZlibCompression header
+        zlib[0] = 0x78.toByte()  // ZLIB header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -166,7 +166,7 @@ class ZlibStoredBlockNlenValidationTest {
 
         // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZlibCompression header
+        zlib[0] = 0x78.toByte()  // ZLIB header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 
@@ -200,7 +200,7 @@ class ZlibStoredBlockNlenValidationTest {
 
         // Wrap in ZlibCompression
         val zlib = ByteArray(2 + deflateStream.size + 4)
-        zlib[0] = 0x78.toByte()  // ZlibCompression header
+        zlib[0] = 0x78.toByte()  // ZLIB header
         zlib[1] = 0x9C.toByte()
         deflateStream.copyInto(zlib, 2)
 

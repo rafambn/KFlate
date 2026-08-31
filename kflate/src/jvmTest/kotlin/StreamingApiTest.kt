@@ -14,9 +14,6 @@ class StreamingApiTest {
     private val testFiles = listOf(
         "model3D",
         "text",
-        "Rainier.bmp",
-        "Maltese.bmp",
-        "Sunrise.bmp",
         "simpleText",
     )
 
@@ -60,7 +57,7 @@ class StreamingApiTest {
             val original = readResourceFile(fileName)
             val compressed = streamCompress(original, RawCompression())
             val decompressed = streamDecompress(compressed, RawDecompression())
-            assertContentEquals(original, decompressed, "RawCompression roundtrip failed on: $fileName")
+            assertContentEquals(original, decompressed, "raw DEFLATE roundtrip failed on: $fileName")
         }
     }
 

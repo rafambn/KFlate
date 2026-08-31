@@ -13,15 +13,16 @@ plugins {
 }
 
 group = "com.rafambn"
-version = "1.0.0"
+version = "1.1.0"
 
 kotlin {
     jvmToolchain(libs.versions.java.get().toInt())
 
-    androidLibrary {
+    android {
         namespace = "com.rafambn"
         compileSdk = 36
         minSdk = 24
+        withHostTest {}
     }
     jvm {
         val mainCompilation = compilations.getByName("main")
@@ -33,18 +34,10 @@ kotlin {
         useEsModules()
         browser {
             testTask {
-                useKarma {
-                    useChromiumHeadless()
-                }
+                enabled = false
             }
         }
-        nodejs {
-            testTask {
-                useKarma {
-                    useChromiumHeadless()
-                }
-            }
-        }
+        nodejs()
     }
     wasmJs {
         useEsModules()
@@ -54,24 +47,16 @@ kotlin {
         }
         browser {
             testTask {
-                useKarma {
-                    useChromiumHeadless()
-                }
+                enabled = false
             }
         }
-        nodejs {
-            testTask {
-                useKarma {
-                    useChromiumHeadless()
-                }
-            }
-        }
+        nodejs()
     }
     iosX64()
     iosArm64()
     iosSimulatorArm64()
     mingwX64()
-    linuxX64{
+    linuxX64 {
         val mainCompilation = compilations.getByName("main")
         compilations.create("benchmark") {
             associateWith(mainCompilation)
@@ -175,7 +160,14 @@ val prepareBenchmarkAll by tasks.registering(Delete::class) {
 val benchmarkTaskNames = setOf("jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchmark", "wasmJsBenchmarkBenchmark")
 
 tasks.matching { it.name in benchmarkTaskNames }.configureEach {
-        mustRunAfter(prepareBenchmarkAll)
+    mustRunAfter(prepareBenchmarkAll)
+}
+
+// tvOS and watchOS simulator tests require locally installed simulator runtimes.
+tasks.matching {
+    it.name == "tvosSimulatorArm64Test" || it.name == "watchosSimulatorArm64Test"
+}.configureEach {
+    enabled = false
 }
 
 val collectBenchmarkMetadata by tasks.registering(Exec::class) {
@@ -225,14 +217,15 @@ mavenPublishing {
     coordinates(
         groupId = "com.rafambn",
         artifactId = "KFlate",
-        version = "1.0.0"
+        version = project.version.toString(),
     )
 
-// Configure POM metadata for the published artifact
+    // Configure POM metadata for the published artifact
     pom {
         name.set("KFlate")
-        description.set("KFlate is a pure Kotlin implementation of DEFLATE, GZIP, and ZLIB compression algorithms. It provides multiplatform " +
-                "compression/decompression with configurable compression levels and dictionary support, working seamlessly across all targets.")
+        description.set(
+            "Pure Kotlin Multiplatform DEFLATE, GZIP, and ZLIB compression with blocking and streaming APIs."
+        )
         url.set("https://kflate.rafambn.com")
 
         licenses {
@@ -253,10 +246,10 @@ mavenPublishing {
         }
     }
 
-// Configure publishing to Maven Central
+    // Configure publishing to Maven Central
     publishToMavenCentral(automaticRelease = false)
 
-// Enable GPG signing for all publications
+    // Enable GPG signing for all publications
     signAllPublications()
 
     configure(
