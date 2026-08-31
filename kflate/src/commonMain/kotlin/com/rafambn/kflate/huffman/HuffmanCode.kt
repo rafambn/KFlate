@@ -1,28 +1,5 @@
 package com.rafambn.kflate.huffman
 
-internal data class HuffmanTable(
-    val baseLengths: ShortArray,
-    val reverseLookup: IntArray
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as HuffmanTable
-
-        if (!baseLengths.contentEquals(other.baseLengths)) return false
-        if (!reverseLookup.contentEquals(other.reverseLookup)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = baseLengths.contentHashCode()
-        result = 31 * result + reverseLookup.contentHashCode()
-        return result
-    }
-}
-
 internal fun generateHuffmanTable(extraBits: ByteArray, startValue: Int): HuffmanTable {
     val baseLengths = ShortArray(31)
     var currentStart = startValue
@@ -141,33 +118,6 @@ internal fun validateHuffmanCodeLengths(codeLengths: ByteArray, maxBits: Int): B
 
     // Valid only if all space used (complete tree)
     return codeSpace == 0
-}
-
-internal data class HuffmanNode(
-    val symbol: Int,
-    val frequency: Int,
-    var leftChild: HuffmanNode? = null,
-    var rightChild: HuffmanNode? = null
-)
-
-internal data class HuffmanTreeResult(val tree: ByteArray, val maxBits: Int) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as HuffmanTreeResult
-
-        if (maxBits != other.maxBits) return false
-        if (!tree.contentEquals(other.tree)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = maxBits
-        result = 31 * result + tree.contentHashCode()
-        return result
-    }
 }
 
 internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int): HuffmanTreeResult {

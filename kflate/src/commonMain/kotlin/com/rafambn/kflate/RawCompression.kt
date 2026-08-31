@@ -1,11 +1,14 @@
 package com.rafambn.kflate
 
 /** Options for raw DEFLATE compression. */
-data class RawCompression(
+class RawCompression(
     override val level: Int = 6,
     override val mem: Int = 8,
-    override val dictionary: ByteArray? = null,
+    dictionary: ByteArray? = null,
 ) : CompressionOptions {
+    private val storedDictionary = dictionary?.copyOf()
+    override val dictionary get() = storedDictionary?.copyOf()
+
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
         require(mem in 0..12) { "mem must be in range 0..12, but was $mem" }

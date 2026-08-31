@@ -3,16 +3,22 @@ package com.rafambn.kflate
 import com.rafambn.kflate.util.toIsoStringBytes
 
 /** Options for RFC 1952 GZIP compression. */
-data class GzipCompression(
+class GzipCompression(
     override val level: Int = 6,
     override val mem: Int = 8,
-    override val dictionary: ByteArray? = null,
+    dictionary: ByteArray? = null,
     val filename: String? = null,
     val mtime: Any? = null,
     val comment: String? = null,
-    val extraFields: Map<String, ByteArray>? = null,
+    extraFields: Map<String, ByteArray>? = null,
     val includeHeaderCrc: Boolean = false,
 ) : CompressionOptions {
+    private val storedDictionary = dictionary?.copyOf()
+    override val dictionary get() = storedDictionary?.copyOf()
+
+    private val storedExtraFields = extraFields?.mapValues { (_, value) -> value.copyOf() }
+    val extraFields get() = storedExtraFields?.mapValues { (_, value) -> value.copyOf() }
+
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
         require(mem in 0..12) { "mem must be in range 0..12, but was $mem" }
@@ -49,7 +55,7 @@ data class GzipCompression(
             filename == other.filename &&
             mtime == other.mtime &&
             comment == other.comment &&
-            extraFields == other.extraFields &&
+            extraFields.contentEquals(other.extraFields) &&
             includeHeaderCrc == other.includeHeaderCrc
     }
 
@@ -60,7 +66,18 @@ data class GzipCompression(
         result = 31 * result + (filename?.hashCode() ?: 0)
         result = 31 * result + (mtime?.hashCode() ?: 0)
         result = 31 * result + (comment?.hashCode() ?: 0)
-        result = 31 * result + (extraFields?.hashCode() ?: 0)
+        result = 31 * result + extraFields.contentHash()
         return 31 * result + includeHeaderCrc.hashCode()
     }
+}
+
+private fun Map<String, ByteArray>?.contentEquals(other: Map<String, ByteArray>?): Boolean {
+    if (this == null || other == null) return this === other
+    if (keys != other.keys) return false
+    return all { (key, value) -> value.contentEquals(other.getValue(key)) }
+}
+
+private fun Map<String, ByteArray>?.contentHash(): Int {
+    if (this == null) return 0
+    return entries.sumOf { (key, value) -> key.hashCode() xor value.contentHashCode() }
 }

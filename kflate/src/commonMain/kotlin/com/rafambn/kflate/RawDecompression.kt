@@ -1,9 +1,12 @@
 package com.rafambn.kflate
 
 /** Options for raw DEFLATE decompression. */
-data class RawDecompression(
-    override val dictionary: ByteArray? = null,
+class RawDecompression(
+    dictionary: ByteArray? = null,
 ) : DecompressionOptions {
+    private val storedDictionary = dictionary?.copyOf()
+    override val dictionary get() = storedDictionary?.copyOf()
+
     init {
         require(dictionary == null || dictionary.size <= 32_768) {
             "dictionary must be 32kB or smaller, but was ${dictionary?.size} bytes"

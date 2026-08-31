@@ -1,7 +1,8 @@
 package com.rafambn.kflate.error
 
+/** Exception thrown when compressed data is invalid or violates a configured safety limit. */
 class FlateError(val code: FlateErrorCode) : Exception(code.message)
 
-fun createFlateError(errorCode: FlateErrorCode): Nothing {
+internal fun createFlateError(errorCode: FlateErrorCode): Nothing {
     throw FlateError(errorCode)
 }

@@ -1,9 +1,12 @@
 package com.rafambn.kflate
 
 /** Options for RFC 1952 GZIP decompression. */
-data class GzipDecompression(
-    override val dictionary: ByteArray? = null,
+class GzipDecompression(
+    dictionary: ByteArray? = null,
 ) : DecompressionOptions {
+    private val storedDictionary = dictionary?.copyOf()
+    override val dictionary get() = storedDictionary?.copyOf()
+
     init {
         require(dictionary == null || dictionary.size <= 32_768) {
             "dictionary must be 32kB or smaller, but was ${dictionary?.size} bytes"
