@@ -3,6 +3,7 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
@@ -176,6 +177,12 @@ val benchmarkTaskNames = setOf("jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchm
 
 tasks.matching { it.name in benchmarkTaskNames }.configureEach {
         mustRunAfter(prepareBenchmarkAll)
+}
+
+tasks.withType<AbstractArchiveTask>().configureEach {
+    from(rootProject.file("LICENSE")) {
+        into("META-INF")
+    }
 }
 
 val collectBenchmarkMetadata by tasks.registering(Exec::class) {
