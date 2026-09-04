@@ -1,6 +1,5 @@
 package com.rafambn.kflate.decompression
 
-import com.rafambn.kflate.Raw
 import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
@@ -11,10 +10,7 @@ import com.rafambn.kflate.streaming.inflateStreamChunk
 import com.rafambn.kflate.streaming.updateHistory
 import kotlinx.io.RawSink
 import kotlinx.io.RawSource
-import kotlinx.io.Sink
-import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.write
 
 internal fun decompressRaw(data: ByteArray, type: Raw): ByteArray {
     return inflate(data, InflateState(validationMode = 2), null, type.dictionary)

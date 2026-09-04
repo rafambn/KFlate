@@ -1,7 +1,7 @@
 package com.rafambn.kflate.benchmark
 
 import com.rafambn.kflate.KFlate
-import com.rafambn.kflate.RAW
+import com.rafambn.kflate.compression.Raw
 import dev.karmakrafts.kompress.Deflater
 import dev.karmakrafts.kompress.Inflater
 import kotlinx.benchmark.Benchmark
@@ -23,7 +23,7 @@ open class KompressBaselineBenchmarks : RawBenchmarkState() {
             libraryName = "Kompress",
             reportPrefix = "BENCHMARK_BASELINE_CORPUS",
             compress = { Deflater.deflate(it, raw = true) },
-            decompressionInput = { KFlate.compress(it, RAW()) },
+            decompressionInput = { KFlate.compress(it, Raw()) },
             decompress = { Inflater.inflate(it, raw = true) }
         )
     }

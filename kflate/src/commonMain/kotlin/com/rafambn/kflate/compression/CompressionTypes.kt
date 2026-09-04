@@ -1,7 +1,7 @@
-
-package com.rafambn.kflate
+package com.rafambn.kflate.compression
 
 import com.rafambn.kflate.util.toIsoStringBytes
+import kotlin.collections.iterator
 
 /**
  * Base interface for compression configuration options.
@@ -48,7 +48,7 @@ sealed interface CompressionType {
     val dictionary: ByteArray?
 }
 
-data class RAW(
+data class Raw(
     override val level: Int = 6,
     override val mem: Int = 8,
     override val dictionary: ByteArray? = null
@@ -65,7 +65,7 @@ data class RAW(
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
-        other as RAW
+        other as Raw
 
         if (level != other.level) return false
         if (mem != other.mem) return false
@@ -82,7 +82,7 @@ data class RAW(
     }
 }
 
-data class GZIP(
+data class Gzip(
     override val level: Int = 6,
     override val mem: Int = 8,
     override val dictionary: ByteArray? = null,
@@ -121,7 +121,7 @@ data class GZIP(
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
-        other as GZIP
+        other as Gzip
 
         if (level != other.level) return false
         if (mem != other.mem) return false
@@ -148,7 +148,7 @@ data class GZIP(
     }
 }
 
-data class ZLIB(
+data class Zlib(
     override val level: Int = 6,
     override val mem: Int = 8,
     override val dictionary: ByteArray? = null
@@ -165,7 +165,7 @@ data class ZLIB(
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
-        other as ZLIB
+        other as Zlib
 
         if (level != other.level) return false
         if (mem != other.mem) return false

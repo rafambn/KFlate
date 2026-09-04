@@ -2,10 +2,10 @@
 
 package com.rafambn.kflate.algorithm
 
-import com.rafambn.kflate.CompressionType
-import com.rafambn.kflate.RAW
-import com.rafambn.kflate.GZIP
-import com.rafambn.kflate.ZLIB
+import com.rafambn.kflate.compression.CompressionType
+import com.rafambn.kflate.compression.Raw
+import com.rafambn.kflate.compression.Gzip
+import com.rafambn.kflate.compression.Zlib
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_BASE
@@ -563,7 +563,7 @@ internal fun deflate(
 
 internal fun deflateWithOptions(
     inputData: ByteArray,
-    type: CompressionType = RAW(),
+    type: CompressionType = Raw(),
     prefixSize: Int,
     suffixSize: Int,
     deflateState: DeflateState? = null
@@ -572,19 +572,19 @@ internal fun deflateWithOptions(
     var workingData = inputData
 
     val level = when (type) {
-        is RAW -> type.level
-        is GZIP -> type.level
-        is ZLIB -> type.level
+        is Raw -> type.level
+        is Gzip -> type.level
+        is Zlib -> type.level
     }
     val mem = when (type) {
-        is RAW -> type.mem
-        is GZIP -> type.mem
-        is ZLIB -> type.mem
+        is Raw -> type.mem
+        is Gzip -> type.mem
+        is Zlib -> type.mem
     }
     val dictionary = when (type) {
-        is RAW -> type.dictionary
-        is GZIP -> type.dictionary
-        is ZLIB -> type.dictionary
+        is Raw -> type.dictionary
+        is Gzip -> type.dictionary
+        is Zlib -> type.dictionary
     }
 
     if (workingState == null) {

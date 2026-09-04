@@ -1,6 +1,8 @@
 
 package com.rafambn.kflate
 
+import com.rafambn.kflate.compression.Raw as CompressionRaw
+import com.rafambn.kflate.decompression.Raw as DecompressionRaw
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertFailsWith
@@ -11,18 +13,18 @@ class BufferSizeValidationTest {
     fun testMemoryLevelValidation() {
         // Should fail if mem < 0
         assertFailsWith<IllegalArgumentException> {
-            RAW(mem = -1)
+            CompressionRaw(mem = -1)
         }
 
         // Should fail if mem > 12
         assertFailsWith<IllegalArgumentException> {
-            RAW(mem = 13)
+            CompressionRaw(mem = 13)
         }
 
         // Should succeed if mem is in valid range
-        RAW(mem = 0)
-        RAW(mem = 8)
-        RAW(mem = 12)
+        CompressionRaw(mem = 0)
+        CompressionRaw(mem = 8)
+        CompressionRaw(mem = 12)
     }
 
     @Test
@@ -32,9 +34,9 @@ class BufferSizeValidationTest {
         val memLevels = listOf(0, 4, 8, 12)
 
         for (memLevel in memLevels) {
-            val type = RAW(mem = memLevel)
+            val type = CompressionRaw(mem = memLevel)
             val compressed = KFlate.compress(originalData, type)
-            val decompressed = KFlate.decompress(compressed, Raw())
+            val decompressed = KFlate.decompress(compressed, DecompressionRaw())
             assertContentEquals(originalData, decompressed, "Failed for mem $memLevel")
         }
     }

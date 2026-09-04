@@ -1,10 +1,8 @@
 package com.rafambn.kflate.decompression
 
-import com.rafambn.kflate.Gzip
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.error.createFlateError
-import com.rafambn.kflate.format.GzipMemberResult
 import com.rafambn.kflate.format.processSingleGzipMember
 import com.rafambn.kflate.format.writeGzipStart
 import com.rafambn.kflate.streaming.STREAM_CHUNK_SIZE
@@ -15,10 +13,7 @@ import com.rafambn.kflate.streaming.updateHistory
 import com.rafambn.kflate.util.readFourBytes
 import kotlinx.io.RawSink
 import kotlinx.io.RawSource
-import kotlinx.io.Sink
-import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.write
 
 internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
     if (data.size < 20) {

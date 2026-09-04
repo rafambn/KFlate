@@ -1,8 +1,8 @@
 package com.rafambn.kflate.benchmark
 
 import com.rafambn.kflate.KFlate
-import com.rafambn.kflate.RAW
-import com.rafambn.kflate.Raw
+import com.rafambn.kflate.compression.Raw as CompressionRaw
+import com.rafambn.kflate.decompression.Raw as DecompressionRaw
 import kotlinx.benchmark.Benchmark
 import kotlinx.benchmark.BenchmarkMode
 import kotlinx.benchmark.BenchmarkTimeUnit
@@ -21,19 +21,19 @@ open class CompressionBenchmarks : RawBenchmarkState() {
         setupRawBenchmark(
             libraryName = "KFlate",
             reportPrefix = "BENCHMARK_CORPUS",
-            compress = { KFlate.compress(it, RAW()) },
-            decompressionInput = { KFlate.compress(it, RAW()) },
-            decompress = { KFlate.decompress(it, Raw()) }
+            compress = { KFlate.compress(it, CompressionRaw()) },
+            decompressionInput = { KFlate.compress(it, CompressionRaw()) },
+            decompress = { KFlate.decompress(it, DecompressionRaw()) }
         )
     }
 
     @Benchmark
     open fun rawDeflateCompression(): ByteArray {
-        return KFlate.compress(input, RAW())
+        return KFlate.compress(input, CompressionRaw())
     }
 
     @Benchmark
     open fun rawDeflateDecompression(): ByteArray {
-        return KFlate.decompress(compressed, Raw())
+        return KFlate.decompress(compressed, DecompressionRaw())
     }
 }

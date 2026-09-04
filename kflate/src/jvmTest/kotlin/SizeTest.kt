@@ -1,6 +1,9 @@
 
 package com.rafambn.kflate
 
+import com.rafambn.kflate.compression.Gzip
+import com.rafambn.kflate.compression.Raw
+import com.rafambn.kflate.compression.Zlib
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
@@ -29,7 +32,7 @@ class SizeTest {
         println("Flate Size Test")
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
-            val compressedData = KFlate.compress(originalData, RAW())
+            val compressedData = KFlate.compress(originalData, Raw())
 
             val deflater = Deflater(6, true)
             val outputStream = ByteArrayOutputStream()
@@ -50,7 +53,7 @@ class SizeTest {
         println("Gzip Size Test")
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
-            val compressedData = KFlate.compress(originalData, GZIP())
+            val compressedData = KFlate.compress(originalData, Gzip())
 
             val outputStream = ByteArrayOutputStream()
             val gzipOutputStream = GZIPOutputStream(outputStream)
@@ -70,7 +73,7 @@ class SizeTest {
         println("Zlib Size Test")
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
-            val compressedData = KFlate.compress(originalData, ZLIB())
+            val compressedData = KFlate.compress(originalData, Zlib())
 
             val deflater = Deflater(Deflater.DEFAULT_COMPRESSION)
             val outputStream = ByteArrayOutputStream()

@@ -2,13 +2,13 @@
 
 package com.rafambn.kflate.demo
 
-import com.rafambn.kflate.GZIP
-import com.rafambn.kflate.Gzip
+import com.rafambn.kflate.compression.Gzip as CompressionGzip
+import com.rafambn.kflate.decompression.Gzip as DecompressionGzip
 import com.rafambn.kflate.KFlate
-import com.rafambn.kflate.RAW
-import com.rafambn.kflate.Raw
-import com.rafambn.kflate.ZLIB
-import com.rafambn.kflate.Zlib
+import com.rafambn.kflate.compression.Raw as CompressionRaw
+import com.rafambn.kflate.decompression.Raw as DecompressionRaw
+import com.rafambn.kflate.compression.Zlib as CompressionZlib
+import com.rafambn.kflate.decompression.Zlib as DecompressionZlib
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
@@ -42,9 +42,9 @@ fun runCompress(format: String, level: Int): Int {
         outputData = KFlate.compress(
             inputData,
             when (format) {
-                "raw"  -> RAW(level = level)
-                "gzip" -> GZIP(level = level)
-                else   -> ZLIB(level = level)
+                "raw"  -> CompressionRaw(level = level)
+                "gzip" -> CompressionGzip(level = level)
+                else   -> CompressionZlib(level = level)
             }
         )
         outputData.size
@@ -61,9 +61,9 @@ fun runDecompress(format: String): Int {
         outputData = KFlate.decompress(
             inputData,
             when (format) {
-                "raw"  -> Raw()
-                "gzip" -> Gzip()
-                else   -> Zlib()
+                "raw"  -> DecompressionRaw()
+                "gzip" -> DecompressionGzip()
+                else   -> DecompressionZlib()
             }
         )
         outputData.size

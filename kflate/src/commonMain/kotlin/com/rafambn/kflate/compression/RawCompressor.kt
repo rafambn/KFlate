@@ -1,6 +1,5 @@
 package com.rafambn.kflate.compression
 
-import com.rafambn.kflate.RAW
 import com.rafambn.kflate.algorithm.deflateWithOptions
 import com.rafambn.kflate.streaming.DeflateState
 import com.rafambn.kflate.streaming.appendBytes
@@ -11,13 +10,12 @@ import kotlinx.io.RawSource
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.write
 
-internal fun compressRaw(data: ByteArray, type: RAW): ByteArray {
+internal fun compressRaw(data: ByteArray, type: Raw): ByteArray {
     return deflateWithOptions(data, type, 0, 0)
 }
 
-internal fun compressStreamRaw(type: RAW, source: RawSource, sink: RawSink) {
+internal fun compressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
     val bufferedSource = source.buffered()
     val bufferedSink = sink.buffered()
 
@@ -27,7 +25,7 @@ internal fun compressStreamRaw(type: RAW, source: RawSource, sink: RawSink) {
 }
 
 private fun deflateStream(
-    type: RAW,
+    type: Raw,
     source: Source,
     sink: Sink,
     onInput: ((ByteArray) -> Unit)?

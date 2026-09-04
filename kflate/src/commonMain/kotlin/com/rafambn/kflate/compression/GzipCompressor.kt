@@ -1,6 +1,5 @@
 package com.rafambn.kflate.compression
 
-import com.rafambn.kflate.GZIP
 import com.rafambn.kflate.algorithm.deflateWithOptions
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.format.getGzipHeaderSize
@@ -15,9 +14,8 @@ import kotlinx.io.RawSource
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.write
 
-internal fun compressGzip(data: ByteArray, type: GZIP): ByteArray {
+internal fun compressGzip(data: ByteArray, type: Gzip): ByteArray {
     val crc = Crc32Checksum()
     val dataLength = data.size
     crc.update(data)
@@ -29,7 +27,7 @@ internal fun compressGzip(data: ByteArray, type: GZIP): ByteArray {
     return deflatedData
 }
 
-internal fun compressStreamGzip(type: GZIP, source: RawSource, sink: RawSink) {
+internal fun compressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) {
     val bufferedSource = source.buffered()
     val bufferedSink = sink.buffered()
 
@@ -54,7 +52,7 @@ internal fun compressStreamGzip(type: GZIP, source: RawSource, sink: RawSink) {
 }
 
 private fun deflateStream(
-    type: GZIP,
+    type: Gzip,
     source: Source,
     sink: Sink,
     onInput: ((ByteArray) -> Unit)?

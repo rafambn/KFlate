@@ -1,5 +1,7 @@
 package com.rafambn.kflate
 
+import com.rafambn.kflate.compression.Gzip as CompressionGzip
+import com.rafambn.kflate.decompression.Gzip as DecompressionGzip
 import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.format.getGzipHeaderSize
@@ -13,17 +15,17 @@ class GzipFhcrcValidationTest {
     @Test
     fun testValidFhcrc() {
         val data = "Hello World".encodeToByteArray()
-        val gzip = GZIP(includeHeaderCrc = true)
+        val gzip = CompressionGzip(includeHeaderCrc = true)
         val compressed = KFlate.compress(data, gzip)
 
-        val decompressed = KFlate.decompress(compressed, Gzip())
+        val decompressed = KFlate.decompress(compressed, DecompressionGzip())
         assertEquals("Hello World", decompressed.decodeToString())
     }
 
     @Test
     fun testCorruptedHeaderWithFhcrc() {
         val data = "Hello World".encodeToByteArray()
-        val gzip = GZIP(includeHeaderCrc = true)
+        val gzip = CompressionGzip(includeHeaderCrc = true)
         val compressed = KFlate.compress(data, gzip).toMutableList()
 
         // Corrupt a byte in the header (e.g., byte 9 is OS, byte 8 is XFL)
@@ -31,14 +33,14 @@ class GzipFhcrcValidationTest {
         compressed[5] = (compressed[5] + 1).toByte()
 
         assertFailsWith<FlateError> {
-            KFlate.decompress(compressed.toByteArray(), Gzip())
+            KFlate.decompress(compressed.toByteArray(), DecompressionGzip())
         }
     }
 
     @Test
     fun testCorruptedFhcrcValue() {
         val data = "Hello World".encodeToByteArray()
-        val gzip = GZIP(includeHeaderCrc = true)
+        val gzip = CompressionGzip(includeHeaderCrc = true)
         val compressed = KFlate.compress(data, gzip).toMutableList()
 
         // The FHCRC is the last 2 bytes of the header.
@@ -52,14 +54,14 @@ class GzipFhcrcValidationTest {
         compressed[11] = (compressed[11] + 1).toByte()
 
         assertFailsWith<FlateError> {
-            KFlate.decompress(compressed.toByteArray(), Gzip())
+            KFlate.decompress(compressed.toByteArray(), DecompressionGzip())
         }
     }
 
     @Test
     fun testTruncatedFhcrc() {
         val data = "Hello World".encodeToByteArray()
-        val gzip = GZIP(includeHeaderCrc = true)
+        val gzip = CompressionGzip(includeHeaderCrc = true)
         val compressed = KFlate.compress(data, gzip)
 
         // Truncate the last byte of the FHCRC
@@ -71,7 +73,7 @@ class GzipFhcrcValidationTest {
         val truncated = compressed.copyOfRange(0, 11)
 
         val error = assertFailsWith<FlateError> {
-            KFlate.decompress(truncated, Gzip())
+            KFlate.decompress(truncated, DecompressionGzip())
         }
         assertEquals(FlateErrorCode.UNEXPECTED_EOF, error.code)
     }

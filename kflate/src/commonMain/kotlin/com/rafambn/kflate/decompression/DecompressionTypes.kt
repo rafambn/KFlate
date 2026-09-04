@@ -1,5 +1,4 @@
-
-package com.rafambn.kflate
+package com.rafambn.kflate.decompression
 
 /**
  * Base interface for decompression configuration options.

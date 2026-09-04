@@ -1,6 +1,12 @@
 
 package com.rafambn.kflate
 
+import com.rafambn.kflate.compression.Gzip as CompressionGzip
+import com.rafambn.kflate.compression.Raw as CompressionRaw
+import com.rafambn.kflate.compression.Zlib as CompressionZlib
+import com.rafambn.kflate.decompression.Gzip as DecompressionGzip
+import com.rafambn.kflate.decompression.Raw as DecompressionRaw
+import com.rafambn.kflate.decompression.Zlib as DecompressionZlib
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.zip.*
@@ -55,7 +61,7 @@ class BlockingValidityTest {
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
 
-            val compressedData = KFlate.compress(originalData, RAW())
+            val compressedData = KFlate.compress(originalData, CompressionRaw())
 
             val inflater = Inflater(true)
             val inputStream = ByteArrayInputStream(compressedData)
@@ -86,7 +92,7 @@ class BlockingValidityTest {
 
             val compressedData = outputStream.toByteArray()
 
-            val decompressedData = KFlate.decompress(compressedData, Raw())
+            val decompressedData = KFlate.decompress(compressedData, DecompressionRaw())
 
             assertContentEquals(originalData, decompressedData, "Failed on file: $fileName")
 
@@ -101,7 +107,7 @@ class BlockingValidityTest {
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
 
-            val compressedData = KFlate.compress(originalData, GZIP())
+            val compressedData = KFlate.compress(originalData, CompressionGzip())
 
             val inputStream = ByteArrayInputStream(compressedData)
             val gzipInputStream = GZIPInputStream(inputStream)
@@ -128,7 +134,7 @@ class BlockingValidityTest {
 
             val compressedData = outputStream.toByteArray()
 
-            val decompressedData = KFlate.decompress(compressedData, Gzip())
+            val decompressedData = KFlate.decompress(compressedData, DecompressionGzip())
 
             assertContentEquals(originalData, decompressedData, "Failed on file: $fileName")
         }
@@ -140,22 +146,22 @@ class BlockingValidityTest {
         val testData = readResourceFile("simpleText")
 
         // Test level 0-1: should set XFL = 4 (max speed)
-        val compressed0 = KFlate.compress(testData, GZIP(level = 0))
+        val compressed0 = KFlate.compress(testData, CompressionGzip(level = 0))
         assert(compressed0[8] == 4.toByte()) { "Level 0 should set XFL = 4 (max speed)" }
 
-        val compressed1 = KFlate.compress(testData, GZIP(level = 1))
+        val compressed1 = KFlate.compress(testData, CompressionGzip(level = 1))
         assert(compressed1[8] == 4.toByte()) { "Level 1 should set XFL = 4 (max speed)" }
 
         // Test levels 2-8: should set XFL = 0 (default)
         for (level in 2..8) {
-            val compressed = KFlate.compress(testData, GZIP(level = level))
+            val compressed = KFlate.compress(testData, CompressionGzip(level = level))
             assert(compressed[8] == 0.toByte()) {
                 "Level $level should set XFL = 0 (default), but got ${compressed[8]}"
             }
         }
 
         // Test level 9: should set XFL = 2 (max compression)
-        val compressed9 = KFlate.compress(testData, GZIP(level = 9))
+        val compressed9 = KFlate.compress(testData, CompressionGzip(level = 9))
         assert(compressed9[8] == 2.toByte()) { "Level 9 should set XFL = 2 (max compression)" }
     }
 
@@ -166,7 +172,7 @@ class BlockingValidityTest {
         for (fileName in testFiles) {
             val originalData = readResourceFile(fileName)
 
-            val compressedData = KFlate.compress(originalData, ZLIB())
+            val compressedData = KFlate.compress(originalData, CompressionZlib())
 
             val inflater = Inflater()
             val inputStream = ByteArrayInputStream(compressedData)
@@ -197,7 +203,7 @@ class BlockingValidityTest {
 
             val compressedData = outputStream.toByteArray()
 
-            val decompressedData = KFlate.decompress(compressedData, Zlib())
+            val decompressedData = KFlate.decompress(compressedData, DecompressionZlib())
 
             assertContentEquals(originalData, decompressedData, "Failed on file: $fileName")
 
@@ -212,10 +218,10 @@ class BlockingValidityTest {
         val originalData = readResourceFile("simpleText")
 
         // Compress with KFlate (includes valid ADLER32)
-        val compressedData = KFlate.compress(originalData, ZLIB())
+        val compressedData = KFlate.compress(originalData, CompressionZlib())
 
         // Should decompress successfully without throwing error
-        val decompressedData = KFlate.decompress(compressedData, Zlib())
+        val decompressedData = KFlate.decompress(compressedData, DecompressionZlib())
 
         assertContentEquals(originalData, decompressedData)
     }
@@ -225,7 +231,7 @@ class BlockingValidityTest {
         val originalData = readResourceFile("simpleText")
 
         // Compress with KFlate
-        val compressedData = KFlate.compress(originalData, ZLIB()).toMutableList()
+        val compressedData = KFlate.compress(originalData, CompressionZlib()).toMutableList()
 
         // Corrupt the ADLER32 checksum (last 4 bytes)
         val checksumStartIndex = compressedData.size - 4
@@ -233,7 +239,7 @@ class BlockingValidityTest {
 
         // Should throw error due to checksum mismatch
         try {
-            KFlate.decompress(compressedData.toByteArray(), Zlib())
+            KFlate.decompress(compressedData.toByteArray(), DecompressionZlib())
             assert(false) { "Expected checksum validation error but none was thrown" }
         } catch (e: Exception) {
             assert(e.message?.contains("checksum", ignoreCase = true) == true) {
@@ -247,7 +253,7 @@ class BlockingValidityTest {
         val originalData = readResourceFile("simpleText")
 
         // Compress with KFlate
-        val compressedData = KFlate.compress(originalData, ZLIB()).toMutableList()
+        val compressedData = KFlate.compress(originalData, CompressionZlib()).toMutableList()
 
         // Corrupt the compressed data (not the checksum)
         // Skip header (2 bytes) and corrupt somewhere in the middle
@@ -257,7 +263,7 @@ class BlockingValidityTest {
 
         // Should throw error due to checksum mismatch
         try {
-            KFlate.decompress(compressedData.toByteArray(), Zlib())
+            KFlate.decompress(compressedData.toByteArray(), DecompressionZlib())
             assert(false) { "Expected checksum validation error but none was thrown" }
         } catch (e: Exception) {
             assert(e.message?.contains("checksum", ignoreCase = true) == true) {
@@ -276,7 +282,7 @@ class BlockingValidityTest {
         )
 
         // Should decompress successfully
-        val decompressedData = KFlate.decompress(emptyData, Zlib())
+        val decompressedData = KFlate.decompress(emptyData, DecompressionZlib())
 
         assertContentEquals(ByteArray(0), decompressedData)
     }
