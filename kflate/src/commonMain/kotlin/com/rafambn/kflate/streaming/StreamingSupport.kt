@@ -53,7 +53,7 @@ internal fun inflateStreamChunk(
     return try {
         inflate(input, state, history, maxOutputSize)
     } catch (e: com.rafambn.kflate.error.FlateError) {
-        if (!sourceExhausted) {
+        if (e.code == com.rafambn.kflate.error.FlateErrorCode.UNEXPECTED_EOF && !sourceExhausted) {
             restoreInflateState(state, snapshot)
             null
         } else {
