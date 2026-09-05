@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalJsExport::class)
+@file:OptIn(ExperimentalJsExport::class, ExperimentalWasmJsInterop::class)
 
 package com.rafambn.kflate.demo
 
@@ -10,6 +10,7 @@ import com.rafambn.kflate.decompression.Raw as DecompressionRaw
 import com.rafambn.kflate.compression.Zlib as CompressionZlib
 import com.rafambn.kflate.decompression.Zlib as DecompressionZlib
 import kotlin.js.ExperimentalJsExport
+import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.JsExport
 
 // Kotlin/WASM JS interop helpers — these run as inline JS, called from WASM
@@ -32,7 +33,9 @@ private var lastError = ""
 @JsExport
 fun loadInput(arr: JsAny) {
     val len = jsLength(arr)
+    require(len <= MAX_INPUT_SIZE) { "Input exceeds the 64 MiB demo limit" }
     inputData = ByteArray(len) { i -> jsGet(arr, i).toByte() }
+    outputData = ByteArray(0)
 }
 
 @JsExport
@@ -42,15 +45,18 @@ fun runCompress(format: String, level: Int): Int {
         outputData = KFlate.compress(
             inputData,
             when (format) {
-                "raw"  -> CompressionRaw(level = level)
+                "raw" -> CompressionRaw(level = level)
                 "gzip" -> CompressionGzip(level = level)
-                else   -> CompressionZlib(level = level)
+                "zlib" -> CompressionZlib(level = level)
+                else -> error("Unsupported format: $format")
             }
         )
         outputData.size
     } catch (e: Exception) {
         lastError = e.message ?: "Unknown error"
         -1
+    } finally {
+        inputData = ByteArray(0)
     }
 }
 
@@ -61,15 +67,18 @@ fun runDecompress(format: String): Int {
         outputData = KFlate.decompress(
             inputData,
             when (format) {
-                "raw"  -> DecompressionRaw()
+                "raw" -> DecompressionRaw()
                 "gzip" -> DecompressionGzip()
-                else   -> DecompressionZlib()
+                "zlib" -> DecompressionZlib()
+                else -> error("Unsupported format: $format")
             }
         )
         outputData.size
     } catch (e: Exception) {
         lastError = e.message ?: "Unknown error"
         -1
+    } finally {
+        inputData = ByteArray(0)
     }
 }
 
@@ -79,8 +88,11 @@ fun getOutput(): JsAny {
     for (i in outputData.indices) {
         jsSet(arr, i, outputData[i].toInt() and 0xFF)
     }
+    outputData = ByteArray(0)
     return arr
 }
 
 @JsExport
 fun getLastError(): String = lastError
+
+private const val MAX_INPUT_SIZE = 64 * 1_024 * 1_024

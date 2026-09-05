@@ -409,9 +409,6 @@
     const workerSrc = `
 import * as kflate from '${BASE_URL}kflate-demo.mjs';
 
-// Run Kotlin top-level initializers (required before calling any Kotlin exports)
-kflate._initialize();
-
 // Signal that the WASM module is initialised (top-level await has resolved)
 self.postMessage({ type: 'ready' });
 
@@ -451,22 +448,39 @@ self.onmessage = ({ data: msg }) => {
         updateBtn();
         return;
       }
-      const cb = pending.get(data.id);
-      if (cb) { pending.delete(data.id); cb(data); }
+      const request = pending.get(data.id);
+      if (request) {
+        pending.delete(data.id);
+        request.resolve(data);
+      }
     };
 
-    worker.onerror = (e) => {
+    function failWorker(message) {
+      wasmReady = false;
       dot.className = 'dot error';
-      statusText.textContent = 'WASM load failed';
-      showError('Failed to initialise WebAssembly: ' + (e.message || 'unknown error'));
-    };
+      statusText.textContent = 'WASM unavailable';
+      for (const { reject } of pending.values()) reject(new Error(message));
+      pending.clear();
+      showError(message);
+      updateBtn();
+    }
+
+    worker.onerror = e => failWorker(
+      'WebAssembly worker failed: ' + (e.message || 'unknown error')
+    );
+    worker.onmessageerror = () => failWorker('The WebAssembly worker returned an unreadable response.');
 
     function callWorker(msg) {
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         const id = nextId++;
-        pending.set(id, resolve);
+        pending.set(id, { resolve, reject });
         const transfer = msg.input instanceof ArrayBuffer ? [msg.input] : [];
-        worker.postMessage({ ...msg, id }, transfer);
+        try {
+          worker.postMessage({ ...msg, id }, transfer);
+        } catch (error) {
+          pending.delete(id);
+          reject(error);
+        }
       });
     }
 
@@ -508,7 +522,7 @@ self.onmessage = ({ data: msg }) => {
     });
 
     // ── File drag / drop / pick ───────────────────────────────────────────────
-    const MAX_BYTES = 500 * 1024 * 1024; // 500 MB
+    const MAX_INPUT_BYTES = 64 * 1024 * 1024;
 
     dropZone.addEventListener('click', () => fileInputEl.click());
 
@@ -532,8 +546,9 @@ self.onmessage = ({ data: msg }) => {
 
     function setFile(f) {
       hideError();
-      if (f.size > MAX_BYTES) {
-        showError(`File is too large (${fmtSize(f.size)}). Maximum allowed size is 500 MB.`);
+      if (f.size > MAX_INPUT_BYTES) {
+        clearSelectedFile();
+        showError(`File is too large (${fmtSize(f.size)}). Maximum allowed size is 64 MB.`);
         return;
       }
       selectedFile = f;
@@ -545,43 +560,54 @@ self.onmessage = ({ data: msg }) => {
       updateBtn();
     }
 
+    function clearSelectedFile() {
+      selectedFile = null;
+      fileInputEl.value = '';
+      dropHint.style.display = '';
+      fileNameEl.style.display = 'none';
+      fileSizeEl.style.display = 'none';
+      updateBtn();
+    }
+
     // ── Process ───────────────────────────────────────────────────────────────
     processBtn.addEventListener('click', async () => {
       if (!selectedFile || !wasmReady) return;
       hideError();
       setProcessing(true);
 
+      const file = selectedFile;
+      const action = mode;
+      const format = document.querySelector('input[name=format]:checked').value;
+      const level = parseInt(levelInput.value, 10);
       const t0 = performance.now();
       try {
-        const buf = await selectedFile.arrayBuffer();
-        const format = document.querySelector('input[name=format]:checked').value;
-        const level  = parseInt(levelInput.value, 10);
+        const buf = await file.arrayBuffer();
 
-        const reply = await callWorker({ action: mode, input: buf, format, level });
+        const reply = await callWorker({ action, input: buf, format, level });
 
         if (reply.error) {
-          showErrorModal(reply.error);
+          showErrorModal(reply.error, action);
           return;
         }
 
         const elapsed = performance.now() - t0;
-        showResult(reply.result, selectedFile.size, reply.result.byteLength, elapsed, selectedFile.name, format);
+        showResult(reply.result, file.size, reply.result.byteLength, elapsed, file.name, format, action);
       } catch (e) {
-        showErrorModal(e.message || String(e));
+        showErrorModal(e.message || String(e), action);
       } finally {
         setProcessing(false);
       }
     });
 
     // ── Result modal ──────────────────────────────────────────────────────────
-    function showResult(buffer, inBytes, outBytes, ms, origName, format) {
+    function showResult(buffer, inBytes, outBytes, ms, origName, format, action) {
       if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
       const blob = new Blob([buffer]);
       currentObjectUrl = URL.createObjectURL(blob);
-      const dlName = outFilename(origName, format, mode);
+      const dlName = outFilename(origName, format, action);
 
       document.getElementById('modal-title').innerHTML =
-        mode === 'compress' ? '<span>Compressed</span> successfully' : '<span>Decompressed</span> successfully';
+        action === 'compress' ? '<span>Compressed</span> successfully' : '<span>Decompressed</span> successfully';
       document.getElementById('modal-in').textContent    = fmtSize(inBytes);
       document.getElementById('modal-out').textContent   = fmtSize(outBytes);
       document.getElementById('modal-ratio').textContent =
@@ -598,9 +624,9 @@ self.onmessage = ({ data: msg }) => {
       modalBackdrop.classList.add('open');
     }
 
-    function showErrorModal(msg) {
+    function showErrorModal(msg, action) {
       document.getElementById('modal-title').innerHTML =
-        mode === 'compress' ? '<span>Compression</span> failed' : '<span>Decompression</span> failed';
+        action === 'compress' ? '<span>Compression</span> failed' : '<span>Decompression</span> failed';
       document.getElementById('modal-error-text').textContent = msg;
       modalBackdrop.classList.add('error');
       modalBackdrop.classList.add('open');
@@ -609,6 +635,10 @@ self.onmessage = ({ data: msg }) => {
     function closeModal() {
       modalBackdrop.classList.remove('open');
       modalBackdrop.classList.remove('error');
+      if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl);
+        currentObjectUrl = null;
+      }
     }
 
     modalClose.addEventListener('click', closeModal);
@@ -625,8 +655,9 @@ self.onmessage = ({ data: msg }) => {
     }
 
     function setProcessing(on) {
-      processBtn.disabled = on;
       spinner.style.display = on ? 'block' : 'none';
+      if (on) processBtn.disabled = true;
+      else updateBtn();
     }
 
     function updateBtn() {
