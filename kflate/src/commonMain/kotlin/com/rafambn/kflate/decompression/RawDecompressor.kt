@@ -25,7 +25,6 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
     val readBuffer = ByteArray(STREAM_CHUNK_SIZE)
     var inputBuffer = ByteArray(0)
     var sourceExhausted = false
-    var sawInput = false
 
     while (true) {
         if (!sourceExhausted) {
@@ -33,16 +32,12 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
             if (read == -1) {
                 sourceExhausted = true
             } else if (read > 0) {
-                sawInput = true
                 inputBuffer = appendBytes(inputBuffer, readBuffer, read)
             }
         }
 
         if (inputBuffer.isEmpty()) {
             if (sourceExhausted) {
-                if (!sawInput) {
-                    return
-                }
                 createFlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
             continue
