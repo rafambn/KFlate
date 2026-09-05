@@ -57,13 +57,8 @@ private fun deflateStream(
     sink: Sink,
     onInput: ((ByteArray) -> Unit)?
 ) {
-    val dictionary = type.dictionary
-
     val state = DeflateState(isLastChunk = false)
-    var inputBuffer = dictionary ?: ByteArray(0)
-    if (dictionary != null) {
-        state.waitIndex = dictionary.size
-    }
+    var inputBuffer = ByteArray(0)
 
     val readBuffer = ByteArray(STREAM_CHUNK_SIZE)
     while (true) {

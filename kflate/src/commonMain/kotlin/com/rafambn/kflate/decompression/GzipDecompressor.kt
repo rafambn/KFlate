@@ -37,7 +37,7 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
         }
 
         // Process member
-        val result = processSingleGzipMember(data, currentPosition, type.dictionary)
+        val result = processSingleGzipMember(data, currentPosition)
         decompressedChunks.add(result.decompressed)
         currentPosition += result.bytesConsumed
     }
@@ -74,7 +74,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
     var headerParsed = false
     var awaitingTrailer = false
     var inflateState = InflateState(validationMode = 0)
-    var history = type.dictionary ?: ByteArray(0)
+    var history = ByteArray(0)
     var crc = Crc32Checksum()
     var uncompressedSize = 0L
     var members = 0
@@ -105,7 +105,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
                 headerParsed = true
                 awaitingTrailer = false
                 inflateState = InflateState(validationMode = 0)
-                history = type.dictionary ?: ByteArray(0)
+                history = ByteArray(0)
                 crc = Crc32Checksum()
                 uncompressedSize = 0L
                 members++
