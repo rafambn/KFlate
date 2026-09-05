@@ -19,10 +19,11 @@ version = "1.0.0"
 kotlin {
     jvmToolchain(libs.versions.java.get().toInt())
 
-    androidLibrary {
+    android {
         namespace = "com.rafambn"
         compileSdk = 36
         minSdk = 24
+        withHostTest {}
     }
     jvm {
         val mainCompilation = compilations.getByName("main")
@@ -39,13 +40,7 @@ kotlin {
                 }
             }
         }
-        nodejs {
-            testTask {
-                useKarma {
-                    useChromiumHeadless()
-                }
-            }
-        }
+        nodejs()
     }
     wasmJs {
         useEsModules()
@@ -60,19 +55,13 @@ kotlin {
                 }
             }
         }
-        nodejs {
-            testTask {
-                useKarma {
-                    useChromiumHeadless()
-                }
-            }
-        }
+        nodejs()
     }
     iosX64()
     iosArm64()
     iosSimulatorArm64()
     mingwX64()
-    linuxX64{
+    linuxX64 {
         val mainCompilation = compilations.getByName("main")
         compilations.create("benchmark") {
             associateWith(mainCompilation)
