@@ -23,7 +23,7 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
     val decompressedChunks = mutableListOf<ByteArray>()
     var currentPosition = 0
     var totalOutputSize = 0L
-    val effectiveMaxOutputSize = type.maxOutputSize ?: Int.MAX_VALUE
+    var remainingOutputSize = type.maxOutputSize ?: Int.MAX_VALUE
 
     while (currentPosition < data.size) {
         // Check if enough bytes for header
@@ -39,7 +39,6 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
         }
 
         // Process member
-        val remainingOutputSize = getRemainingOutputSize(effectiveMaxOutputSize, totalOutputSize)
         val result = processSingleGzipMember(
             data,
             currentPosition,
@@ -47,6 +46,7 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
         )
         decompressedChunks.add(result.decompressed)
         totalOutputSize += result.decompressed.size.toLong()
+        remainingOutputSize -= result.decompressed.size
         currentPosition += result.bytesConsumed
     }
 
@@ -85,7 +85,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
     var crc = Crc32Checksum()
     var uncompressedSize = 0L
     var members = 0
-    var totalOutputSize = 0L
+    var remainingOutputSize = type.maxOutputSize
 
     while (true) {
         if (!sourceExhausted) {
@@ -137,7 +137,6 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
             }
 
             inflateState.outputOffset = 0
-            val remainingOutputSize = getRemainingOutputSize(type.maxOutputSize, totalOutputSize)
             val output = inflateStreamChunk(
                 inputBuffer,
                 inflateState,
@@ -149,7 +148,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
                 bufferedSink.write(output)
                 crc.update(output)
                 uncompressedSize += output.size.toLong()
-                totalOutputSize += output.size.toLong()
+                remainingOutputSize = remainingOutputSize?.minus(output.size)
                 history = updateHistory(history, output)
             }
 

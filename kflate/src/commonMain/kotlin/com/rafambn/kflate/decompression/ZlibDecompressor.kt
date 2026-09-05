@@ -55,7 +55,7 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
     var sourceExhausted = false
     var headerParsed = false
     var awaitingTrailer = false
-    var totalOutputSize = 0L
+    var remainingOutputSize = type.maxOutputSize
 
     while (true) {
         if (!sourceExhausted) {
@@ -95,7 +95,6 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
             }
 
             state.outputOffset = 0
-            val remainingOutputSize = getRemainingOutputSize(type.maxOutputSize, totalOutputSize)
             val output = inflateStreamChunk(
                 inputBuffer,
                 state,
@@ -107,7 +106,7 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
                 bufferedSink.write(output)
                 adler.update(output)
                 history = updateHistory(history, output)
-                totalOutputSize += output.size.toLong()
+                remainingOutputSize = remainingOutputSize?.minus(output.size)
             }
 
             if (state.isFinalBlock && state.literalMap == null) {

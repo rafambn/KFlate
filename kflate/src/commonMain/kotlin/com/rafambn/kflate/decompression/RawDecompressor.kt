@@ -25,7 +25,7 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
     val readBuffer = ByteArray(STREAM_CHUNK_SIZE)
     var inputBuffer = ByteArray(0)
     var sourceExhausted = false
-    var totalOutputSize = 0L
+    var remainingOutputSize = type.maxOutputSize
 
     while (true) {
         if (!sourceExhausted) {
@@ -45,7 +45,6 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
         }
 
         state.outputOffset = 0
-        val remainingOutputSize = getRemainingOutputSize(type.maxOutputSize, totalOutputSize)
         val output = inflateStreamChunk(
             inputBuffer,
             state,
@@ -56,7 +55,7 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
         if (output.isNotEmpty()) {
             bufferedSink.write(output)
             history = updateHistory(history, output)
-            totalOutputSize += output.size.toLong()
+            remainingOutputSize = remainingOutputSize?.minus(output.size)
         }
 
         if (state.isFinalBlock && state.literalMap == null) {

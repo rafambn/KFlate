@@ -7,7 +7,6 @@ import com.rafambn.kflate.decompression.DecompressionType
 import com.rafambn.kflate.decompression.Gzip as DecompressionGzip
 import com.rafambn.kflate.decompression.Raw as DecompressionRaw
 import com.rafambn.kflate.decompression.Zlib as DecompressionZlib
-import com.rafambn.kflate.decompression.getRemainingOutputSize
 import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.error.FlateErrorCode
 import kotlinx.io.Buffer
@@ -16,7 +15,6 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class DecompressionOutputLimitTest {
@@ -128,13 +126,10 @@ class DecompressionOutputLimitTest {
     }
 
     @Test
-    fun validatesLimitsAndKeepsNullUnbounded() {
+    fun rejectsNegativeLimits() {
         assertFailsWith<IllegalArgumentException> { DecompressionRaw(maxOutputSize = -1) }
         assertFailsWith<IllegalArgumentException> { DecompressionGzip(maxOutputSize = -1) }
         assertFailsWith<IllegalArgumentException> { DecompressionZlib(maxOutputSize = -1) }
-
-        assertNull(getRemainingOutputSize(null, Int.MAX_VALUE.toLong() + 1L))
-        assertEquals(24, getRemainingOutputSize(1_024, 1_000L))
     }
 
     private fun assertOutputLimit(compressed: ByteArray, type: DecompressionType) {
