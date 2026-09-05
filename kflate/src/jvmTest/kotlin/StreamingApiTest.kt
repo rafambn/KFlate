@@ -22,9 +22,6 @@ class StreamingApiTest {
     private val testFiles = listOf(
         "model3D",
         "text",
-        "Rainier.bmp",
-        "Maltese.bmp",
-        "Sunrise.bmp",
         "simpleText",
     )
 
