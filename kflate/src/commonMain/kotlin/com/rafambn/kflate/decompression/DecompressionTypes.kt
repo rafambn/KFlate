@@ -1,28 +1,10 @@
 package com.rafambn.kflate.decompression
 
-import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
-
 /**
  * Base interface for decompression configuration options.
  */
 sealed interface DecompressionType {
     val maxOutputSize: Int?
-}
-
-internal fun validateMaxOutputSize(maxOutputSize: Int?) {
-    require(maxOutputSize == null || maxOutputSize >= 0) {
-        "maxOutputSize must be non-negative, but was $maxOutputSize"
-    }
-}
-
-internal fun getRemainingOutputSize(maxOutputSize: Int?, totalOutputSize: Long): Int? {
-    if (maxOutputSize == null) return null
-    val remaining = maxOutputSize.toLong() - totalOutputSize
-    if (remaining < 0) {
-        createFlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
-    }
-    return remaining.toInt()
 }
 
 data class Raw(
@@ -33,7 +15,9 @@ data class Raw(
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
-        validateMaxOutputSize(maxOutputSize)
+        require(maxOutputSize == null || maxOutputSize >= 0) {
+            "maxOutputSize must be non-negative, but was $maxOutputSize"
+        }
     }
 
     override fun equals(other: Any?): Boolean {
@@ -57,7 +41,9 @@ data class Gzip(
     override val maxOutputSize: Int? = null
 ) : DecompressionType {
     init {
-        validateMaxOutputSize(maxOutputSize)
+        require(maxOutputSize == null || maxOutputSize >= 0) {
+            "maxOutputSize must be non-negative, but was $maxOutputSize"
+        }
     }
 }
 
@@ -69,7 +55,9 @@ data class Zlib(
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
-        validateMaxOutputSize(maxOutputSize)
+        require(maxOutputSize == null || maxOutputSize >= 0) {
+            "maxOutputSize must be non-negative, but was $maxOutputSize"
+        }
     }
 
     override fun equals(other: Any?): Boolean {
