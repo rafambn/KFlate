@@ -30,6 +30,9 @@ internal fun writeZlibHeader(output: ByteArray, options: Zlib) {
 }
 
 internal fun writeZlibStart(data: ByteArray, hasDictionary: Boolean, dictionary: ByteArray? = null): Int {
+    if (data.size < 2) {
+        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+    }
     val cmf = data[0].toInt() and 0xFF
     val flg = data[1].toInt() and 0xFF
     if ((cmf and 15) != 8 || (cmf ushr 4) > 7 || ((cmf shl 8 or flg) % 31 != 0))
