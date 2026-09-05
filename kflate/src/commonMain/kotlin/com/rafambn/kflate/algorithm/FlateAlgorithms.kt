@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.rafambn.kflate.algorithm
 
 import com.rafambn.kflate.compression.CompressionType
@@ -33,7 +31,6 @@ import kotlin.math.ceil
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.time.ExperimentalTime
 
 internal fun inflate(
     inputData: ByteArray,
@@ -52,6 +49,9 @@ internal fun inflate(
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         return ByteArray(0)
+    }
+    if (sourceLength > (Int.MAX_VALUE - 64) / 8) {
+        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
     }
 
     val hasNoStoredState = inflateState.validationMode != 0
@@ -426,9 +426,12 @@ internal fun deflate(
 ): ByteArray {
     val dataSize = state.inputEndIndex.takeIf { it != 0 } ?: data.size
     // Heuristic: dataSize + 1/8th of dataSize (for expansion) + 256 (for tree/header overhead) + 5 per block
-    val bufferMargin = (dataSize shr 3) + 256 + 5 * (1 + (dataSize / 7000))
-    val output = ByteArray(prefixSize + dataSize + bufferMargin + postfixSize)
-    val writeBuffer = ByteArray(output.size - prefixSize - postfixSize)
+    val bufferMargin = (dataSize.toLong() shr 3) + 256L + 5L * (1L + dataSize / 7_000L)
+    val writeBufferSize = dataSize.toLong() + bufferMargin
+    if (writeBufferSize > Int.MAX_VALUE.toLong()) {
+        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+    val writeBuffer = ByteArray(writeBufferSize.toInt())
     val isLastBlock = state.isLastChunk
     var bitPosition: Long = (state.bitBuffer and 7).toLong()
 
@@ -577,8 +580,19 @@ internal fun deflate(
         }
         state.inputOffset = dataSize
     }
-    writeBuffer.copyInto(output, destinationOffset = prefixSize)
-    return output.sliceArray(0 until prefixSize + shiftToNextByte(bitPosition) + postfixSize)
+    val compressedSize = shiftToNextByte(bitPosition)
+    val outputSize = prefixSize.toLong() + compressedSize.toLong() + postfixSize.toLong()
+    if (outputSize > Int.MAX_VALUE.toLong()) {
+        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+    val output = ByteArray(outputSize.toInt())
+    writeBuffer.copyInto(
+        output,
+        destinationOffset = prefixSize,
+        startIndex = 0,
+        endIndex = compressedSize,
+    )
+    return output
 }
 
 internal fun deflateWithOptions(
@@ -611,7 +625,11 @@ internal fun deflateWithOptions(
         workingState = DeflateState(isLastChunk = true)
 
         if (dictionary != null) {
-            val combinedData = ByteArray(dictionary.size + inputData.size)
+            val combinedSize = dictionary.size.toLong() + inputData.size.toLong()
+            if (combinedSize > Int.MAX_VALUE.toLong()) {
+                createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+            }
+            val combinedData = ByteArray(combinedSize.toInt())
 
             dictionary.copyInto(combinedData, destinationOffset = 0)
 
