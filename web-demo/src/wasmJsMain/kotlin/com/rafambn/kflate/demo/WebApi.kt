@@ -67,9 +67,9 @@ fun runDecompress(format: String): Int {
         outputData = KFlate.decompress(
             inputData,
             when (format) {
-                "raw" -> DecompressionRaw()
-                "gzip" -> DecompressionGzip()
-                "zlib" -> DecompressionZlib()
+                "raw" -> DecompressionRaw(maxOutputSize = MAX_OUTPUT_SIZE)
+                "gzip" -> DecompressionGzip(maxOutputSize = MAX_OUTPUT_SIZE)
+                "zlib" -> DecompressionZlib(maxOutputSize = MAX_OUTPUT_SIZE)
                 else -> error("Unsupported format: $format")
             }
         )
@@ -96,3 +96,4 @@ fun getOutput(): JsAny {
 fun getLastError(): String = lastError
 
 private const val MAX_INPUT_SIZE = 64 * 1_024 * 1_024
+private const val MAX_OUTPUT_SIZE = 128 * 1_024 * 1_024
