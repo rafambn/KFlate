@@ -206,13 +206,23 @@ internal fun inflate(
                     var codeIndex = 0
 
                     while (codeIndex < totalCodes) {
-                        if (currentBitPosition > totalAvailableBits) {
-                            if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                            break
+                        val availableBits = totalAvailableBits - currentBitPosition
+                        if (availableBits <= 0) {
+                            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
                         }
 
                         val huffmanCode = codeLengthHuffmanMap[readBits(inputData, currentBitPosition, codeLengthBitMask)]
-                        currentBitPosition += (huffmanCode.toInt() and 15)
+                        val huffmanCodeLength = huffmanCode.toInt() and 15
+                        if (huffmanCodeLength == 0) {
+                            if (availableBits < codeLengthMaxBits) {
+                                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                            }
+                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                        }
+                        if (huffmanCodeLength > availableBits) {
+                            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        }
+                        currentBitPosition += huffmanCodeLength
                         val symbol = huffmanCode.toInt() shr 4
 
                         when {
@@ -223,6 +233,9 @@ internal fun inflate(
                             symbol == 16 -> {
                                 if (codeIndex == 0) {
                                     createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                }
+                                if (currentBitPosition + 2 > totalAvailableBits) {
+                                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
                                 }
                                 val repeatCount = 3 + readBits(inputData, currentBitPosition, 3)
                                 currentBitPosition += 2
@@ -235,6 +248,9 @@ internal fun inflate(
                             }
 
                             symbol == 17 -> {
+                                if (currentBitPosition + 3 > totalAvailableBits) {
+                                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                                }
                                 val repeatCount = 3 + readBits(inputData, currentBitPosition, 7)
                                 currentBitPosition += 3
                                 val remainingSlots = totalCodes - codeIndex
@@ -245,6 +261,9 @@ internal fun inflate(
                             }
 
                             symbol == 18 -> {
+                                if (currentBitPosition + 7 > totalAvailableBits) {
+                                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                                }
                                 val repeatCount = 11 + readBits(inputData, currentBitPosition, 127)
                                 currentBitPosition += 7
                                 val remainingSlots = totalCodes - codeIndex
@@ -254,11 +273,6 @@ internal fun inflate(
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = 0 }
                             }
                         }
-                    }
-
-                    if (currentBitPosition > totalAvailableBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                        break
                     }
 
                     if (codeIndex < totalCodes) {
@@ -312,14 +326,23 @@ internal fun inflate(
         val currentDistMap = distanceMap!!
 
         while (true) {
-            val literalCode = (currentLitMap[readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
-            val symbol = literalCode shr 4
-            currentBitPosition += (literalCode and 15)
-
-            if (currentBitPosition > totalAvailableBits) {
+            val availableLiteralBits = totalAvailableBits - currentBitPosition
+            if (availableLiteralBits <= 0) {
                 if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
+            val literalCode = (currentLitMap[readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
+            val literalCodeLength = literalCode and 15
+            if (literalCode == 0 && availableLiteralBits < literalMaxBits) {
+                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                break
+            }
+            if (literalCodeLength > availableLiteralBits) {
+                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                break
+            }
+            val symbol = literalCode shr 4
+            currentBitPosition += literalCodeLength
 
             // Symbols 0..285 are valid. Fixed Huffman symbols 286 and 287 are reserved by RFC 1951.
             if (literalCode == 0 || symbol > 285) {
@@ -345,28 +368,45 @@ internal fun inflate(
                     if (symbol > 264) {
                         val lengthIndex = symbol - 257
                         val extraBits = FIXED_LENGTH_EXTRA_BITS[lengthIndex].toInt() and 0xFF
+                        if (currentBitPosition + extraBits > totalAvailableBits) {
+                            if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                            break
+                        }
                         matchLength =
                             readBits(inputData, currentBitPosition, (1 shl extraBits) - 1) + (FIXED_LENGTH_BASE[lengthIndex].toInt() and 0xFFFF)
                         currentBitPosition += extraBits
                     }
 
+                    val availableDistanceBits = totalAvailableBits - currentBitPosition
+                    if (availableDistanceBits <= 0) {
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
                     val distanceCode = (currentDistMap[readBits16(inputData, currentBitPosition) and distanceBitMask].toInt() and 0xFFFF)
+                    val distanceCodeLength = distanceCode and 15
+                    if (distanceCode == 0 && availableDistanceBits < distanceMaxBits) {
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
+                    if (distanceCodeLength > availableDistanceBits) {
+                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
                     val distanceSymbol = distanceCode shr 4
                     if (distanceCode == 0) createFlateError(FlateErrorCode.INVALID_DISTANCE)
                     // RFC 1951: Distance codes 30-31 will never occur in valid compressed data
                     if (distanceSymbol >= 30) createFlateError(FlateErrorCode.INVALID_DISTANCE)
-                    currentBitPosition += (distanceCode and 15)
+                    currentBitPosition += distanceCodeLength
 
                     var matchDistance = FIXED_DISTANCE_BASE[distanceSymbol].toInt() and 0xFFFF
                     if (distanceSymbol > 3) {
                         val extraBits = FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF
+                        if (currentBitPosition + extraBits > totalAvailableBits) {
+                            if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                            break
+                        }
                         matchDistance += readBits16(inputData, currentBitPosition) and ((1 shl extraBits) - 1)
                         currentBitPosition += extraBits
-                    }
-
-                    if (currentBitPosition > totalAvailableBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                        break
                     }
 
                     ensureCapacity(matchLength, bytesWrittenToOutput)
