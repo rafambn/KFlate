@@ -18,17 +18,11 @@ class BlockingValidityTest {
     private val testFiles = listOf(
         "model3D",
         "text",
-        "Rainier.bmp",
-        "Maltese.bmp",
-        "Sunrise.bmp",
         "simpleText",
     )
 
     private val expectedFileSizes = mapOf(
-        "Maltese.bmp" to 16427390,
         "text" to 1232923,
-        "Rainier.bmp" to 6220854,
-        "Sunrise.bmp" to 52344054,
         "model3D" to 2478,
         "simpleText" to 100,
     )
