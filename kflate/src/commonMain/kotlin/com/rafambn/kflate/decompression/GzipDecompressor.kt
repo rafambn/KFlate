@@ -22,6 +22,8 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
 
     val decompressedChunks = mutableListOf<ByteArray>()
     var currentPosition = 0
+    var totalOutputSize = 0L
+    val effectiveMaxOutputSize = type.maxOutputSize ?: Int.MAX_VALUE
 
     while (currentPosition < data.size) {
         // Check if enough bytes for header
@@ -37,8 +39,14 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
         }
 
         // Process member
-        val result = processSingleGzipMember(data, currentPosition)
+        val remainingOutputSize = getRemainingOutputSize(effectiveMaxOutputSize, totalOutputSize)
+        val result = processSingleGzipMember(
+            data,
+            currentPosition,
+            remainingOutputSize,
+        )
         decompressedChunks.add(result.decompressed)
+        totalOutputSize += result.decompressed.size.toLong()
         currentPosition += result.bytesConsumed
     }
 
@@ -53,8 +61,7 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
     }
 
     // Concatenate multiple members
-    val totalSize = decompressedChunks.sumOf { it.size }
-    val result = ByteArray(totalSize)
+    val result = ByteArray(totalOutputSize.toInt())
     var offset = 0
     for (chunk in decompressedChunks) {
         chunk.copyInto(result, destinationOffset = offset)
@@ -78,6 +85,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
     var crc = Crc32Checksum()
     var uncompressedSize = 0L
     var members = 0
+    var totalOutputSize = 0L
 
     while (true) {
         if (!sourceExhausted) {
@@ -129,11 +137,19 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
             }
 
             inflateState.outputOffset = 0
-            val output = inflateStreamChunk(inputBuffer, inflateState, history, sourceExhausted) ?: continue
+            val remainingOutputSize = getRemainingOutputSize(type.maxOutputSize, totalOutputSize)
+            val output = inflateStreamChunk(
+                inputBuffer,
+                inflateState,
+                history,
+                sourceExhausted,
+                remainingOutputSize,
+            ) ?: continue
             if (output.isNotEmpty()) {
                 bufferedSink.write(output)
                 crc.update(output)
                 uncompressedSize += output.size.toLong()
+                totalOutputSize += output.size.toLong()
                 history = updateHistory(history, output)
             }
 

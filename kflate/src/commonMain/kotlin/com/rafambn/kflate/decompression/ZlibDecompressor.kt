@@ -28,8 +28,8 @@ internal fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
     val decompressedData = inflate(
         inputData,
         InflateState(validationMode = 2),
-        null,
-        type.dictionary
+        type.dictionary,
+        type.maxOutputSize,
     )
 
     val computedAdler32 = Adler32Checksum().apply {
@@ -55,6 +55,7 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
     var sourceExhausted = false
     var headerParsed = false
     var awaitingTrailer = false
+    var totalOutputSize = 0L
 
     while (true) {
         if (!sourceExhausted) {
@@ -94,11 +95,19 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
             }
 
             state.outputOffset = 0
-            val output = inflateStreamChunk(inputBuffer, state, history, sourceExhausted) ?: continue
+            val remainingOutputSize = getRemainingOutputSize(type.maxOutputSize, totalOutputSize)
+            val output = inflateStreamChunk(
+                inputBuffer,
+                state,
+                history,
+                sourceExhausted,
+                remainingOutputSize,
+            ) ?: continue
             if (output.isNotEmpty()) {
                 bufferedSink.write(output)
                 adler.update(output)
                 history = updateHistory(history, output)
+                totalOutputSize += output.size.toLong()
             }
 
             if (state.isFinalBlock && state.literalMap == null) {

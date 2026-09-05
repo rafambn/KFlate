@@ -38,35 +38,47 @@ import kotlin.time.ExperimentalTime
 internal fun inflate(
     inputData: ByteArray,
     inflateState: InflateState,
-    outputBuffer: ByteArray? = null,
-    dictionary: ByteArray? = null
+    dictionary: ByteArray? = null,
+    maxOutputSize: Int? = null,
 ): ByteArray {
     val sourceLength = inputData.size
     val dictionaryLength = dictionary?.size ?: 0
 
     if (inflateState.isFinalBlock && inflateState.literalMap == null) {
-        return outputBuffer ?: ByteArray(0)
+        return ByteArray(0)
     }
     if (sourceLength == 0) {
         if (inflateState.validationMode != 0) {
             createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
-        return outputBuffer ?: ByteArray(0)
+        return ByteArray(0)
     }
 
-    var workingBuffer = outputBuffer
-    val isBufferProvided = workingBuffer != null
-
-    val needsResize = !isBufferProvided || inflateState.validationMode != 2
     val hasNoStoredState = inflateState.validationMode != 0
+    val suggestedCapacity = minOf(
+        maxOf(sourceLength.toLong() * 3L, 32_768L),
+        1_048_576L,
+    ).toInt()
+    val initialCapacity = maxOutputSize?.let { minOf(it, suggestedCapacity) } ?: suggestedCapacity
+    var workingBuffer = ByteArray(initialCapacity)
 
-    if (!isBufferProvided)
-        workingBuffer = ByteArray(maxOf(sourceLength * 3, 32768))
-
-    fun ensureCapacity(requiredSize: Int) {
-        val currentBuffer = workingBuffer!!
+    fun ensureCapacity(additionalBytes: Int, bytesWritten: Int) {
+        val requiredSizeLong = bytesWritten.toLong() + additionalBytes.toLong()
+        if (maxOutputSize != null && requiredSizeLong > maxOutputSize.toLong()) {
+            createFlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
+        }
+        if (requiredSizeLong > Int.MAX_VALUE.toLong()) {
+            createFlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
+        }
+        val requiredSize = requiredSizeLong.toInt()
+        val currentBuffer = workingBuffer
         if (requiredSize > currentBuffer.size) {
-            val newSize = maxOf(currentBuffer.size * 2, requiredSize)
+            val doubledSize = minOf(
+                maxOf(currentBuffer.size.toLong() * 2L, 1L),
+                Int.MAX_VALUE.toLong(),
+            ).toInt()
+            val grownSize = maxOf(doubledSize, requiredSize)
+            val newSize = maxOutputSize?.let { minOf(grownSize, it) } ?: grownSize
             val newBuffer = ByteArray(newSize)
             currentBuffer.copyInto(newBuffer)
             workingBuffer = newBuffer
@@ -120,7 +132,7 @@ internal fun inflate(
                         break
                     }
 
-                    if (needsResize) ensureCapacity(bytesWrittenToOutput + blockLength)
+                    ensureCapacity(blockLength, bytesWrittenToOutput)
 
                     inputData.copyInto(
                         workingBuffer,
@@ -293,12 +305,10 @@ internal fun inflate(
             }
         }
 
-        if (needsResize) ensureCapacity(bytesWrittenToOutput + 131072)
-
         val literalBitMask = (1 shl literalMaxBits) - 1
         val distanceBitMask = (1 shl distanceMaxBits) - 1
         var lastBitPosition = currentBitPosition
-        val currentLitMap = literalLengthMap!!
+        val currentLitMap = literalLengthMap
         val currentDistMap = distanceMap!!
 
         while (true) {
@@ -318,6 +328,7 @@ internal fun inflate(
 
             when {
                 symbol < 256 -> {
+                    ensureCapacity(1, bytesWrittenToOutput)
                     workingBuffer[bytesWrittenToOutput++] = symbol.toByte()
                     lastBitPosition = currentBitPosition
                 }
@@ -358,10 +369,10 @@ internal fun inflate(
                         break
                     }
 
-                    if (needsResize) ensureCapacity(bytesWrittenToOutput + matchLength)
+                    ensureCapacity(matchLength, bytesWrittenToOutput)
 
                     val copyEndIndex = bytesWrittenToOutput + matchLength
-                    val buffer = workingBuffer!!
+                    val buffer = workingBuffer
 
                     if (bytesWrittenToOutput < matchDistance) {
                         val dictionaryOffset = dictionaryLength - matchDistance
@@ -402,7 +413,7 @@ internal fun inflate(
 
     } while (!isFinalBlock)
 
-    return workingBuffer!!.copyOfRange(0, bytesWrittenToOutput)
+    return workingBuffer.copyOfRange(0, bytesWrittenToOutput)
 }
 
 internal fun deflate(

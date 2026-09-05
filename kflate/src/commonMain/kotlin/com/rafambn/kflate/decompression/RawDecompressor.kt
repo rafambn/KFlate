@@ -13,7 +13,7 @@ import kotlinx.io.RawSource
 import kotlinx.io.buffered
 
 internal fun decompressRaw(data: ByteArray, type: Raw): ByteArray {
-    return inflate(data, InflateState(validationMode = 2), null, type.dictionary)
+    return inflate(data, InflateState(validationMode = 2), type.dictionary, type.maxOutputSize)
 }
 
 internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
@@ -25,6 +25,7 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
     val readBuffer = ByteArray(STREAM_CHUNK_SIZE)
     var inputBuffer = ByteArray(0)
     var sourceExhausted = false
+    var totalOutputSize = 0L
 
     while (true) {
         if (!sourceExhausted) {
@@ -44,10 +45,18 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
         }
 
         state.outputOffset = 0
-        val output = inflateStreamChunk(inputBuffer, state, history, sourceExhausted) ?: continue
+        val remainingOutputSize = getRemainingOutputSize(type.maxOutputSize, totalOutputSize)
+        val output = inflateStreamChunk(
+            inputBuffer,
+            state,
+            history,
+            sourceExhausted,
+            remainingOutputSize,
+        ) ?: continue
         if (output.isNotEmpty()) {
             bufferedSink.write(output)
             history = updateHistory(history, output)
+            totalOutputSize += output.size.toLong()
         }
 
         if (state.isFinalBlock && state.literalMap == null) {
