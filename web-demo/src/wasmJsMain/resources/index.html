@@ -442,6 +442,7 @@ self.onmessage = ({ data: msg }) => {
 
     worker.onmessage = ({ data }) => {
       if (data.type === 'ready') {
+        URL.revokeObjectURL(blobUrl);
         wasmReady = true;
         dot.className = 'dot ready';
         statusText.textContent = 'WASM ready';
@@ -456,6 +457,7 @@ self.onmessage = ({ data: msg }) => {
     };
 
     function failWorker(message) {
+      URL.revokeObjectURL(blobUrl);
       wasmReady = false;
       dot.className = 'dot error';
       statusText.textContent = 'WASM unavailable';
@@ -548,7 +550,7 @@ self.onmessage = ({ data: msg }) => {
       hideError();
       if (f.size > MAX_INPUT_BYTES) {
         clearSelectedFile();
-        showError(`File is too large (${fmtSize(f.size)}). Maximum allowed size is 64 MB.`);
+        showError(`File is too large (${fmtSize(f.size)}). Maximum allowed size is 64 MiB.`);
         return;
       }
       selectedFile = f;
