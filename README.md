@@ -3,50 +3,43 @@
 <p align="center">Pure Kotlin Multiplatform DEFLATE, GZIP, and ZLIB compression.</p>
 
 <p align="center">
-  <img src="KFlate-Logo.svg" alt="KFlate-Logo" width="200" height="200">
+  <img src="KFlate-Logo.svg" alt="KFlate logo" width="200" height="200">
 </p>
 
 <p align="center">
   <a href="https://central.sonatype.com/artifact/com.rafambn/KFlate">
     <img alt="Maven Central" src="https://img.shields.io/maven-central/v/com.rafambn/KFlate?label=Maven%20Central">
   </a>
-  <a href="https://opensource.org/licenses/Apache-2.0">
+  <a href="LICENSE">
     <img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg">
   </a>
-  <img alt="Platform Targets" src="https://img.shields.io/badge/targets-android%20%7C%20jvm%20%7C%20js%20%7C%20wasm%20%7C%20ios%20%7C%20macos%20%7C%20linux%20%7C%20windows-0A7EA4">
+  <img alt="Platform targets" src="https://img.shields.io/badge/targets-android%20%7C%20jvm%20%7C%20js%20%7C%20wasm%20%7C%20ios%20%7C%20macos%20%7C%20linux%20%7C%20windows-0A7EA4">
 </p>
 
 <p align="center">
-  KFlate is an independently written Kotlin implementation based on the design and API ideas of the npm <a href="https://github.com/101arrowz/fflate"><code>fflate</code></a> library. It provides compression and decompression with configurable levels, dictionary support, and both blocking and streaming APIs across KMP targets.
+  KFlate is an independently written Kotlin implementation based on the design and API ideas of the npm <a href="https://github.com/101arrowz/fflate"><code>fflate</code></a> library.
 </p>
 
 <table align="center">
   <tr>
     <td align="center">
-      <a href="https://kflate.rafambn.com"><strong>KFlate Web Compressor (Powered by WASM)</strong></a>
+      <a href="https://kflate.rafambn.com"><strong>KFlate Web Compressor using Wasm</strong></a>
     </td>
   </tr>
 </table>
 
-### Key Features
+## Features
 
-- **Pure Kotlin Implementation**: No native dependencies, works everywhere Kotlin runs.
-- **Multiplatform Support**: JVM, Android, JS (Browser/Node), WASM, and native targets.
-- **Multiple Compression Formats**: Raw DEFLATE, GZIP with optional headers, and ZLIB with dictionary support.
-- **Flexible APIs**: Both blocking and streaming (`kotlinx-io`) interfaces.
-- **Configurable Compression**: Compression levels 0-9 with intelligent hash table sizing.
-- **Dictionary Support**: Full preset dictionary support for DEFLATE/ZLIB (max 32 KB).
-- **Production Ready**: Tested against standard tools and libraries.
+- Raw DEFLATE, RFC 1952 GZIP, and RFC 1950 ZLIB.
+- Blocking `ByteArray` and streaming `kotlinx-io` APIs.
+- Compression levels from 0 through 9 and configurable hash-table memory.
+- Preset dictionaries for raw DEFLATE and ZLIB.
+- GZIP filename, comment, extra fields, modification time, and header CRC.
+- JVM, Android, JS, Wasm, and Kotlin/Native targets.
 
-### Performance
+## Setup
 
-KFlate includes JVM, Linux Native, and Wasm benchmark tasks for RAW DEFLATE. The comparison baseline is Kompress, which maps to `java.util.zip`, platform `zlib`, and npm `fflate`.
-
-For benchmark scope, result interpretation, and comparison guidance, see [BENCHMARKING.md](BENCHMARKING.md).
-
-### Setup
-
-Add KFlate to your `commonMain` dependencies:
+Add KFlate to `commonMain`:
 
 ```kotlin
 kotlin {
@@ -58,63 +51,117 @@ kotlin {
 }
 ```
 
-### Usage
+## Imports
 
-With KFlate, you select a format config and call the same API to compress/decompress:
-
-### Raw DEFLATE
+Compression and decompression formats use the same short names in separate packages. Kotlin import aliases keep both sides explicit:
 
 ```kotlin
-val input = "hello".encodeToByteArray()
-val deflated = KFlate.compress(input, RAW())
-val inflated = KFlate.decompress(deflated, Raw())
+import com.rafambn.kflate.KFlate
+import com.rafambn.kflate.compression.Gzip as CompressionGzip
+import com.rafambn.kflate.compression.Raw as CompressionRaw
+import com.rafambn.kflate.compression.Zlib as CompressionZlib
+import com.rafambn.kflate.decompression.Gzip as DecompressionGzip
+import com.rafambn.kflate.decompression.Raw as DecompressionRaw
+import com.rafambn.kflate.decompression.Zlib as DecompressionZlib
+import com.rafambn.kflate.error.FlateError
 ```
 
-### GZIP
+## Blocking API
 
 ```kotlin
 val input = "hello".encodeToByteArray()
 
-val options = GZIP(
-    filename = "hello.txt",
-    comment = "example",
-    extraFields = mapOf("AB" to byteArrayOf(1, 2)),
-    includeHeaderCrc = true
+val deflated = KFlate.compress(input, CompressionRaw())
+val inflated = KFlate.decompress(deflated, DecompressionRaw())
+
+val gzip = KFlate.compress(
+    input,
+    CompressionGzip(
+        filename = "hello.txt",
+        comment = "example",
+        extraFields = mapOf("AB" to byteArrayOf(1, 2)),
+        includeHeaderCrc = true,
+    ),
+)
+val ungzipped = KFlate.decompress(gzip, DecompressionGzip())
+
+val dictionary = "common bytes".encodeToByteArray()
+val zlib = KFlate.compress(input, CompressionZlib(dictionary = dictionary))
+val unzlib = KFlate.decompress(
+    zlib,
+    DecompressionZlib(dictionary = dictionary),
+)
+```
+
+GZIP does not support preset dictionaries because RFC 1952 has no interoperable field for one.
+
+## Streaming API
+
+The streaming overloads read a `RawSource`, write to a `RawSink`, and flush the buffered sink. KFlate does not close either resource. A decompression failure may leave bytes already written to the sink.
+
+```kotlin
+KFlate.compress(
+    type = CompressionZlib(level = 6),
+    source = inputSource,
+    sink = compressedSink,
 )
 
-val gz = KFlate.compress(input, options)
-val roundTrip = KFlate.decompress(gz, Gzip())
+KFlate.decompress(
+    type = DecompressionZlib(maxOutputSize = 64 * 1_024 * 1_024),
+    source = compressedSource,
+    sink = outputSink,
+)
 ```
 
-### ZLIB
+## Options
+
+All compression formats accept:
+
+- `level`: compression level from 0 through 9. The default is 6.
+- `mem`: hash-table memory level from 0 through 12. The default is 8.
+
+Raw DEFLATE and ZLIB also accept a preset `dictionary` of at most 32 KiB. Decompression requires the same dictionary.
+
+GZIP compression additionally accepts:
+
+- `filename` and `comment`: ISO-8859-1 header text without NUL characters.
+- `extraFields`: two-byte ISO-8859-1 field IDs mapped to at most 65,535 bytes in total.
+- `mtime`: a `kotlin.time.Instant` within the unsigned 32-bit GZIP timestamp range.
+- `includeHeaderCrc`: writes the optional GZIP header CRC16.
+
+All decompression formats accept `maxOutputSize`. Set it for untrusted data to stop decompression once the configured number of bytes is reached.
+
+## Errors
+
+Malformed, truncated, or oversized compressed data throws `FlateError`. Its `code` contains a `FlateErrorCode`, including `UNEXPECTED_EOF`, checksum errors, and `OUTPUT_LIMIT_EXCEEDED`.
 
 ```kotlin
-val input = "hello".encodeToByteArray()
-val z = KFlate.compress(input, ZLIB())
-val out = KFlate.decompress(z, Zlib())
-
-val dict = "common".encodeToByteArray()
-val zWithDict = KFlate.compress(input, ZLIB(dictionary = dict))
+try {
+    KFlate.decompress(data, DecompressionGzip(maxOutputSize = 16 * 1_024 * 1_024))
+} catch (error: FlateError) {
+    println(error.code)
+}
 ```
 
-### Configuration Options
+## Migrating from 1.0.x
 
-- **`level`**: Compression level 0–9 (default: 6)
-  - 0: No compression
-  - 1–3: Fast compression
-  - 4–6: Balanced (6 is default)
-  - 7–9: Maximum compression (9 uses full 1M entry hash table)
-- **`bufferSize`**: Internal hash table size (optional, auto-sized per level)
-- **`dictionary`**: Preset dictionary up to 32 KB (DEFLATE/ZLIB only)
+Version 1.1.0 moves compression and decompression formats into separate packages. Use import aliases when the same file needs both types.
 
-### GZIP-Specific Options
+| 1.0.x | 1.1.0 |
+|---|---|
+| `RAW` | `compression.Raw` |
+| `GZIP` | `compression.Gzip` |
+| `ZLIB` | `compression.Zlib` |
+| `Raw` | `decompression.Raw` |
+| `Gzip` | `decompression.Gzip` |
+| `Zlib` | `decompression.Zlib` |
 
-- `filename`: Original filename
-- `comment`: File comment
-- `extraFields`: Custom header fields
-- `mtime`: Modification time
-- `includeHeaderCrc`: Include CRC16 of header
+The GZIP configuration no longer exposes the non-standard dictionary option. Its `mtime` now uses `kotlin.time.Instant` instead of `Any`.
 
-### Decompression Options
+## Benchmarks
 
-- **`dictionary`**: Preset dictionary for DEFLATE/ZLIB (required if compression used one)
+Correctness tests are separate from the `kotlinx-benchmark` suite. See [BENCHMARKING.md](BENCHMARKING.md) for JVM, Linux Native, and Wasm commands, corpus definitions, and result interpretation.
+
+## License
+
+KFlate is available under the [Apache License 2.0](LICENSE).
