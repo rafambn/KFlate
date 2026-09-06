@@ -2,82 +2,27 @@
 
 KFlate keeps correctness tests separate from performance benchmarks.
 
-## Run Benchmarks
+## What the suite measures
 
-Compile every configured benchmark without running the full timing suite:
-
-```bash
-./gradlew :kflate:assembleBenchmarks
-```
-
-Run every configured benchmark target:
-
-```bash
-./gradlew :kflate:benchmarkAll
-```
-
-`benchmarkAll` now also runs `python3 scripts/benchmark_comparison.py` automatically after the three platform benchmarks finish.
-Before generating the comparison, `benchmarkAll` consolidates metadata from JVM/Native and Wasm paths into `kflate/performance/benchmark-metadata.jsonl`.
-
-Run one target at a time:
-
-```bash
-./gradlew :kflate:jvmBenchmarkBenchmark
-./gradlew :kflate:linuxX64BenchmarkBenchmark
-./gradlew :kflate:wasmJsBenchmarkBenchmark
-```
-
-Wasm benchmarks use the Kotlin Wasm yarn lock. If Gradle reports that the lock file changed, update it before rerunning:
-
-```bash
-./gradlew kotlinWasmUpgradeYarnLock
-```
-
-Generated JSON reports are written under:
-
-```text
-kflate/build/reports/benchmarks/main/<timestamp>/
-```
-
-## How The Suite Is Built
-
-The benchmark suite uses `kotlinx-benchmark` with average-time mode and JSON output. The same common benchmark source runs on JVM, Linux x64 Native, and Wasm/JS.
-Main benchmark config uses 3 forks, 8 warmup iterations, and 15 measurement iterations (1 second each).
-
-KFlate benchmark class:
-
-```text
-com.rafambn.kflate.benchmark.CompressionBenchmarks
-```
-
-Kompress baseline class:
-
-```text
-com.rafambn.kflate.benchmark.KompressBaselineBenchmarks
-```
-
-Kompress is used as the cross-platform baseline because its implementations map to the platform libraries being compared:
+The suite measures the one-shot RAW DEFLATE APIs of KFlate and Kompress on JVM, Linux x64 Native, and Wasm/JS.
+Both compressors use compression level 6. KFlate uses memory level 8. Kompress maps to a different backend on each platform:
 
 | Platform | Kompress backend |
 | --- | --- |
-| JVM | `java.util.zip` deflate/inflate |
+| JVM | `java.util.zip` |
 | Linux x64 Native | platform `zlib` |
 | Wasm/JS | npm `fflate` |
 
-This benchmark suite currently times RAW DEFLATE only. KFlate supports GZIP and ZLIB in the library API, but those formats are intentionally excluded from the active benchmark methods.
+These are end-to-end API comparisons. They include output allocation and any backend bridge cost.
 
-Benchmarks use deterministic generated fixtures from `BenchmarkCorpus`. They intentionally do not load local files. This keeps the same data shape available on JVM, Native, and Wasm without absolute paths, resource-packaging differences, or missing-file behavior.
+Compare KFlate and Kompress only when the platform, corpus, operation, and decompression stream producer match.
+Do not rank JVM, Native, and Wasm absolute times against one another. Their runtimes, code generation, and Kompress backends differ.
 
-## Comparable Matrix
+The active suite covers RAW DEFLATE only. KFlate also supports GZIP and ZLIB, but this suite makes no performance claim about them.
 
-Use the same platform, corpus, operation, and format when comparing KFlate with Kompress.
+## Corpus
 
-| Format | Operation | KFlate benchmark | Kompress baseline | Comparable on JVM, Linux Native, Wasm |
-| --- | --- | --- | --- | --- |
-| RAW DEFLATE | Compression | `CompressionBenchmarks.rawDeflateCompression` | `KompressBaselineBenchmarks.rawDeflateCompression` | Yes |
-| RAW DEFLATE | Decompression | `CompressionBenchmarks.rawDeflateDecompression` | `KompressBaselineBenchmarks.rawDeflateDecompression` | Yes |
-
-Stable corpus parameter names:
+Every target reads the same tracked files from `kflate/src/jvmTest/resources`:
 
 - `simpleText`
 - `text`
@@ -87,94 +32,109 @@ Stable corpus parameter names:
 - `Sunrise.bmp`
 - `compressed_MVT.pbf`
 
-Do not rename classes, methods, or corpus names casually. Dashboards and regression tools depend on stable benchmark IDs.
+`BenchmarkCorpus` searches upward from the benchmark process working directory for the repository or `kflate` module.
+Running a benchmark artifact outside the checkout fails instead of silently substituting generated data.
+The report takes original sizes from benchmark metadata rather than a second hard-coded size table.
 
-## Reading Results
+Do not rename corpus files, classes, or methods casually. Result history uses their names as stable identifiers.
 
-Each JSON entry contains:
+## Measurement configuration
 
-- `benchmark`: fully qualified class and method name
-- `params.corpus`: corpus name
-- `primaryMetric.score`: average seconds per operation
-- `primaryMetric.scorePercentiles["50.0"]`: p50 seconds per operation
-- `primaryMetric.scorePercentiles["95.0"]`: p95 seconds per operation
-- `primaryMetric.rawData`: raw measured iteration data
+The main configuration uses average-time mode, JSON output, 8 warmup iterations, and 15 one-second measurement iterations.
+JVM benchmarks use 3 fresh JVM forks. Native and Wasm use their runner's process model and do not inherit the JVM fork setting.
+For release claims, repeat the full Native and Wasm commands in separate quiet system sessions and compare the retained raw samples.
 
-During setup, each benchmark prints a structured corpus line:
+The generated JSON summary preserves:
 
-```text
-BENCHMARK_CORPUS library=KFlate name=Sunrise.bmp originalBytes=49900000 originalMiB=47.5883 operationMiB=47.5883 rawBytes=... rawRatio=...
-BENCHMARK_BASELINE_CORPUS library=Kompress name=Sunrise.bmp originalBytes=49900000 originalMiB=47.5883 operationMiB=47.5883 rawBytes=... rawRatio=...
-```
+- average time and error
+- confidence interval
+- p50 and p95 of iteration-level average times
+- fork and sample counts
+- all raw iteration averages
+- runtime and runner fields supplied by kotlinx-benchmark
 
-Throughput in MiB/s is computed from the JSON average-time score:
+The Markdown report shows the averages, errors, confidence intervals, and percentiles.
+Use the raw JSON when investigating regressions or noisy results.
 
-```text
-throughputMiBPerSecond = operationMiB / primaryMetric.score
-```
+## Run benchmarks
 
-For example, if `operationMiB` is `47.5883` and `primaryMetric.score` is `0.5`, throughput is `95.1766 MiB/s`.
+Compile the configured benchmarks:
 
-## Comparing All Three Platforms
+~~~bash
+./gradlew :kflate:assembleBenchmarks
+~~~
 
-Run:
+Run all configured targets and generate comparison reports:
 
-```bash
+~~~bash
+./gradlew :kflate:benchmarkAll
+~~~
+
+Run benchmarkAll on a Linux x64 host. Other hosts cannot execute the Linux x64 Native target, and the comparison script rejects an incomplete release report.
+
+Run one target:
+
+~~~bash
 ./gradlew :kflate:jvmBenchmarkBenchmark
 ./gradlew :kflate:linuxX64BenchmarkBenchmark
 ./gradlew :kflate:wasmJsBenchmarkBenchmark
-```
+~~~
 
-Then compare the latest JSON files:
+Wasm uses the Kotlin Wasm yarn lock. Update it if Gradle reports a changed lock:
 
-```text
-kflate/build/reports/benchmarks/main/<timestamp>/jvmBenchmark.json
-kflate/build/reports/benchmarks/main/<timestamp>/linuxX64Benchmark.json
-kflate/build/reports/benchmarks/main/<timestamp>/wasmJsBenchmark.json
-```
+~~~bash
+./gradlew kotlinWasmUpgradeYarnLock
+~~~
 
-For each platform, compare rows with:
+The benchmark plugin writes target reports under:
 
-- same `params.corpus`
-- same operation suffix, such as `rawDeflateCompression`
-- RAW DEFLATE format
-- KFlate class vs Kompress class
+~~~text
+kflate/build/reports/benchmarks/main/<timestamp>/
+~~~
 
-Recommended compression table:
+`benchmarkAll` clears prior reports and metadata first. It then merges platform metadata into
+`kflate/performance/benchmark-metadata.jsonl` and runs `scripts/benchmark_comparison.py`.
 
-| Platform | Corpus | Original size | KFlate compressed size | Kompress compressed size | KFlate avg ms | Kompress avg ms |
-| --- | --- | --- | --- | --- | --- | --- |
-| JVM | `text` | from metadata | from metadata | from metadata | from JSON | from JSON |
+The comparison script writes:
 
-Recommended decompression table:
-
-| Platform | Corpus | KFlate avg ms | Kompress avg ms |
-| --- | --- | --- | --- |
-| JVM | `text` | from JSON | from JSON |
-
-Generate the Markdown tables and cleaned JSON summary from a benchmark run:
-
-```bash
-mkdir -p performance
-rm -f performance/benchmark-metadata.jsonl
-./gradlew :kflate:benchmarkAll
-```
-
-By default this writes:
-
-```text
+~~~text
 performance/benchmark-comparison-<timestamp>.md
 performance/benchmark-comparison-<timestamp>.json
-```
+~~~
 
-Use `--output <path>` to write the Markdown file somewhere else. Use `--json-output <path>` to write the cleaned JSON somewhere else.
-Use `--run-dir <path>` to force a specific timestamp folder under `kflate/build/reports/benchmarks/main/`.
-Without `--run-dir`, the script selects one timestamp folder and does not mix platform JSON from different runs.
+Use `--output`, `--json-output`, `--metadata`, or `--run-dir` to override those paths.
+Automatic report selection chooses the newest timestamp directory and rejects missing platforms or benchmark rows.
+It never mixes files from different directories or rejects a platform because another target took longer to finish.
+`--allow-partial` and `--allow-missing-sizes` exist for local investigation, not release reports.
 
-The script reads timing data from kotlinx-benchmark JSON. It reads compressed sizes from one explicit metadata JSONL path.
-By default this is `kflate/performance/benchmark-metadata.jsonl`.
+## Benchmark matrix
 
-Without size metadata for a platform/library/corpus row, the script fails.
-Use `--metadata <path>` to point to a specific metadata file.
+Compression times each library's own level-6 compressor and records its compressed size:
 
-The decompression benchmarks use the same canonical RAW compressed payload for KFlate and Kompress. Compression benchmarks still time each library's own compressor output.
+| Operation | KFlate method | Kompress method |
+| --- | --- | --- |
+| RAW compression | `CompressionBenchmarks.rawDeflateCompression` | `KompressBaselineBenchmarks.rawDeflateCompression` |
+
+Decompression tests both decoders against streams produced by both compressors:
+
+| Stream producer | KFlate method | Kompress method |
+| --- | --- | --- |
+| KFlate | `CompressionBenchmarks.rawDeflateDecompressionFromKFlate` | `KompressBaselineBenchmarks.rawDeflateDecompressionFromKFlate` |
+| Kompress | `CompressionBenchmarks.rawDeflateDecompressionFromKompress` | `KompressBaselineBenchmarks.rawDeflateDecompressionFromKompress` |
+
+Setup verifies that each decoder reproduces the original corpus from both streams before timing begins.
+This catches incompatible output without including validation work in measured time.
+
+## Reading results
+
+Treat a small difference as noise when confidence intervals are wide or raw samples drift.
+The report keeps both compressed size and time because a faster compressor that produces materially larger output is a tradeoff, not an unconditional win.
+
+Throughput can be calculated for a row from its original byte count and average-time score:
+
+~~~text
+throughputMiBPerSecond = originalSizeBytes / 1,048,576 / averageSeconds
+~~~
+
+Record the Git commit, machine, operating system, JDK, Node version, and system load with any published result.
+The cleaned JSON retains environment fields present in the source reports, but it cannot detect thermal throttling or competing processes.
