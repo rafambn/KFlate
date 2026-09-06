@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import math
 from datetime import datetime
 from pathlib import Path
 
@@ -10,29 +11,30 @@ PLATFORMS = {
     "wasmJsBenchmark.json": "Wasm/JS",
 }
 
-CORPUS_BYTES = {
-    "simpleText": 100,
-    "text": 1_200_000,
-    "model3D": 2_400,
-    "Rainier.bmp": 5_900_000,
-    "Maltese.bmp": 15_700_000,
-    "Sunrise.bmp": 49_900_000,
-    "compressed_MVT.pbf": 142_800,
+CORPORA = [
+    "simpleText",
+    "text",
+    "model3D",
+    "Rainier.bmp",
+    "Maltese.bmp",
+    "Sunrise.bmp",
+    "compressed_MVT.pbf",
+]
+
+OPERATIONS = {
+    "rawDeflateCompression": ("compression", None),
+    "rawDeflateDecompressionFromKFlate": ("decompression", "KFlate"),
+    "rawDeflateDecompressionFromKompress": ("decompression", "Kompress"),
 }
 
-OPERATION_ORDER = {
-    "rawDeflateCompression": 0,
-    "rawDeflateDecompression": 1,
-}
-
-CORPUS_ORDER = {name: index for index, name in enumerate(CORPUS_BYTES)}
+CORPUS_ORDER = {name: index for index, name in enumerate(CORPORA)}
 PLATFORM_ORDER = {name: index for index, name in enumerate(PLATFORMS.values())}
-STALE_REPORT_SECONDS = 30 * 60
+PRODUCER_ORDER = {"KFlate": 0, "Kompress": 1}
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Generate Markdown benchmark comparison tables from kotlinx-benchmark JSON reports."
+        description="Generate benchmark comparisons with uncertainty from kotlinx-benchmark JSON reports."
     )
     parser.add_argument(
         "--report-root",
@@ -44,30 +46,35 @@ def parse_args():
         "--run-dir",
         type=Path,
         default=None,
-        help="Specific timestamp report directory to read (for example .../main/2026-05-05T09.30.07.928468415).",
+        help="Specific timestamp report directory to read.",
     )
     parser.add_argument(
         "--metadata",
         type=Path,
         default=Path("kflate/performance/benchmark-metadata.jsonl"),
-        help="JSONL file written by benchmark setup with corpus sizes. Exactly this file is used.",
+        help="JSONL file written by benchmark setup with corpus and compressed sizes.",
     )
     parser.add_argument(
         "--allow-missing-sizes",
         action="store_true",
-        help="Write JSON and Markdown even when compressed-size metadata is missing.",
+        help="Write reports even when compressed-size metadata is missing.",
+    )
+    parser.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="Write reports from a subset of platforms or benchmark rows.",
     )
     parser.add_argument(
         "--output",
         type=Path,
         default=None,
-        help="Markdown file that will receive the generated tables.",
+        help="Markdown output path.",
     )
     parser.add_argument(
         "--json-output",
         type=Path,
         default=None,
-        help="JSON file that will receive the generated metric summary.",
+        help="JSON output path.",
     )
     return parser.parse_args()
 
@@ -84,8 +91,7 @@ def report_directories(report_root):
 
 
 def report_dir_score(report_dir):
-    file_count = sum(1 for file_name in PLATFORMS if (report_dir / file_name).exists())
-    return file_count, report_dir.stat().st_mtime
+    return report_dir.stat().st_mtime
 
 
 def select_report_dir(report_root, requested_run_dir):
@@ -95,8 +101,6 @@ def select_report_dir(report_root, requested_run_dir):
     candidates = report_directories(report_root)
     if not candidates:
         return None
-
-    # Prefer runs with more available platform reports, then newer timestamp folders.
     return max(candidates, key=report_dir_score)
 
 
@@ -108,193 +112,327 @@ def library_name(benchmark):
     return None
 
 
-def read_size_metadata(metadata):
-    sizes = {}
+def read_metadata(metadata):
+    values_by_key = {}
     if not metadata.exists():
         raise SystemExit(
             f"Metadata file not found: '{metadata}'.\n"
             "Run benchmarks first so benchmark setup writes metadata, or pass --metadata <path>."
         )
 
-    for line in metadata.read_text().splitlines():
+    for line_number, line in enumerate(metadata.read_text().splitlines(), start=1):
         if not line.strip():
             continue
-
         values = json.loads(line)
         platform = values.get("platform")
         library = values.get("library")
         corpus = values.get("corpus")
+        original_size = values.get("originalSizeBytes")
         compressed_size = values.get("compressedSizeBytes")
+        if None in (platform, library, corpus, original_size, compressed_size):
+            raise SystemExit(f"Incomplete benchmark metadata at {metadata}:{line_number}")
 
-        if platform is None or library is None or corpus is None or compressed_size is None:
-            continue
+        key = (platform, library, corpus)
+        row = {
+            "originalSizeBytes": int(original_size),
+            "compressedSizeBytes": int(compressed_size),
+        }
+        previous = values_by_key.get(key)
+        if previous is not None and previous != row:
+            raise SystemExit(f"Conflicting benchmark metadata for {' / '.join(key)}")
+        values_by_key[key] = row
 
-        sizes[(platform, library, corpus)] = int(compressed_size)
-
-    return sizes
+    return values_by_key
 
 
 def report_files(report_dir):
     return {
-        platform: (report_dir / file_name)
+        platform: report_dir / file_name
         for file_name, platform in PLATFORMS.items()
         if (report_dir / file_name).exists()
     }
 
 
-def stale_report_platforms(report_dir):
-    files = report_files(report_dir)
-    if not files:
-        return set()
-
-    latest_mtime = max(path.stat().st_mtime for path in files.values())
-    stale = set()
-    for platform, path in files.items():
-        if latest_mtime - path.stat().st_mtime > STALE_REPORT_SECONDS:
-            stale.add(platform)
-    return stale
+def finite_number(value):
+    return isinstance(value, (int, float)) and math.isfinite(value)
 
 
-def read_scores(report_dir, ignored_platforms):
-    scores = {}
+def milliseconds(value):
+    return value * 1000 if finite_number(value) else None
+
+
+def percentile(values, fraction):
+    if not values:
+        return None
+    ordered = sorted(values)
+    position = (len(ordered) - 1) * fraction
+    lower_index = math.floor(position)
+    upper_index = math.ceil(position)
+    if lower_index == upper_index:
+        return ordered[lower_index]
+    weight = position - lower_index
+    return ordered[lower_index] * (1 - weight) + ordered[upper_index] * weight
+
+
+def metric_from_entry(entry):
+    metric = entry["primaryMetric"]
+    score_unit = metric.get("scoreUnit")
+    if score_unit not in ("s/op", "sec/op"):
+        raise SystemExit(f"Unsupported benchmark score unit: {score_unit!r}")
+    confidence = metric.get("scoreConfidence", [])
+    percentiles = metric.get("scorePercentiles", {})
+    raw_data = [
+        [milliseconds(value) for value in fork if finite_number(value)]
+        for fork in metric.get("rawData", [])
+    ]
+    raw_data = [fork for fork in raw_data if fork]
+    samples = [value for fork in raw_data for value in fork]
+    p50 = milliseconds(percentiles.get("50.0"))
+    p95 = milliseconds(percentiles.get("95.0"))
+    return {
+        "sourceUnit": score_unit,
+        "averageMs": milliseconds(metric.get("score")),
+        "errorMs": milliseconds(metric.get("scoreError")),
+        "confidenceIntervalMs": [
+            milliseconds(confidence[0]) if len(confidence) > 0 else None,
+            milliseconds(confidence[1]) if len(confidence) > 1 else None,
+        ],
+        "p50Ms": p50 if p50 is not None else percentile(samples, 0.50),
+        "p95Ms": p95 if p95 is not None else percentile(samples, 0.95),
+        "forkCount": len(raw_data),
+        "sampleCount": sum(len(fork) for fork in raw_data),
+        "rawDataMs": raw_data,
+    }
+
+
+def environment_from_entry(entry):
+    excluded = {
+        "benchmark",
+        "mode",
+        "params",
+        "primaryMetric",
+        "secondaryMetrics",
+        "threads",
+    }
+    return {key: value for key, value in entry.items() if key not in excluded}
+
+
+def read_results(report_dir):
+    metrics = {}
+    environments = {}
     for platform, report in report_files(report_dir).items():
-        if platform in ignored_platforms:
-            continue
-
         for entry in json.loads(report.read_text()):
             benchmark = entry["benchmark"]
             library = library_name(benchmark)
             operation = benchmark.rsplit(".", 1)[-1]
             corpus = entry.get("params", {}).get("corpus")
-
-            if library is None or corpus not in CORPUS_BYTES or operation not in OPERATION_ORDER:
+            if library is None or corpus not in CORPUS_ORDER or operation not in OPERATIONS:
                 continue
 
             key = (platform, corpus, operation, library)
-            scores[key] = entry["primaryMetric"]["score"]
+            if key in metrics:
+                raise SystemExit(f"Duplicate benchmark result for {' / '.join(key)}")
+            metrics[key] = metric_from_entry(entry)
+            environment = environment_from_entry(entry)
+            previous_environment = environments.setdefault(platform, environment)
+            if previous_environment != environment:
+                raise SystemExit(f"Benchmark environment changes within the {platform} report")
 
-    return scores
+    return metrics, environments
 
 
-def result_order(scores, operation):
-    keys = {
-        (platform, corpus)
-        for platform, corpus, row_operation, _ in scores
-        if row_operation == operation
+def original_size(metadata, platform, corpus):
+    sizes = {
+        row["originalSizeBytes"]
+        for (row_platform, _, row_corpus), row in metadata.items()
+        if row_platform == platform and row_corpus == corpus
     }
+    if not sizes:
+        return None
+    if len(sizes) != 1:
+        raise SystemExit(f"Original corpus size differs between libraries for {platform} / {corpus}")
+    return sizes.pop()
+
+
+def compressed_size(metadata, platform, library, corpus):
+    row = metadata.get((platform, library, corpus))
+    return None if row is None else row["compressedSizeBytes"]
+
+
+def compression_ratio(compressed, original):
+    if compressed is None or original in (None, 0):
+        return None
+    return compressed / original
+
+
+def paired_rows(metrics, operation):
     return sorted(
-        keys,
-        key=lambda key: (
-            PLATFORM_ORDER[key[0]],
-            CORPUS_ORDER[key[1]],
-        ),
+        {
+            (platform, corpus)
+            for platform, corpus, row_operation, _ in metrics
+            if row_operation == operation
+        },
+        key=lambda key: (PLATFORM_ORDER[key[0]], CORPUS_ORDER[key[1]]),
     )
 
 
-def score(scores, platform, corpus, operation, library):
-    return scores.get((platform, corpus, operation, library))
+def metric(metrics, platform, corpus, operation, library):
+    return metrics.get((platform, corpus, operation, library))
 
 
-def compressed_size(sizes, platform, library, corpus):
-    return sizes.get((platform, library, corpus))
+def metric_summary(metrics, metadata, environments, report_dir):
+    compression = []
+    for platform, corpus in paired_rows(metrics, "rawDeflateCompression"):
+        size = original_size(metadata, platform, corpus)
+        kflate_size = compressed_size(metadata, platform, "KFlate", corpus)
+        kompress_size = compressed_size(metadata, platform, "Kompress", corpus)
+        compression.append(
+            {
+                "platform": platform,
+                "corpus": corpus,
+                "originalSizeBytes": size,
+                "kflateCompressedSizeBytes": kflate_size,
+                "kompressCompressedSizeBytes": kompress_size,
+                "kflateCompressionRatio": compression_ratio(kflate_size, size),
+                "kompressCompressionRatio": compression_ratio(kompress_size, size),
+                "kflate": metric(metrics, platform, corpus, "rawDeflateCompression", "KFlate"),
+                "kompress": metric(metrics, platform, corpus, "rawDeflateCompression", "Kompress"),
+            }
+        )
+
+    decompression = []
+    for operation, (_, producer) in OPERATIONS.items():
+        if producer is None:
+            continue
+        for platform, corpus in paired_rows(metrics, operation):
+            decompression.append(
+                {
+                    "platform": platform,
+                    "corpus": corpus,
+                    "producer": producer,
+                    "originalSizeBytes": original_size(metadata, platform, corpus),
+                    "kflate": metric(metrics, platform, corpus, operation, "KFlate"),
+                    "kompress": metric(metrics, platform, corpus, operation, "Kompress"),
+                }
+            )
+    decompression.sort(
+        key=lambda row: (
+            PLATFORM_ORDER[row["platform"]],
+            CORPUS_ORDER[row["corpus"]],
+            PRODUCER_ORDER[row["producer"]],
+        )
+    )
+
+    return {
+        "runDirectory": str(report_dir),
+        "comparisonRule": "Compare KFlate and Kompress only within the same platform, corpus, operation, and producer.",
+        "environment": environments,
+        "compression": compression,
+        "decompression": decompression,
+    }
+
+
+def missing_result_rows(metrics, platforms):
+    missing = []
+    for platform in platforms:
+        for corpus in CORPORA:
+            for operation in OPERATIONS:
+                for library in ("KFlate", "Kompress"):
+                    if (platform, corpus, operation, library) not in metrics:
+                        missing.append(f"{platform} / {corpus} / {operation} / {library}")
+    return missing
+
+
+def missing_size_rows(summary):
+    return [
+        f"{row['platform']} / {row['corpus']}"
+        for row in summary["compression"]
+        if row["originalSizeBytes"] is None
+        or row["kflateCompressedSizeBytes"] is None
+        or row["kompressCompressedSizeBytes"] is None
+    ]
+
+
+def fmt_number(value, digits=3):
+    return "-" if not finite_number(value) else f"{value:.{digits}f}"
 
 
 def fmt_bytes(value):
     return "-" if value is None else f"{value:,}"
 
 
-def fmt_millis(seconds):
-    return "-" if seconds is None else f"{seconds * 1000:.3f}"
+def fmt_ratio(value):
+    return "-" if not finite_number(value) else f"{value * 100:.2f}%"
 
 
-def millis(seconds):
-    return None if seconds is None else seconds * 1000
+def fmt_average(metric_value):
+    if metric_value is None:
+        return "-"
+    average = fmt_number(metric_value["averageMs"])
+    error = metric_value["errorMs"]
+    return average if not finite_number(error) else f"{average} ± {error:.3f}"
 
 
-def metric_summary(scores, sizes):
-    compression = []
-    for platform, corpus in result_order(scores, "rawDeflateCompression"):
-        compression.append(
-            {
-                "platform": platform,
-                "corpus": corpus,
-                "originalSizeBytes": CORPUS_BYTES[corpus],
-                "kflateCompressedSizeBytes": compressed_size(sizes, platform, "KFlate", corpus),
-                "kompressCompressedSizeBytes": compressed_size(sizes, platform, "Kompress", corpus),
-                "kflateAvgMs": millis(score(scores, platform, corpus, "rawDeflateCompression", "KFlate")),
-                "kompressAvgMs": millis(score(scores, platform, corpus, "rawDeflateCompression", "Kompress")),
-            }
-        )
-
-    decompression = []
-    for platform, corpus in result_order(scores, "rawDeflateDecompression"):
-        decompression.append(
-            {
-                "platform": platform,
-                "corpus": corpus,
-                "kflateAvgMs": millis(score(scores, platform, corpus, "rawDeflateDecompression", "KFlate")),
-                "kompressAvgMs": millis(score(scores, platform, corpus, "rawDeflateDecompression", "Kompress")),
-            }
-        )
-
-    return {
-        "compression": compression,
-        "decompression": decompression,
-    }
+def fmt_confidence(metric_value):
+    if metric_value is None:
+        return "-"
+    lower, upper = metric_value["confidenceIntervalMs"]
+    if not finite_number(lower) or not finite_number(upper):
+        return "-"
+    return f"[{lower:.3f}, {upper:.3f}]"
 
 
-def missing_size_rows(summary):
-    missing = []
-    for row in summary["compression"]:
-        if row["kflateCompressedSizeBytes"] is None or row["kompressCompressedSizeBytes"] is None:
-            missing.append(f"{row['platform']} / {row['corpus']}")
-    return missing
+def fmt_percentiles(metric_value):
+    if metric_value is None:
+        return "-"
+    return f"{fmt_number(metric_value['p50Ms'])} / {fmt_number(metric_value['p95Ms'])}"
 
 
 def compression_table_lines(summary):
     lines = [
         "## Compression",
         "",
-        "| Platform | Corpus | Original size | KFlate compressed size | Kompress compressed size | KFlate avg ms | Kompress avg ms |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| Platform | Corpus | Original bytes | KFlate bytes | Kompress bytes | KFlate ratio | Kompress ratio | KFlate avg ± error ms | Kompress avg ± error ms | KFlate p50 / p95 ms | Kompress p50 / p95 ms | KFlate confidence interval ms | Kompress confidence interval ms |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
-
     for row in summary["compression"]:
         lines.append(
             f"| {row['platform']} | `{row['corpus']}` | {fmt_bytes(row['originalSizeBytes'])} | "
-            f"{fmt_bytes(row['kflateCompressedSizeBytes'])} | "
-            f"{fmt_bytes(row['kompressCompressedSizeBytes'])} | "
-            f"{fmt_millis_from_value(row['kflateAvgMs'])} | "
-            f"{fmt_millis_from_value(row['kompressAvgMs'])} |"
+            f"{fmt_bytes(row['kflateCompressedSizeBytes'])} | {fmt_bytes(row['kompressCompressedSizeBytes'])} | "
+            f"{fmt_ratio(row['kflateCompressionRatio'])} | {fmt_ratio(row['kompressCompressionRatio'])} | "
+            f"{fmt_average(row['kflate'])} | {fmt_average(row['kompress'])} | "
+            f"{fmt_percentiles(row['kflate'])} | {fmt_percentiles(row['kompress'])} | "
+            f"{fmt_confidence(row['kflate'])} | {fmt_confidence(row['kompress'])} |"
         )
-
     return lines
-
-
-def fmt_millis_from_value(value):
-    return "-" if value is None else f"{value:.3f}"
 
 
 def decompression_table_lines(summary):
     lines = [
         "## Decompression",
         "",
-        "| Platform | Corpus | KFlate avg ms | Kompress avg ms |",
-        "| --- | --- | --- | --- |",
+        "| Platform | Corpus | Stream producer | KFlate avg ± error ms | Kompress avg ± error ms | KFlate p50 / p95 ms | Kompress p50 / p95 ms | KFlate confidence interval ms | Kompress confidence interval ms |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
-
     for row in summary["decompression"]:
         lines.append(
-            f"| {row['platform']} | `{row['corpus']}` | "
-            f"{fmt_millis_from_value(row['kflateAvgMs'])} | "
-            f"{fmt_millis_from_value(row['kompressAvgMs'])} |"
+            f"| {row['platform']} | `{row['corpus']}` | {row['producer']} | "
+            f"{fmt_average(row['kflate'])} | {fmt_average(row['kompress'])} | "
+            f"{fmt_percentiles(row['kflate'])} | {fmt_percentiles(row['kompress'])} | "
+            f"{fmt_confidence(row['kflate'])} | {fmt_confidence(row['kompress'])} |"
         )
-
     return lines
 
 
 def report_lines(summary):
-    lines = compression_table_lines(summary)
+    lines = [
+        "# Benchmark comparison",
+        "",
+        "Compare KFlate and Kompress only within the same platform, corpus, operation, and stream producer.",
+        "Absolute times across JVM, Native, and Wasm are not comparable because their runtimes and baseline backends differ.",
+        "",
+    ]
+    lines.extend(compression_table_lines(summary))
     lines.append("")
     lines.extend(decompression_table_lines(summary))
     return lines
@@ -307,7 +445,7 @@ def write_report(summary, output):
 
 def write_json(summary, output):
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(summary, indent=2) + "\n")
+    output.write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n")
 
 
 def main():
@@ -320,32 +458,38 @@ def main():
             f"No benchmark run directory found under '{args.report_root}'. "
             "Run benchmarks first with ./gradlew :kflate:benchmarkAll."
         )
-    ignored_platforms = set()
-    if args.run_dir is None:
-        ignored_platforms = stale_report_platforms(report_dir)
-    summary = metric_summary(read_scores(report_dir, ignored_platforms), read_size_metadata(args.metadata))
+
+    files = report_files(report_dir)
+    available_platforms = set(files)
+    missing_platforms = set(PLATFORMS.values()) - available_platforms
+    if missing_platforms and not args.allow_partial:
+        raise SystemExit(
+            "Benchmark reports are missing for: "
+            + ", ".join(sorted(missing_platforms))
+            + ". Pass --allow-partial only for local investigation."
+        )
+
+    metrics, environments = read_results(report_dir)
+    missing_results = missing_result_rows(metrics, available_platforms)
+    if missing_results and not args.allow_partial:
+        raise SystemExit(
+            "Benchmark result rows are missing:\n  - "
+            + "\n  - ".join(missing_results)
+            + "\nPass --allow-partial only for local investigation."
+        )
+
+    summary = metric_summary(metrics, read_metadata(args.metadata), environments, report_dir)
     missing_sizes = missing_size_rows(summary)
     if missing_sizes and not args.allow_missing_sizes:
-        missing = "\n  - ".join(missing_sizes)
         raise SystemExit(
-            "Compressed-size metadata is missing for:\n"
-            f"  - {missing}\n\n"
-            "Run benchmarks first so benchmark setup writes metadata:\n"
-            "  mkdir -p performance\n"
-            "  rm -f performance/benchmark-metadata.jsonl\n"
-            "  ./gradlew :kflate:benchmarkAll\n"
-            "  python3 scripts/benchmark_comparison.py\n\n"
-            "Use --allow-missing-sizes only for partial/debug reports."
+            "Corpus or compressed-size metadata is missing for:\n  - "
+            + "\n  - ".join(missing_sizes)
+            + "\nRun the matching benchmarks again or pass --allow-missing-sizes for local investigation."
         )
+
     write_report(summary, output)
     write_json(summary, json_output)
     print(f"Using benchmark report directory: {report_dir}")
-    if ignored_platforms:
-        print(
-            "Ignoring stale platform reports in auto mode: "
-            + ", ".join(sorted(ignored_platforms))
-            + f" (older than {STALE_REPORT_SECONDS // 60} minutes from latest report file)"
-        )
     print(f"Wrote benchmark comparison tables to {output}")
     print(f"Wrote benchmark metric JSON to {json_output}")
 

@@ -20,35 +20,43 @@ abstract class RawBenchmarkState {
     protected val input: ByteArray
         get() = rawInput
 
-    protected val compressed: ByteArray
-        get() = rawCompressed
+    protected val kflateCompressed: ByteArray
+        get() = rawKFlateCompressed
+
+    protected val kompressCompressed: ByteArray
+        get() = rawKompressCompressed
 
     private lateinit var rawInput: ByteArray
-    private lateinit var rawCompressed: ByteArray
+    private lateinit var rawKFlateCompressed: ByteArray
+    private lateinit var rawKompressCompressed: ByteArray
 
     protected fun setupRawBenchmark(
-        libraryName: String,
+        library: BenchmarkLibrary,
         reportPrefix: String,
-        compress: (ByteArray) -> ByteArray,
-        decompressionInput: (ByteArray) -> ByteArray,
+        compressWithKFlate: (ByteArray) -> ByteArray,
+        compressWithKompress: (ByteArray) -> ByteArray,
         decompress: (ByteArray) -> ByteArray
     ) {
         rawInput = BenchmarkCorpus.load(corpus)
-        val libraryCompressed = compress(rawInput)
-        rawCompressed = decompressionInput(rawInput)
-
-        require(decompress(rawCompressed).contentEquals(rawInput)) {
-            "$libraryName RAW roundtrip failed for benchmark corpus '$corpus'"
-        }
-        require(decompress(libraryCompressed).contentEquals(rawInput)) {
-            "$libraryName RAW compression output failed roundtrip for benchmark corpus '$corpus'"
+        rawKFlateCompressed = compressWithKFlate(rawInput)
+        rawKompressCompressed = compressWithKompress(rawInput)
+        val libraryCompressed = when (library) {
+            BenchmarkLibrary.KFlate -> rawKFlateCompressed
+            BenchmarkLibrary.Kompress -> rawKompressCompressed
         }
 
-        println(rawBenchmarkReportLine(reportPrefix, libraryName, corpus, rawInput.size, libraryCompressed.size))
+        require(decompress(rawKFlateCompressed).contentEquals(rawInput)) {
+            "${library.reportName} failed to decompress KFlate RAW output for benchmark corpus '$corpus'"
+        }
+        require(decompress(rawKompressCompressed).contentEquals(rawInput)) {
+            "${library.reportName} failed to decompress Kompress RAW output for benchmark corpus '$corpus'"
+        }
+
+        println(rawBenchmarkReportLine(reportPrefix, library.reportName, corpus, rawInput.size, libraryCompressed.size))
         appendBenchmarkMetadata(
             benchmarkMetadataJsonLine(
                 platform = benchmarkPlatformName(),
-                libraryName = libraryName,
+                libraryName = library.reportName,
                 corpusName = corpus,
                 originalSize = rawInput.size,
                 compressedSize = libraryCompressed.size
@@ -56,6 +64,9 @@ abstract class RawBenchmarkState {
         )
     }
 }
+
+const val BENCHMARK_COMPRESSION_LEVEL: Int = 6
+const val BENCHMARK_MEMORY_LEVEL: Int = 8
 
 expect fun appendBenchmarkMetadata(line: String)
 
