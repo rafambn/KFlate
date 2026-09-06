@@ -14,7 +14,6 @@ import com.rafambn.kflate.huffman.FIXED_LENGTH_BASE
 import com.rafambn.kflate.huffman.FIXED_LENGTH_EXTRA_BITS
 import com.rafambn.kflate.huffman.FIXED_LENGTH_REVERSE_LOOKUP
 import com.rafambn.kflate.huffman.FIXED_LENGTH_REVERSE_MAP
-import com.rafambn.kflate.huffman.DEFLATE_OPTIONS
 import com.rafambn.kflate.huffman.CODE_LENGTH_INDEX_MAP
 import com.rafambn.kflate.huffman.createHuffmanTree
 import com.rafambn.kflate.huffman.validateHuffmanCodeLengths
@@ -454,11 +453,9 @@ internal fun deflate(
         if (bitPosition != 0L) {
             writeBuffer[0] = (state.bitBuffer shr 3).toByte()
         }
-        val option = DEFLATE_OPTIONS[level - 1]
-        val niceLength = option shr 13
-        val chainLength = option and 8191
+        val levelOptions = DEFLATE_LEVELS[level]
         val mask = (1 shl compressionLevel) - 1
-        val prev = state.prev ?: ShortArray(32768)
+        val prev = state.prev ?: ShortArray(MATCH_DISTANCE_MASK + 1)
         val head = state.head ?: ShortArray(mask + 1)
         val baseShift1 = ceil(compressionLevel / 3.0).toInt()
         val baseShift2 = 2 * baseShift1
@@ -472,12 +469,12 @@ internal fun deflate(
         var symbolIndex = 0
         var waitIndex = state.waitIndex
         var blockStart = maxOf(state.inputOffset, waitIndex)
+        var pendingMatch = 0
 
         while (i + 2 < dataSize) {
-            val hashValue =
-                ((data[i].toInt() and 0xFF) xor ((data[i + 1].toInt() and 0xFF) shl baseShift1) xor ((data[i + 2].toInt() and 0xFF) shl baseShift2)) and mask
-            var iMod = i and 32767
-            var pIMod = head[hashValue].toInt() and 0xFFFF
+            val hashValue = deflateHash(data, i, baseShift1, baseShift2, mask)
+            val iMod = i and MATCH_DISTANCE_MASK
+            val pIMod = head[hashValue].toInt() and 0xFFFF
             prev[iMod] = pIMod.toShort()
             head[hashValue] = iMod.toShort()
 
@@ -496,54 +493,31 @@ internal fun deflate(
                     distanceFrequencies.fill(0, 0, 30)
                 }
 
-                var length = 2
-                var distance = 0
-                var currentChain = chainLength
-                var diff = (iMod - pIMod) and 32767
+                val match = if (pendingMatch != 0) {
+                    pendingMatch.also { pendingMatch = 0 }
+                } else {
+                    findLongestMatch(data, dataSize, i, pIMod, prev, levelOptions)
+                }
+                val length = match ushr MATCH_DISTANCE_BITS
+                val distance = match and MATCH_DISTANCE_MASK
 
-                if (hasThreeByteMatch(data, i, diff, remaining)) {
-                    val maxN = minOf(niceLength, remaining) - 1
-                    val maxD = minOf(32767, i)
-                    val maxLength = minOf(258, remaining)
-
-                    while (diff <= maxD && --currentChain != 0 && iMod != pIMod) {
-                        if (data[i + length] == data[i + length - diff] &&
-                            data[i] == data[i - diff] &&
-                            data[i + 1] == data[i + 1 - diff]
-                        ) {
-                            var newLength = 2
-                            while (newLength < maxLength && data[i + newLength] == data[i + newLength - diff]) {
-                                newLength++
-                            }
-                            if (newLength > length) {
-                                length = newLength
-                                distance = diff
-                                if (newLength > maxN) break
-
-                                // Optimized minMatchDiff loop: stop early if no improvement possible
-                                val minMatchDiff = minOf(diff, newLength - 2)
-                                var maxDiff = 0
-                                for (j in 0 until minMatchDiff) {
-                                    val tI = (i - diff + j) and 32767
-                                    val pTI = prev[tI].toInt() and 0xFFFF
-                                    val cD = (tI - pTI) and 32767
-                                    if (cD > maxDiff) {
-                                        maxDiff = cD
-                                        pIMod = tI
-                                        // Early exit if we found the maximum possible distance
-                                        if (maxDiff >= maxD) break
-                                    }
-                                }
-                            }
-                        }
-                        iMod = pIMod
-                        pIMod = prev[iMod].toInt() and 0xFFFF
-                        diff += (iMod - pIMod) and 32767
-                    }
+                val nextMatch = if (shouldSearchLazyMatch(length, levelOptions.maxLazyLength, remaining)) {
+                    val nextIndex = i + 1
+                    val nextHash = deflateHash(data, nextIndex, baseShift1, baseShift2, mask)
+                    findLongestMatch(data, dataSize, nextIndex, head[nextHash].toInt() and 0xFFFF, prev, levelOptions)
+                } else {
+                    0
                 }
 
-                if (distance != 0) {
-                    symbols[symbolIndex++] = 268435456 or (FIXED_LENGTH_REVERSE_LOOKUP[length] shl 18) or FIXED_DISTANCE_REVERSE_LOOKUP[distance]
+                if ((nextMatch ushr MATCH_DISTANCE_BITS) > length) {
+                    pendingMatch = nextMatch
+                    symbols[symbolIndex++] = data[i].toInt() and 0xFF
+                    ++literalFrequencies[data[i].toInt() and 0xFF]
+                } else if (distance != 0) {
+                    symbols[symbolIndex++] =
+                        268435456 or
+                            (FIXED_LENGTH_REVERSE_LOOKUP[length] shl 18) or
+                            FIXED_DISTANCE_REVERSE_LOOKUP[distance]
                     val lenIndex = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
                     val distIndex = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
                     extraBits += (FIXED_LENGTH_EXTRA_BITS[lenIndex].toInt() and 0xFF) + (FIXED_DISTANCE_EXTRA_BITS[distIndex].toInt() and 0xFF)
@@ -618,16 +592,8 @@ internal fun deflateWithOptions(
     var workingState = deflateState
     var workingData = inputData
 
-    val level = when (type) {
-        is Raw -> type.level
-        is Gzip -> type.level
-        is Zlib -> type.level
-    }
-    val mem = when (type) {
-        is Raw -> type.mem
-        is Gzip -> type.mem
-        is Zlib -> type.mem
-    }
+    val level = type.level
+    val mem = type.mem
     val dictionary = when (type) {
         is Raw -> type.dictionary
         is Gzip -> null
@@ -649,18 +615,8 @@ internal fun deflateWithOptions(
         }
     }
 
-    // Cap hash table size per compression level for better CPU cache utilization.
-    // Lower levels search few chain links and don't need large tables.
-    val maxHashBitsForLevel = when (level) {
-        0, 1 -> 12  // 4K entries = 8KB (L1 cache)
-        2, 3 -> 13  // 8K entries = 16KB (L1 cache)
-        4, 5 -> 14  // 16K entries = 32KB (L1 cache)
-        6, 7 -> 15  // 32K entries = 64KB (L2 cache)
-        8 -> 16  // 64K entries = 128KB (L2 cache)
-        else -> 20  // 1M entries (level 9: max quality, current default)
-    }
     val memoryUsage = if (workingState.isLastChunk && mem == 8) {
-        minOf(maxHashBitsForLevel, ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt())
+        minOf(DEFLATE_LEVELS[level].maxHashBits, ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt())
     } else {
         mem + 12
     }
@@ -722,3 +678,80 @@ internal fun hasThreeByteMatch(data: ByteArray, index: Int, distance: Int, remai
             data[index + 1] == data[index - distance + 1] &&
             data[index + 2] == data[index - distance + 2]
 }
+
+internal fun shouldSearchLazyMatch(length: Int, maxLazyLength: Int, remaining: Int): Boolean {
+    return maxLazyLength > 0 && length in 3 until maxLazyLength && remaining > length + 1
+}
+
+private fun deflateHash(data: ByteArray, index: Int, shift1: Int, shift2: Int, mask: Int): Int {
+    return ((data[index].toInt() and 0xFF) xor
+            ((data[index + 1].toInt() and 0xFF) shl shift1) xor
+            ((data[index + 2].toInt() and 0xFF) shl shift2)) and mask
+}
+
+private fun findLongestMatch(
+    data: ByteArray,
+    dataSize: Int,
+    index: Int,
+    previousIndex: Int,
+    previous: ShortArray,
+    level: DeflateLevel,
+): Int {
+    val remaining = dataSize - index
+    var currentIndex = index and MATCH_DISTANCE_MASK
+    var candidateIndex = previousIndex
+    var distance = (currentIndex - candidateIndex) and MATCH_DISTANCE_MASK
+    if (!hasThreeByteMatch(data, index, distance, remaining)) return 0
+
+    val niceLength = minOf(level.niceLength, remaining)
+    val maxDistance = minOf(MATCH_DISTANCE_MASK, index)
+    val maxLength = minOf(MAX_MATCH_LENGTH, remaining)
+    var remainingChain = level.chainLength
+    var bestLength = 2
+    var bestDistance = 0
+
+    while (distance <= maxDistance && --remainingChain != 0 && currentIndex != candidateIndex) {
+        if (data[index + bestLength] == data[index + bestLength - distance] &&
+            data[index] == data[index - distance] &&
+            data[index + 1] == data[index + 1 - distance]
+        ) {
+            var candidateLength = 2
+            while (
+                candidateLength < maxLength &&
+                data[index + candidateLength] == data[index + candidateLength - distance]
+            ) {
+                candidateLength++
+            }
+            if (candidateLength > bestLength) {
+                bestLength = candidateLength
+                bestDistance = distance
+                if (candidateLength >= niceLength) break
+
+                val matchSpan = minOf(distance, candidateLength - 2)
+                var largestPreviousDistance = 0
+                for (offset in 0 until matchSpan) {
+                    val matchIndex = (index - distance + offset) and MATCH_DISTANCE_MASK
+                    val previousMatchIndex = previous[matchIndex].toInt() and 0xFFFF
+                    val previousDistance = (matchIndex - previousMatchIndex) and MATCH_DISTANCE_MASK
+                    if (previousDistance > largestPreviousDistance) {
+                        largestPreviousDistance = previousDistance
+                        candidateIndex = matchIndex
+                        if (largestPreviousDistance >= maxDistance) break
+                    }
+                }
+            }
+        }
+        currentIndex = candidateIndex
+        candidateIndex = previous[currentIndex].toInt() and 0xFFFF
+        distance += (currentIndex - candidateIndex) and MATCH_DISTANCE_MASK
+    }
+
+    // The extra distance bits make a far three-byte match costlier than three literals in most blocks.
+    if (bestLength == 3 && bestDistance > MAX_DISTANCE_FOR_THREE_BYTE_MATCH) return 0
+    return (bestLength shl MATCH_DISTANCE_BITS) or bestDistance
+}
+
+private const val MATCH_DISTANCE_BITS = 15
+private const val MATCH_DISTANCE_MASK = 32767
+private const val MAX_MATCH_LENGTH = 258
+private const val MAX_DISTANCE_FOR_THREE_BYTE_MATCH = 4096

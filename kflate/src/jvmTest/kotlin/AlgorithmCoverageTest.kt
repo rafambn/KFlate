@@ -1,11 +1,13 @@
 package com.rafambn.kflate
 
+import com.rafambn.kflate.algorithm.DEFLATE_LEVELS
+import com.rafambn.kflate.algorithm.checkedDeflateInputSize
 import com.rafambn.kflate.algorithm.deflate
 import com.rafambn.kflate.algorithm.deflateWithOptions
-import com.rafambn.kflate.algorithm.inflate
-import com.rafambn.kflate.algorithm.checkedDeflateInputSize
 import com.rafambn.kflate.algorithm.hasThreeByteMatch
+import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.algorithm.shouldFlushBlock
+import com.rafambn.kflate.algorithm.shouldSearchLazyMatch
 import com.rafambn.kflate.algorithm.validateCodeLengthEntry
 import com.rafambn.kflate.algorithm.validateCodeLengthTree
 import com.rafambn.kflate.algorithm.validateInflateInputSize
@@ -208,6 +210,33 @@ class AlgorithmCoverageTest {
         assertTrue(!hasThreeByteMatch(byteArrayOf(1, 2, 3, 0, 2, 3), 3, 3, 3))
         assertTrue(!hasThreeByteMatch(byteArrayOf(1, 2, 3, 1, 0, 3), 3, 3, 3))
         assertTrue(!hasThreeByteMatch(byteArrayOf(1, 2, 3, 1, 2, 0), 3, 3, 3))
+    }
+
+    @Test
+    fun compressionLevelsIncreaseSearchEffort() {
+        val compressedLevels = DEFLATE_LEVELS.drop(1)
+
+        assertEquals(9, compressedLevels.size)
+        assertTrue(compressedLevels.zipWithNext().all { (lower, higher) ->
+            lower.niceLength <= higher.niceLength
+        })
+        assertTrue(compressedLevels.zipWithNext().all { (lower, higher) ->
+            lower.chainLength <= higher.chainLength
+        })
+        assertTrue(compressedLevels.zipWithNext().all { (lower, higher) ->
+            lower.maxLazyLength <= higher.maxLazyLength
+        })
+        assertTrue(compressedLevels.zipWithNext().all { (lower, higher) ->
+            lower.maxHashBits <= higher.maxHashBits
+        })
+        assertEquals(0, DEFLATE_LEVELS[3].maxLazyLength)
+        assertTrue(DEFLATE_LEVELS[4].maxLazyLength > 0)
+
+        assertTrue(shouldSearchLazyMatch(length = 3, maxLazyLength = 4, remaining = 5))
+        assertTrue(!shouldSearchLazyMatch(length = 2, maxLazyLength = 4, remaining = 5))
+        assertTrue(!shouldSearchLazyMatch(length = 4, maxLazyLength = 4, remaining = 5))
+        assertTrue(!shouldSearchLazyMatch(length = 3, maxLazyLength = 0, remaining = 5))
+        assertTrue(!shouldSearchLazyMatch(length = 3, maxLazyLength = 4, remaining = 4))
     }
 
     @Test

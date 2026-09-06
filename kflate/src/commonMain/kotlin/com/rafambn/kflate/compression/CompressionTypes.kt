@@ -14,7 +14,9 @@ sealed interface CompressionType {
      * The level of compression to use, ranging from 0-9.
      *
      * 0 will store the data without compression.
-     * 1 is fastest but compresses the worst, 9 is slowest but compresses the best.
+     * Levels 1-3 greedily select matches with progressively larger search budgets.
+     * Levels 4-9 also look one byte ahead before accepting short matches and use progressively larger search budgets.
+     * Level 1 is usually fastest, while level 9 usually produces the smallest output.
      * The default level is 6.
      *
      * Typically, binary data benefits much more from higher values than text data.
