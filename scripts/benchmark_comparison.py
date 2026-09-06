@@ -154,7 +154,7 @@ def report_files(report_dir):
 
 
 def finite_number(value):
-    return isinstance(value, (int, float)) and math.isfinite(value)
+    return type(value) in (int, float) and math.isfinite(value)
 
 
 def milliseconds(value):
@@ -176,16 +176,31 @@ def percentile(values, fraction):
 
 def metric_from_entry(entry):
     metric = entry["primaryMetric"]
+    context = f"{entry.get('benchmark', 'benchmark')} {entry.get('params', {})}"
+    score = metric.get("score")
+    if not finite_number(score) or score <= 0 or not finite_number(score * 1000):
+        raise SystemExit(f"Invalid benchmark score for {context}: expected a finite positive time")
+    raw_samples = metric.get("rawData")
+    if not isinstance(raw_samples, list) or not raw_samples:
+        raise SystemExit(f"Missing benchmark samples for {context}")
+    for fork_index, fork in enumerate(raw_samples):
+        if not isinstance(fork, list) or not fork:
+            raise SystemExit(f"Missing benchmark samples for {context}, fork {fork_index}")
+        for sample_index, sample in enumerate(fork):
+            if not finite_number(sample) or sample <= 0 or not finite_number(sample * 1000):
+                raise SystemExit(
+                    f"Invalid benchmark sample for {context}, fork {fork_index}, sample {sample_index}: "
+                    "expected a finite positive time"
+                )
     score_unit = metric.get("scoreUnit")
     if score_unit not in ("s/op", "sec/op"):
         raise SystemExit(f"Unsupported benchmark score unit: {score_unit!r}")
     confidence = metric.get("scoreConfidence", [])
     percentiles = metric.get("scorePercentiles", {})
     raw_data = [
-        [milliseconds(value) for value in fork if finite_number(value)]
-        for fork in metric.get("rawData", [])
+        [milliseconds(value) for value in fork]
+        for fork in raw_samples
     ]
-    raw_data = [fork for fork in raw_data if fork]
     samples = [value for fork in raw_data for value in fork]
     p50 = milliseconds(percentiles.get("50.0"))
     p95 = milliseconds(percentiles.get("95.0"))

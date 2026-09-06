@@ -104,6 +104,8 @@ performance/benchmark-comparison-<timestamp>.json
 
 Use `--output`, `--json-output`, `--metadata`, or `--run-dir` to override those paths.
 Automatic report selection chooses the newest timestamp directory and rejects missing platforms or benchmark rows.
+Reports also reject missing or empty sample forks and nonnumeric, nonfinite, or nonpositive scores and samples.
+These measurement checks apply even with `--allow-partial`; invalid samples are never discarded.
 It never mixes files from different directories or rejects a platform because another target took longer to finish.
 `--allow-partial` and `--allow-missing-sizes` exist for local investigation, not release reports.
 

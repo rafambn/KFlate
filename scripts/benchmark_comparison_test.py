@@ -14,6 +14,29 @@ from benchmark_comparison import (
 
 
 class BenchmarkComparisonTest(unittest.TestCase):
+    def test_invalid_scores_are_rejected(self):
+        for score in (None, True, "0.1", 0, -1, float("nan"), float("inf"), -float("inf"), 1e308):
+            with self.subTest(score=score), self.assertRaisesRegex(SystemExit, "Invalid benchmark score"):
+                metric_from_entry({"primaryMetric": {
+                    "score": score, "scoreUnit": "s/op", "rawData": [[0.01]],
+                }})
+
+    def test_invalid_samples_are_not_silently_dropped(self):
+        for sample in (None, True, "0.1", 0, -1, float("nan"), float("inf"), -float("inf"), 1e308):
+            with self.subTest(sample=sample), self.assertRaisesRegex(
+                SystemExit, "Invalid benchmark sample.*example.*fork 1, sample 1"
+            ):
+                metric_from_entry({"benchmark": "example", "primaryMetric": {
+                    "score": 0.01, "scoreUnit": "s/op", "rawData": [[0.01], [0.01, sample]],
+                }})
+
+    def test_missing_or_malformed_forks_are_rejected(self):
+        for samples in (None, [], [[]], [[0.01], []], [None], [0.01], "samples"):
+            with self.subTest(samples=samples), self.assertRaisesRegex(SystemExit, "Missing benchmark samples"):
+                metric_from_entry({"primaryMetric": {
+                    "score": 0.01, "scoreUnit": "s/op", "rawData": samples,
+                }})
+
     def test_metric_preserves_uncertainty_and_raw_samples(self):
         metric = metric_from_entry(
             {
