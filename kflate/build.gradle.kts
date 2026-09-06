@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "com.rafambn"
-version = "1.0.0"
+version = "1.1.0"
 
 kotlin {
     jvmToolchain(libs.versions.java.get().toInt())
@@ -240,7 +240,7 @@ mavenPublishing {
     coordinates(
         groupId = "com.rafambn",
         artifactId = "KFlate",
-        version = "1.0.0"
+        version = project.version.toString(),
     )
 
 // Configure POM metadata for the published artifact
