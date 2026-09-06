@@ -6,7 +6,7 @@ import com.rafambn.kflate.compression.Gzip
 import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.streaming.InflateState
 import com.rafambn.kflate.util.readFourBytes
 import com.rafambn.kflate.util.toIsoStringBytes
@@ -123,26 +123,26 @@ internal fun writeGzipHeader(output: ByteArray, options: Gzip) {
 
 internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {
     if (startOffset + 10 > data.size) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
     if ((data[startOffset].toInt() and 0xFF) != 31 || (data[startOffset + 1].toInt() and 0xFF) != 139 || (data[startOffset + 2].toInt() and 0xFF) != 8) {
-        createFlateError(FlateErrorCode.INVALID_HEADER)
+        throw FlateError(FlateErrorCode.INVALID_HEADER)
     }
     val flags = data[startOffset + 3].toInt() and 0xFF
     if ((flags and 0xE0) != 0) { // Check reserved bits 5, 6, 7
-        createFlateError(FlateErrorCode.INVALID_HEADER)
+        throw FlateError(FlateErrorCode.INVALID_HEADER)
     }
 
     var headerSize = 10
     // FEXTRA
     if ((flags and 4) != 0) {
         if (startOffset + headerSize + 2 > data.size) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         val xlen = (data[startOffset + headerSize].toInt() and 0xFF) or ((data[startOffset + headerSize + 1].toInt() and 0xFF) shl 8)
         headerSize += 2
         if (startOffset + headerSize + xlen > data.size) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         headerSize += xlen
     }
@@ -151,7 +151,7 @@ internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {
     if ((flags and 8) != 0) {
         while (true) {
             if (startOffset + headerSize >= data.size) {
-                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
             if (data[startOffset + headerSize++].toInt() == 0) {
                 break
@@ -163,7 +163,7 @@ internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {
     if ((flags and 16) != 0) {
         while (true) {
             if (startOffset + headerSize >= data.size) {
-                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
             if (data[startOffset + headerSize++].toInt() == 0) {
                 break
@@ -174,12 +174,12 @@ internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {
     // FHCRC
     if ((flags and 2) != 0) {
         if (startOffset + headerSize + 2 > data.size) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         val computedCrc = computeGzipHeaderCrc16(data, startOffset, startOffset + headerSize)
         val storedCrc = (data[startOffset + headerSize].toInt() and 0xFF) or ((data[startOffset + headerSize + 1].toInt() and 0xFF) shl 8)
         if (computedCrc != storedCrc) {
-            createFlateError(FlateErrorCode.INVALID_HEADER)
+            throw FlateError(FlateErrorCode.INVALID_HEADER)
         }
         headerSize += 2
     }
@@ -220,7 +220,7 @@ internal fun processSingleGzipMember(
 ): GzipMemberResult {
     // Validate minimum size: 10 bytes header + at least 2 bytes compressed data + 8 bytes trailer (CRC32 + ISIZE)
     if (startOffset + 20 > data.size) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
 
     // Parse header
@@ -239,7 +239,7 @@ internal fun processSingleGzipMember(
     // Validate trailer
     val trailerStart = compressedDataStart + bytesConsumedByInflate
     if (trailerStart + 8 > data.size) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
 
     // Validate CRC32
@@ -247,13 +247,13 @@ internal fun processSingleGzipMember(
     val crc = Crc32Checksum()
     crc.update(decompressed)
     if (crc.getChecksum() != storedCrc32) {
-        createFlateError(FlateErrorCode.CRC_MISMATCH)
+        throw FlateError(FlateErrorCode.CRC_MISMATCH)
     }
 
     // Validate ISIZE
     val storedISize = readFourBytes(data, trailerStart + 4)
     if ((decompressed.size.toLong() and 0xFFFFFFFFL) != storedISize) {
-        createFlateError(FlateErrorCode.ISIZE_MISMATCH)
+        throw FlateError(FlateErrorCode.ISIZE_MISMATCH)
     }
 
     val totalBytesConsumed = trailerStart + 8 - startOffset

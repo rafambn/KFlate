@@ -2,7 +2,7 @@ package com.rafambn.kflate.decompression
 
 import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.streaming.STREAM_CHUNK_SIZE
 import com.rafambn.kflate.streaming.InflateState
 import com.rafambn.kflate.streaming.appendBytes
@@ -34,7 +34,7 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
         }
 
         if (inputBuffer.isEmpty()) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
 
         state.outputOffset = 0
@@ -61,7 +61,7 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
             inputBuffer = inputBuffer.copyOfRange(consumedBytes, inputBuffer.size)
             state.inputBitPosition = bitRemainder
         } else if (sourceExhausted) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
     }
 

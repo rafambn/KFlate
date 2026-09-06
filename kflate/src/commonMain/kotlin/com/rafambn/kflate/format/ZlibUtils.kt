@@ -4,7 +4,7 @@ package com.rafambn.kflate.format
 import com.rafambn.kflate.compression.Zlib
 import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.util.readFourBytesBE
 import com.rafambn.kflate.util.writeBytesBE
 
@@ -31,26 +31,26 @@ internal fun writeZlibHeader(output: ByteArray, options: Zlib) {
 
 internal fun writeZlibStart(data: ByteArray, hasDictionary: Boolean, dictionary: ByteArray? = null): Int {
     if (data.size < 2) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
     val cmf = data[0].toInt() and 0xFF
     val flg = data[1].toInt() and 0xFF
     if ((cmf and 15) != 8 || (cmf ushr 4) > 7 || ((cmf shl 8 or flg) % 31 != 0))
-        createFlateError(FlateErrorCode.INVALID_HEADER)
+        throw FlateError(FlateErrorCode.INVALID_HEADER)
     val needsDictionary = (flg and 32) != 0
     if (needsDictionary != hasDictionary)
-        createFlateError(FlateErrorCode.INVALID_HEADER)
+        throw FlateError(FlateErrorCode.INVALID_HEADER)
 
     val headerSize = (if (needsDictionary) 4 else 0) + 2
 
     // Validate DICTID if FDICT is set
     if (needsDictionary) {
         if (data.size < headerSize) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
 
         if (dictionary == null) {
-            createFlateError(FlateErrorCode.INVALID_HEADER)
+            throw FlateError(FlateErrorCode.INVALID_HEADER)
         }
 
         val storedDictId = readFourBytesBE(data, 2)
@@ -59,7 +59,7 @@ internal fun writeZlibStart(data: ByteArray, hasDictionary: Boolean, dictionary:
         }.getChecksum()
 
         if (storedDictId != computedDictId) {
-            createFlateError(FlateErrorCode.CHECKSUM_MISMATCH)
+            throw FlateError(FlateErrorCode.CHECKSUM_MISMATCH)
         }
     }
 

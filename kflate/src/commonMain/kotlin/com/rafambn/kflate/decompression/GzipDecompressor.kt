@@ -2,7 +2,7 @@ package com.rafambn.kflate.decompression
 
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.format.processSingleGzipMember
 import com.rafambn.kflate.format.writeGzipStart
 import com.rafambn.kflate.streaming.STREAM_CHUNK_SIZE
@@ -17,7 +17,7 @@ import kotlinx.io.buffered
 
 internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
     if (data.size < 20) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
 
     val decompressedChunks = mutableListOf<ByteArray>()
@@ -28,14 +28,14 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
     while (currentPosition < data.size) {
         // Check if enough bytes for header
         if (currentPosition + 10 > data.size) {
-            createFlateError(FlateErrorCode.TRAILING_GARBAGE)
+            throw FlateError(FlateErrorCode.TRAILING_GARBAGE)
         }
 
         // Validate gzip magic bytes
         if ((data[currentPosition].toInt() and 0xFF) != 31 ||
             (data[currentPosition + 1].toInt() and 0xFF) != 139 ||
             (data[currentPosition + 2].toInt() and 0xFF) != 8) {
-            createFlateError(FlateErrorCode.TRAILING_GARBAGE)
+            throw FlateError(FlateErrorCode.TRAILING_GARBAGE)
         }
 
         // Process member
@@ -93,7 +93,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
                 if (members > 0) {
                     break
                 }
-                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
             try {
                 val headerSize = writeGzipStart(inputBuffer, 0)
@@ -109,7 +109,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
                 if (error.code == FlateErrorCode.UNEXPECTED_EOF && !sourceExhausted) {
                     continue
                 }
-                createFlateError(
+                throw FlateError(
                     if (members > 0) FlateErrorCode.TRAILING_GARBAGE else error.code,
                 )
             }
@@ -118,7 +118,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
         if (!awaitingTrailer) {
             if (inputBuffer.isEmpty()) {
                 if (sourceExhausted) {
-                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 }
                 continue
             }
@@ -148,7 +148,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
                     inputBuffer = inputBuffer.copyOfRange(consumedBytes, inputBuffer.size)
                     inflateState.inputBitPosition = bitRemainder
                 } else if (sourceExhausted) {
-                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 }
             }
         }
@@ -157,17 +157,17 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
             val alignedBytes = (inflateState.inputBitPosition + 7) / 8
             if (inputBuffer.size < alignedBytes + 8) {
                 if (sourceExhausted) {
-                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 }
                 continue
             }
             val storedCrc = readFourBytes(inputBuffer, alignedBytes).toInt()
             val storedISize = readFourBytes(inputBuffer, alignedBytes + 4)
             if (crc.getChecksum() != storedCrc) {
-                createFlateError(FlateErrorCode.CRC_MISMATCH)
+                throw FlateError(FlateErrorCode.CRC_MISMATCH)
             }
             if ((uncompressedSize and 0xFFFFFFFFL) != storedISize) {
-                createFlateError(FlateErrorCode.ISIZE_MISMATCH)
+                throw FlateError(FlateErrorCode.ISIZE_MISMATCH)
             }
             inputBuffer = inputBuffer.copyOfRange(alignedBytes + 8, inputBuffer.size)
             headerParsed = false
