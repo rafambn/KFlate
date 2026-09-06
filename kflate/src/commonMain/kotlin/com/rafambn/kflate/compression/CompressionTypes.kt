@@ -30,11 +30,13 @@ sealed interface CompressionType {
     /**
      * The memory level to use, ranging from 0-12. Increasing this increases speed and compression ratio at the cost of memory.
      *
-     * Note that this is exponential: while level 0 uses 4 kB, level 4 uses 64 kB, level 8 uses 1 MB, and level 12 uses 16 MB.
+     * Note that this is exponential: level 0 uses 8 KiB, level 4 uses 128 KiB,
+     * level 8 uses 2 MiB, and level 12 uses 32 MiB for the hash table.
+     * Compression also uses a 64 KiB history table and temporary input and output buffers.
      * It is recommended not to lower the value below 4, since that tends to hurt performance.
      * In addition, values above 8 tend to help very little on most data and can even hurt performance.
      *
-     * The default value is automatically determined based on the size of the input data.
+     * The default is 8. Blocking compression may select a smaller table for small inputs.
      */
     val mem: Int
 
