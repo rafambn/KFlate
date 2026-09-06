@@ -1,9 +1,14 @@
 package com.rafambn.kflate
 
+import com.rafambn.kflate.algorithm.COST_AWARE_WINDOW_SIZE
 import com.rafambn.kflate.algorithm.DEFLATE_LEVELS
+import com.rafambn.kflate.algorithm.MATCH_DISTANCE_BITS
 import com.rafambn.kflate.algorithm.checkedDeflateInputSize
+import com.rafambn.kflate.algorithm.chooseCostAwarePath
 import com.rafambn.kflate.algorithm.deflate
 import com.rafambn.kflate.algorithm.deflateWithOptions
+import com.rafambn.kflate.algorithm.fixedLiteralBitCost
+import com.rafambn.kflate.algorithm.fixedMatchBitCost
 import com.rafambn.kflate.algorithm.hasThreeByteMatch
 import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.algorithm.shouldFlushBlock
@@ -11,6 +16,8 @@ import com.rafambn.kflate.algorithm.shouldSearchLazyMatch
 import com.rafambn.kflate.algorithm.validateCodeLengthEntry
 import com.rafambn.kflate.algorithm.validateCodeLengthTree
 import com.rafambn.kflate.algorithm.validateInflateInputSize
+import com.rafambn.kflate.compression.Raw as CompressionRaw
+import com.rafambn.kflate.decompression.Raw as DecompressionRaw
 import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.error.FlateErrorCode
 import com.rafambn.kflate.huffman.buildHuffmanTreeFromFrequencies
@@ -223,7 +230,7 @@ class AlgorithmCoverageTest {
         assertTrue(compressedLevels.zipWithNext().all { (lower, higher) ->
             lower.chainLength <= higher.chainLength
         })
-        assertTrue(compressedLevels.zipWithNext().all { (lower, higher) ->
+        assertTrue(compressedLevels.dropLast(1).zipWithNext().all { (lower, higher) ->
             lower.maxLazyLength <= higher.maxLazyLength
         })
         assertTrue(compressedLevels.zipWithNext().all { (lower, higher) ->
@@ -231,12 +238,64 @@ class AlgorithmCoverageTest {
         })
         assertEquals(0, DEFLATE_LEVELS[3].maxLazyLength)
         assertTrue(DEFLATE_LEVELS[4].maxLazyLength > 0)
+        assertTrue(!DEFLATE_LEVELS[8].usesCostAwareParsing)
+        assertTrue(DEFLATE_LEVELS[9].usesCostAwareParsing)
 
         assertTrue(shouldSearchLazyMatch(length = 3, maxLazyLength = 4, remaining = 5))
         assertTrue(!shouldSearchLazyMatch(length = 2, maxLazyLength = 4, remaining = 5))
         assertTrue(!shouldSearchLazyMatch(length = 4, maxLazyLength = 4, remaining = 5))
         assertTrue(!shouldSearchLazyMatch(length = 3, maxLazyLength = 0, remaining = 5))
         assertTrue(!shouldSearchLazyMatch(length = 3, maxLazyLength = 4, remaining = 4))
+    }
+
+    @Test
+    fun costAwareParsingChoosesTheCheapestTokenPath() {
+        assertEquals(8, fixedLiteralBitCost(42))
+        assertEquals(9, fixedLiteralBitCost(200))
+        assertEquals(12, fixedMatchBitCost(length = 3, distance = 1))
+        assertEquals(25, fixedMatchBitCost(length = 3, distance = 32_767))
+
+        val data = ByteArray(5)
+        val matches = IntArray(data.size)
+        val costs = IntArray(data.size + 1)
+        val choices = IntArray(data.size)
+
+        matches[0] = (3 shl MATCH_DISTANCE_BITS) or 1
+        matches[1] = (4 shl MATCH_DISTANCE_BITS) or 32_767
+        chooseCostAwarePath(data, 0, data.size, matches, costs, choices)
+        assertEquals(3, choices[0])
+
+        matches[0] = (3 shl MATCH_DISTANCE_BITS) or 32_767
+        matches[1] = (4 shl MATCH_DISTANCE_BITS) or 1
+        chooseCostAwarePath(data, 0, data.size, matches, costs, choices)
+        assertEquals(1, choices[0])
+        assertEquals(4, choices[1])
+    }
+
+    @Test
+    fun costAwareLevelRoundTripsWindowsAndDictionaries() {
+        val multipleWindows = ByteArray(COST_AWARE_WINDOW_SIZE * 2 + 3)
+        val compressedWindows = KFlate.compress(multipleWindows, CompressionRaw(level = 9))
+        assertContentEquals(multipleWindows, KFlate.decompress(compressedWindows, DecompressionRaw()))
+
+        val random = java.util.Random(9)
+        val incompressible = ByteArray(COST_AWARE_WINDOW_SIZE + 3) { random.nextInt().toByte() }
+        val compressedRandom = KFlate.compress(incompressible, CompressionRaw(level = 9))
+        assertContentEquals(incompressible, KFlate.decompress(compressedRandom, DecompressionRaw()))
+
+        val dictionary = "cost-aware dictionary".repeat(100).encodeToByteArray()
+        val payload = "dictionary-backed payload".repeat(100).encodeToByteArray()
+        val compressedPayload = KFlate.compress(payload, CompressionRaw(level = 9, dictionary = dictionary))
+        assertContentEquals(
+            payload,
+            KFlate.decompress(compressedPayload, DecompressionRaw(dictionary = dictionary)),
+        )
+
+        val compressedEmpty = KFlate.compress(byteArrayOf(), CompressionRaw(level = 9, dictionary = dictionary))
+        assertContentEquals(
+            byteArrayOf(),
+            KFlate.decompress(compressedEmpty, DecompressionRaw(dictionary = dictionary)),
+        )
     }
 
     @Test

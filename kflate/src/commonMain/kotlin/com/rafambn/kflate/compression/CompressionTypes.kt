@@ -15,7 +15,8 @@ sealed interface CompressionType {
      *
      * 0 will store the data without compression.
      * Levels 1-3 greedily select matches with progressively larger search budgets.
-     * Levels 4-9 also look one byte ahead before accepting short matches and use progressively larger search budgets.
+     * Levels 4-8 also look one byte ahead before accepting short matches.
+     * Level 9 uses bounded cost-aware parsing to minimize the estimated number of DEFLATE bits.
      * Level 1 is usually fastest, while level 9 usually produces the smallest output.
      * The default level is 6.
      *

@@ -9,6 +9,8 @@ internal class DeflateLevel(
     val maxLazyLength: Int,
     // Cap the hash table so low levels retain their memory and cache advantage.
     val maxHashBits: Int,
+    // Use bounded dynamic programming instead of greedy or one-byte lazy parsing.
+    val usesCostAwareParsing: Boolean = false,
 )
 
 internal val DEFLATE_LEVELS = arrayOf(
@@ -21,5 +23,11 @@ internal val DEFLATE_LEVELS = arrayOf(
     DeflateLevel(niceLength = 128, chainLength = 128, maxLazyLength = 16, maxHashBits = 15),
     DeflateLevel(niceLength = 128, chainLength = 256, maxLazyLength = 32, maxHashBits = 15),
     DeflateLevel(niceLength = 258, chainLength = 1_024, maxLazyLength = 128, maxHashBits = 16),
-    DeflateLevel(niceLength = 258, chainLength = 4_096, maxLazyLength = 258, maxHashBits = 20),
+    DeflateLevel(
+        niceLength = 258,
+        chainLength = 4_096,
+        maxLazyLength = 0,
+        maxHashBits = 20,
+        usesCostAwareParsing = true,
+    ),
 )

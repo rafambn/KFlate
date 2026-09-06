@@ -463,7 +463,7 @@ internal fun deflate(
         val symbols = IntArray(65536)
         val literalFrequencies = IntArray(288)
         val distanceFrequencies = IntArray(32)
-        var literalCount = 0
+        var matchCount = 0
         var extraBits = 0
         var i = state.inputOffset
         var symbolIndex = 0
@@ -471,69 +471,161 @@ internal fun deflate(
         var blockStart = maxOf(state.inputOffset, waitIndex)
         var pendingMatch = 0
 
-        while (i + 2 < dataSize) {
-            val hashValue = deflateHash(data, i, baseShift1, baseShift2, mask)
-            val iMod = i and MATCH_DISTANCE_MASK
-            val pIMod = head[hashValue].toInt() and 0xFFFF
-            prev[iMod] = pIMod.toShort()
-            head[hashValue] = iMod.toShort()
+        if (levelOptions.usesCostAwareParsing) {
+            while (i < waitIndex && i + 2 < dataSize) {
+                val hashValue = deflateHash(data, i, baseShift1, baseShift2, mask)
+                val iMod = i and MATCH_DISTANCE_MASK
+                prev[iMod] = head[hashValue]
+                head[hashValue] = iMod.toShort()
+                i++
+            }
+            i = maxOf(i, waitIndex)
+            blockStart = i
 
-            if (waitIndex <= i) {
-                val remaining = dataSize - i
-                if (shouldFlushBlock(literalCount, symbolIndex, remaining, isLastBlock)) {
-                    bitPosition = writeBlock(
-                        data, writeBuffer, false, symbols, literalFrequencies, distanceFrequencies,
-                        extraBits, symbolIndex, blockStart, i - blockStart, bitPosition
-                    )
-                    symbolIndex = 0
-                    literalCount = 0
-                    extraBits = 0
-                    blockStart = i
-                    literalFrequencies.fill(0, 0, 286)
-                    distanceFrequencies.fill(0, 0, 30)
+            val costWindowSize = minOf(COST_AWARE_WINDOW_SIZE, maxOf(1, dataSize - i))
+            val matches = IntArray(costWindowSize)
+            val costs = IntArray(costWindowSize + 1)
+            val choices = IntArray(costWindowSize)
+            var hashedUntil = i
+
+            while (i < dataSize) {
+                val hashEnd = minOf(i, dataSize - 2)
+                while (hashedUntil < hashEnd) {
+                    val hashValue = deflateHash(data, hashedUntil, baseShift1, baseShift2, mask)
+                    val hashIndex = hashedUntil and MATCH_DISTANCE_MASK
+                    prev[hashIndex] = head[hashValue]
+                    head[hashValue] = hashIndex.toShort()
+                    hashedUntil++
                 }
 
-                val match = if (pendingMatch != 0) {
-                    pendingMatch.also { pendingMatch = 0 }
-                } else {
-                    findLongestMatch(data, dataSize, i, pIMod, prev, levelOptions)
-                }
-                val length = match ushr MATCH_DISTANCE_BITS
-                val distance = match and MATCH_DISTANCE_MASK
+                val windowStart = i
+                val windowEnd = minOf(dataSize, windowStart + costWindowSize)
+                val windowSize = windowEnd - windowStart
+                matches.fill(0, 0, windowSize)
 
-                val nextMatch = if (shouldSearchLazyMatch(length, levelOptions.maxLazyLength, remaining)) {
-                    val nextIndex = i + 1
-                    val nextHash = deflateHash(data, nextIndex, baseShift1, baseShift2, mask)
-                    findLongestMatch(data, dataSize, nextIndex, head[nextHash].toInt() and 0xFFFF, prev, levelOptions)
-                } else {
-                    0
+                var scanIndex = windowStart
+                while (scanIndex < windowEnd) {
+                    if (scanIndex + 2 >= dataSize) break
+                    val hashValue = deflateHash(data, scanIndex, baseShift1, baseShift2, mask)
+                    val scanIndexMod = scanIndex and MATCH_DISTANCE_MASK
+                    val previousIndex = head[hashValue].toInt() and 0xFFFF
+                    prev[scanIndexMod] = previousIndex.toShort()
+                    head[hashValue] = scanIndexMod.toShort()
+                    matches[scanIndex - windowStart] =
+                        findLongestMatch(data, dataSize, scanIndex, previousIndex, prev, levelOptions)
+                    scanIndex++
                 }
+                hashedUntil = maxOf(hashedUntil, scanIndex)
 
-                if ((nextMatch ushr MATCH_DISTANCE_BITS) > length) {
-                    pendingMatch = nextMatch
-                    symbols[symbolIndex++] = data[i].toInt() and 0xFF
-                    ++literalFrequencies[data[i].toInt() and 0xFF]
-                } else if (distance != 0) {
-                    symbols[symbolIndex++] =
-                        268435456 or
-                            (FIXED_LENGTH_REVERSE_LOOKUP[length] shl 18) or
-                            FIXED_DISTANCE_REVERSE_LOOKUP[distance]
-                    val lenIndex = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
-                    val distIndex = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
-                    extraBits += (FIXED_LENGTH_EXTRA_BITS[lenIndex].toInt() and 0xFF) + (FIXED_DISTANCE_EXTRA_BITS[distIndex].toInt() and 0xFF)
-                    ++literalFrequencies[257 + lenIndex]
-                    ++distanceFrequencies[distIndex]
-                    waitIndex = i + length
-                    ++literalCount
-                } else {
-                    symbols[symbolIndex++] = data[i].toInt() and 0xFF
-                    ++literalFrequencies[data[i].toInt() and 0xFF]
+                chooseCostAwarePath(data, windowStart, windowEnd, matches, costs, choices)
+
+                while (i < windowEnd) {
+                    val remaining = dataSize - i
+                    if (shouldFlushBlock(matchCount, symbolIndex, remaining, isLastBlock)) {
+                        bitPosition = writeBlock(
+                            data, writeBuffer, false, symbols, literalFrequencies, distanceFrequencies,
+                            extraBits, symbolIndex, blockStart, i - blockStart, bitPosition
+                        )
+                        symbolIndex = 0
+                        matchCount = 0
+                        extraBits = 0
+                        blockStart = i
+                        literalFrequencies.fill(0, 0, 286)
+                        distanceFrequencies.fill(0, 0, 30)
+                    }
+
+                    val match = matches[i - windowStart]
+                    val length = choices[i - windowStart]
+                    if (length == 1) {
+                        symbols[symbolIndex++] = data[i].toInt() and 0xFF
+                        ++literalFrequencies[data[i].toInt() and 0xFF]
+                    } else {
+                        val distance = match and MATCH_DISTANCE_MASK
+                        symbols[symbolIndex++] =
+                            268435456 or
+                                (FIXED_LENGTH_REVERSE_LOOKUP[length] shl 18) or
+                                FIXED_DISTANCE_REVERSE_LOOKUP[distance]
+                        val lenIndex = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
+                        val distIndex = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
+                        extraBits +=
+                            (FIXED_LENGTH_EXTRA_BITS[lenIndex].toInt() and 0xFF) +
+                                (FIXED_DISTANCE_EXTRA_BITS[distIndex].toInt() and 0xFF)
+                        ++literalFrequencies[257 + lenIndex]
+                        ++distanceFrequencies[distIndex]
+                        ++matchCount
+                    }
+                    i += length
                 }
             }
-            i++
+            waitIndex = i
+        } else {
+            while (i + 2 < dataSize) {
+                val hashValue = deflateHash(data, i, baseShift1, baseShift2, mask)
+                val iMod = i and MATCH_DISTANCE_MASK
+                val pIMod = head[hashValue].toInt() and 0xFFFF
+                prev[iMod] = pIMod.toShort()
+                head[hashValue] = iMod.toShort()
+
+                if (waitIndex <= i) {
+                    val remaining = dataSize - i
+                    if (shouldFlushBlock(matchCount, symbolIndex, remaining, isLastBlock)) {
+                        bitPosition = writeBlock(
+                            data, writeBuffer, false, symbols, literalFrequencies, distanceFrequencies,
+                            extraBits, symbolIndex, blockStart, i - blockStart, bitPosition
+                        )
+                        symbolIndex = 0
+                        matchCount = 0
+                        extraBits = 0
+                        blockStart = i
+                        literalFrequencies.fill(0, 0, 286)
+                        distanceFrequencies.fill(0, 0, 30)
+                    }
+
+                    val match = if (pendingMatch != 0) {
+                        pendingMatch.also { pendingMatch = 0 }
+                    } else {
+                        findLongestMatch(data, dataSize, i, pIMod, prev, levelOptions)
+                    }
+                    val length = match ushr MATCH_DISTANCE_BITS
+                    val distance = match and MATCH_DISTANCE_MASK
+
+                    val nextMatch = if (shouldSearchLazyMatch(length, levelOptions.maxLazyLength, remaining)) {
+                        val nextIndex = i + 1
+                        val nextHash = deflateHash(data, nextIndex, baseShift1, baseShift2, mask)
+                        findLongestMatch(data, dataSize, nextIndex, head[nextHash].toInt() and 0xFFFF, prev, levelOptions)
+                    } else {
+                        0
+                    }
+
+                    if ((nextMatch ushr MATCH_DISTANCE_BITS) > length) {
+                        pendingMatch = nextMatch
+                        symbols[symbolIndex++] = data[i].toInt() and 0xFF
+                        ++literalFrequencies[data[i].toInt() and 0xFF]
+                    } else if (distance != 0) {
+                        symbols[symbolIndex++] =
+                            268435456 or
+                                (FIXED_LENGTH_REVERSE_LOOKUP[length] shl 18) or
+                                FIXED_DISTANCE_REVERSE_LOOKUP[distance]
+                        val lenIndex = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
+                        val distIndex = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
+                        extraBits +=
+                            (FIXED_LENGTH_EXTRA_BITS[lenIndex].toInt() and 0xFF) +
+                                (FIXED_DISTANCE_EXTRA_BITS[distIndex].toInt() and 0xFF)
+                        ++literalFrequencies[257 + lenIndex]
+                        ++distanceFrequencies[distIndex]
+                        waitIndex = i + length
+                        ++matchCount
+                    } else {
+                        symbols[symbolIndex++] = data[i].toInt() and 0xFF
+                        ++literalFrequencies[data[i].toInt() and 0xFF]
+                    }
+                }
+                i++
+            }
+
+            i = maxOf(i, waitIndex)
         }
 
-        i = maxOf(i, waitIndex)
         while (i < dataSize) {
             symbols[symbolIndex++] = data[i].toInt() and 0xFF
             literalFrequencies[data[i].toInt() and 0xFF]++
@@ -664,12 +756,12 @@ internal fun validateCodeLengthTree(codeLengths: ByteArray, maxBits: Int) {
 }
 
 internal fun shouldFlushBlock(
-    literalCount: Int,
+    matchCount: Int,
     symbolCount: Int,
     remaining: Int,
     isLastBlock: Boolean,
 ): Boolean {
-    return (literalCount > 7_000 || symbolCount > 24_576) && (remaining > 423 || !isLastBlock)
+    return (matchCount > 7_000 || symbolCount > 24_576) && (remaining > 423 || !isLastBlock)
 }
 
 internal fun hasThreeByteMatch(data: ByteArray, index: Int, distance: Int, remaining: Int): Boolean {
@@ -751,7 +843,7 @@ private fun findLongestMatch(
     return (bestLength shl MATCH_DISTANCE_BITS) or bestDistance
 }
 
-private const val MATCH_DISTANCE_BITS = 15
-private const val MATCH_DISTANCE_MASK = 32767
+internal const val MATCH_DISTANCE_BITS = 15
+internal const val MATCH_DISTANCE_MASK = 32767
 private const val MAX_MATCH_LENGTH = 258
 private const val MAX_DISTANCE_FOR_THREE_BYTE_MATCH = 4096
