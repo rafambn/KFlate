@@ -3,6 +3,7 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
+import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
@@ -11,6 +12,7 @@ plugins {
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.benchmark)
+    alias(libs.plugins.kover)
 }
 
 group = "com.rafambn"
@@ -127,6 +129,23 @@ benchmark {
             iterationTime = 1
             iterationTimeUnit = "s"
             reportFormat = "json"
+        }
+    }
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                classes("com.rafambn.kflate.benchmark.*")
+            }
+        }
+
+        verify {
+            rule {
+                minBound(100, CoverageUnit.INSTRUCTION)
+                minBound(100, CoverageUnit.BRANCH)
+            }
         }
     }
 }

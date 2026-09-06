@@ -132,10 +132,7 @@ internal fun writeBlock(
     }
 
     val (codeLengthTree, maxCodeLengthBits) = buildHuffmanTreeFromFrequencies(codeLengthFrequencies, 7)
-    var numCodeLengthCodes = 19
-    while (numCodeLengthCodes > 4 && codeLengthTree[CODE_LENGTH_INDEX_MAP[numCodeLengthCodes - 1].toInt()].toInt() == 0) {
-        numCodeLengthCodes--
-    }
+    val numCodeLengthCodes = countCodeLengthCodes(codeLengthTree)
 
     val fixedBlockLength = (blockLength + 5) shl 3
     val fixedTypedLength = calculateCodeLength(literalFrequencies, FIXED_LENGTH_TREE) +
@@ -145,7 +142,7 @@ internal fun writeBlock(
             calculateCodeLength(codeLengthFrequencies, codeLengthTree) + 2 * codeLengthFrequencies[16] +
             3 * codeLengthFrequencies[17] + 7 * codeLengthFrequencies[18]
 
-    if (blockStart >= 0 && fixedBlockLength <= fixedTypedLength && fixedBlockLength <= dynamicTypedLength) {
+    if (shouldUseStoredBlock(blockStart, fixedBlockLength, fixedTypedLength, dynamicTypedLength)) {
         return writeFixedBlock(output, currentBitPosition, data.sliceArray(blockStart until blockStart + blockLength))
     }
 
@@ -253,4 +250,21 @@ internal fun writeBytesBE(data: ByteArray, offset: Int, value: Int) {
     data[offset + 1] = ((value shr 16) and 0xFF).toByte()
     data[offset + 2] = ((value shr 8) and 0xFF).toByte()
     data[offset + 3] = (value and 0xFF).toByte()
+}
+
+internal fun countCodeLengthCodes(codeLengthTree: ByteArray): Int {
+    var count = 19
+    while (count > 4 && codeLengthTree[CODE_LENGTH_INDEX_MAP[count - 1].toInt()].toInt() == 0) {
+        count--
+    }
+    return count
+}
+
+internal fun shouldUseStoredBlock(
+    blockStart: Int,
+    storedLength: Int,
+    fixedLength: Int,
+    dynamicLength: Int,
+): Boolean {
+    return blockStart >= 0 && storedLength <= fixedLength && storedLength <= dynamicLength
 }

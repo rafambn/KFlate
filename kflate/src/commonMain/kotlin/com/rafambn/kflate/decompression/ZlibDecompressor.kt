@@ -52,27 +52,20 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
     val adler = Adler32Checksum()
     val readBuffer = ByteArray(STREAM_CHUNK_SIZE)
     var inputBuffer = ByteArray(0)
-    var sourceExhausted = false
     var headerParsed = false
     var awaitingTrailer = false
     var remainingOutputSize = type.maxOutputSize
 
     while (true) {
+        val read = bufferedSource.readAtMostTo(readBuffer)
+        val sourceExhausted = read == -1
         if (!sourceExhausted) {
-            val read = bufferedSource.readAtMostTo(readBuffer)
-            if (read == -1) {
-                sourceExhausted = true
-            } else if (read > 0) {
-                inputBuffer = appendBytes(inputBuffer, readBuffer, read)
-            }
+            inputBuffer = appendBytes(inputBuffer, readBuffer, read)
         }
 
         if (!headerParsed) {
             if (inputBuffer.isEmpty()) {
-                if (sourceExhausted) {
-                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                }
-                continue
+                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
             try {
                 val headerSize = writeZlibStart(inputBuffer, type.dictionary != null, type.dictionary)

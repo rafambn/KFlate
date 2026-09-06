@@ -19,7 +19,7 @@ jobs:
       - name: Build JVM, Android, web, Linux, and Android Native
         run: >-
           ./gradlew
-          :kflate:jvmTest
+          :kflate:koverVerifyJvm
           :kflate:compileAndroidMain
           :kflate:compileKotlinJs
           :kflate:compileKotlinWasmJs
