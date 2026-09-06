@@ -5,7 +5,7 @@ import com.rafambn.kflate.compression.Raw
 import com.rafambn.kflate.compression.Gzip
 import com.rafambn.kflate.compression.Zlib
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_BASE
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_EXTRA_BITS
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_REVERSE_MAP
@@ -46,7 +46,7 @@ internal fun inflate(
     }
     if (sourceLength == 0) {
         if (inflateState.validationMode != 0) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         return ByteArray(0)
     }
@@ -63,10 +63,10 @@ internal fun inflate(
     fun ensureCapacity(additionalBytes: Int, bytesWritten: Int) {
         val requiredSizeLong = bytesWritten.toLong() + additionalBytes.toLong()
         if (maxOutputSize != null && requiredSizeLong > maxOutputSize.toLong()) {
-            createFlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
+            throw FlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
         }
         if (requiredSizeLong > Int.MAX_VALUE.toLong()) {
-            createFlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
+            throw FlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
         }
         val requiredSize = requiredSizeLong.toInt()
         val currentBuffer = workingBuffer
@@ -97,7 +97,7 @@ internal fun inflate(
         if (literalLengthMap == null) {
             // Need at least 3 bits for block header (1 BFINAL + 2 BTYPE)
             if (currentBitPosition + 3 > totalAvailableBits) {
-                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
             isFinalBlock = readBits(inputData, currentBitPosition, 1) != 0
@@ -110,7 +110,7 @@ internal fun inflate(
 
                     // Check if at least 4 bytes remain for LEN and NLEN
                     if (blockStartByte + 4 > sourceLength) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
@@ -119,14 +119,14 @@ internal fun inflate(
 
                     // Validate that NLEN is the one's complement of LEN
                     if ((blockLength xor 0xFFFF) != blockNlen) {
-                        createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                        throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                     }
 
                     val dataStartByte = blockStartByte + 4
                     val blockEndByte = dataStartByte + blockLength
 
                     if (blockEndByte > sourceLength) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
@@ -158,7 +158,7 @@ internal fun inflate(
                 2 -> {
                     // Check if we have at least 14 bits for the block header
                     if (currentBitPosition + 14 > totalAvailableBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
@@ -169,7 +169,7 @@ internal fun inflate(
                     // RFC 1951: HLIT max is 29 (286 codes), HDIST max is 31 (32 codes)
                     // Distance codes 30-31 are never used in valid data but may appear in the tree
                     if (numLiteralCodes > 286) {
-                        createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                        throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                     }
 
                     val totalCodes = numLiteralCodes + numDistanceCodes
@@ -178,7 +178,7 @@ internal fun inflate(
                     // Check if we have enough bits for the code length tree
                     val codeLengthTreeBits = numCodeLengthCodes * 3
                     if (currentBitPosition + codeLengthTreeBits > totalAvailableBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
@@ -202,7 +202,7 @@ internal fun inflate(
                     while (codeIndex < totalCodes) {
                         val availableBits = totalAvailableBits - currentBitPosition
                         if (availableBits <= 0) {
-                            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         }
 
                         val huffmanCode = codeLengthHuffmanMap[readBits(inputData, currentBitPosition, codeLengthBitMask)]
@@ -218,16 +218,16 @@ internal fun inflate(
 
                             symbol == 16 -> {
                                 if (codeIndex == 0) {
-                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                    throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                                 }
                                 if (currentBitPosition + 2 > totalAvailableBits) {
-                                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                                 }
                                 val repeatCount = 3 + readBits(inputData, currentBitPosition, 3)
                                 currentBitPosition += 2
                                 val remainingSlots = totalCodes - codeIndex
                                 if (repeatCount > remainingSlots) {
-                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                    throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                                 }
                                 val valueToRepeat = allCodeLengths[codeIndex - 1]
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = valueToRepeat }
@@ -235,26 +235,26 @@ internal fun inflate(
 
                             symbol == 17 -> {
                                 if (currentBitPosition + 3 > totalAvailableBits) {
-                                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                                 }
                                 val repeatCount = 3 + readBits(inputData, currentBitPosition, 7)
                                 currentBitPosition += 3
                                 val remainingSlots = totalCodes - codeIndex
                                 if (repeatCount > remainingSlots) {
-                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                    throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                                 }
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = 0 }
                             }
 
                             else -> {
                                 if (currentBitPosition + 7 > totalAvailableBits) {
-                                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                                 }
                                 val repeatCount = 11 + readBits(inputData, currentBitPosition, 127)
                                 currentBitPosition += 7
                                 val remainingSlots = totalCodes - codeIndex
                                 if (repeatCount > remainingSlots) {
-                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                    throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                                 }
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = 0 }
                             }
@@ -266,7 +266,7 @@ internal fun inflate(
 
                     // Validate that end-of-block symbol (256) has a non-zero code length
                     if (literalLengthCodeLengths[256].toInt() == 0) {
-                        createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                        throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
                     }
 
                     literalMaxBits = findMaxValue(literalLengthCodeLengths)
@@ -274,7 +274,7 @@ internal fun inflate(
 
                     // Validate literal/length tree
                     if (!validateHuffmanCodeLengths(literalLengthCodeLengths, literalMaxBits)) {
-                        createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                        throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
                     }
 
                     literalLengthMap = createHuffmanTree(literalLengthCodeLengths, literalMaxBits, true)
@@ -282,14 +282,14 @@ internal fun inflate(
                     // Validate distance tree
                     if (distanceMaxBits > 0) {
                         if (!validateHuffmanCodeLengths(distanceCodeLengths, distanceMaxBits)) {
-                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                            throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
                         }
                     }
 
                     distanceMap = createHuffmanTree(distanceCodeLengths, distanceMaxBits, true)
                 }
 
-                else -> createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                else -> throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
             }
 
         }
@@ -303,17 +303,17 @@ internal fun inflate(
         while (true) {
             val availableLiteralBits = totalAvailableBits - currentBitPosition
             if (availableLiteralBits <= 0) {
-                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
             val literalCode = (currentLitMap[readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
             val literalCodeLength = literalCode and 15
             if (literalCode == 0 && availableLiteralBits < literalMaxBits) {
-                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
             if (literalCodeLength > availableLiteralBits) {
-                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
             val symbol = literalCode shr 4
@@ -321,7 +321,7 @@ internal fun inflate(
 
             // Symbols 0..285 are valid. Fixed Huffman symbols 286 and 287 are reserved by RFC 1951.
             if (literalCode == 0 || symbol > 285) {
-                createFlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
+                throw FlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
             }
 
             when {
@@ -344,7 +344,7 @@ internal fun inflate(
                         val lengthIndex = symbol - 257
                         val extraBits = FIXED_LENGTH_EXTRA_BITS[lengthIndex].toInt() and 0xFF
                         if (currentBitPosition + extraBits > totalAvailableBits) {
-                            if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                            if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                             break
                         }
                         matchLength =
@@ -354,30 +354,30 @@ internal fun inflate(
 
                     val availableDistanceBits = totalAvailableBits - currentBitPosition
                     if (availableDistanceBits <= 0) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
                     val distanceCode = (currentDistMap[readBits16(inputData, currentBitPosition) and distanceBitMask].toInt() and 0xFFFF)
                     val distanceCodeLength = distanceCode and 15
                     if (distanceCode == 0 && availableDistanceBits < distanceMaxBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
                     if (distanceCodeLength > availableDistanceBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
                     val distanceSymbol = distanceCode shr 4
-                    if (distanceCode == 0) createFlateError(FlateErrorCode.INVALID_DISTANCE)
+                    if (distanceCode == 0) throw FlateError(FlateErrorCode.INVALID_DISTANCE)
                     // RFC 1951: Distance codes 30-31 will never occur in valid compressed data
-                    if (distanceSymbol >= 30) createFlateError(FlateErrorCode.INVALID_DISTANCE)
+                    if (distanceSymbol >= 30) throw FlateError(FlateErrorCode.INVALID_DISTANCE)
                     currentBitPosition += distanceCodeLength
 
                     var matchDistance = FIXED_DISTANCE_BASE[distanceSymbol].toInt() and 0xFFFF
                     if (distanceSymbol > 3) {
                         val extraBits = FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF
                         if (currentBitPosition + extraBits > totalAvailableBits) {
-                            if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                            if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                             break
                         }
                         matchDistance += readBits16(inputData, currentBitPosition) and ((1 shl extraBits) - 1)
@@ -393,7 +393,7 @@ internal fun inflate(
                         val dictionaryOffset = dictionaryLength - matchDistance
                         val dictionaryEndIndex = minOf(matchDistance, copyEndIndex)
                         if (dictionaryOffset + bytesWrittenToOutput < 0) {
-                            createFlateError(FlateErrorCode.INVALID_DISTANCE)
+                            throw FlateError(FlateErrorCode.INVALID_DISTANCE)
                         }
 
                         dictionary!!.copyInto(
@@ -444,7 +444,7 @@ internal fun deflate(
     val bufferMargin = (dataSize.toLong() shr 3) + 256L + 5L * (1L + dataSize / 7_000L)
     val writeBufferSize = dataSize.toLong() + bufferMargin
     if (writeBufferSize > Int.MAX_VALUE.toLong()) {
-        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+        throw FlateError(FlateErrorCode.INPUT_TOO_LARGE)
     }
     val writeBuffer = ByteArray(writeBufferSize.toInt())
     val isLastBlock = state.isLastChunk
@@ -596,7 +596,7 @@ internal fun deflate(
     val compressedSize = shiftToNextByte(bitPosition)
     val outputSize = prefixSize.toLong() + compressedSize.toLong() + postfixSize.toLong()
     if (outputSize > Int.MAX_VALUE.toLong()) {
-        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+        throw FlateError(FlateErrorCode.INPUT_TOO_LARGE)
     }
     val output = ByteArray(outputSize.toInt())
     writeBuffer.copyInto(
@@ -677,14 +677,14 @@ internal fun deflateWithOptions(
 
 internal fun validateInflateInputSize(sourceLength: Int) {
     if (sourceLength > (Int.MAX_VALUE - 64) / 8) {
-        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+        throw FlateError(FlateErrorCode.INPUT_TOO_LARGE)
     }
 }
 
 internal fun checkedDeflateInputSize(dictionarySize: Int, inputSize: Int): Int {
     val combinedSize = dictionarySize.toLong() + inputSize.toLong()
     if (combinedSize > Int.MAX_VALUE.toLong()) {
-        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+        throw FlateError(FlateErrorCode.INPUT_TOO_LARGE)
     }
     return combinedSize.toInt()
 }
@@ -692,18 +692,18 @@ internal fun checkedDeflateInputSize(dictionarySize: Int, inputSize: Int): Int {
 internal fun validateCodeLengthEntry(codeLength: Int, availableBits: Int, maxBits: Int) {
     if (codeLength == 0) {
         if (availableBits < maxBits) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
-        createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+        throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
     }
     if (codeLength > availableBits) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
 }
 
 internal fun validateCodeLengthTree(codeLengths: ByteArray, maxBits: Int) {
     if (maxBits == 0 || !validateHuffmanCodeLengths(codeLengths, maxBits)) {
-        createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+        throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
     }
 }
 
