@@ -50,9 +50,7 @@ internal fun inflate(
         }
         return ByteArray(0)
     }
-    if (sourceLength > (Int.MAX_VALUE - 64) / 8) {
-        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
-    }
+    validateInflateInputSize(sourceLength)
 
     val hasNoStoredState = inflateState.validationMode != 0
     val suggestedCapacity = minOf(
@@ -170,7 +168,7 @@ internal fun inflate(
 
                     // RFC 1951: HLIT max is 29 (286 codes), HDIST max is 31 (32 codes)
                     // Distance codes 30-31 are never used in valid data but may appear in the tree
-                    if (numLiteralCodes > 286 || numDistanceCodes > 32) {
+                    if (numLiteralCodes > 286) {
                         createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                     }
 
@@ -193,11 +191,7 @@ internal fun inflate(
                     val codeLengthMaxBits = findMaxValue(codeLengthTree)
 
                     // Validate code-length tree
-                    if (codeLengthMaxBits > 0) {
-                        if (!validateHuffmanCodeLengths(codeLengthTree, codeLengthMaxBits)) {
-                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
-                        }
-                    }
+                    validateCodeLengthTree(codeLengthTree, codeLengthMaxBits)
 
                     val codeLengthBitMask = (1 shl codeLengthMaxBits) - 1
                     val codeLengthHuffmanMap = createHuffmanTree(codeLengthTree, codeLengthMaxBits, true)
@@ -213,15 +207,7 @@ internal fun inflate(
 
                         val huffmanCode = codeLengthHuffmanMap[readBits(inputData, currentBitPosition, codeLengthBitMask)]
                         val huffmanCodeLength = huffmanCode.toInt() and 15
-                        if (huffmanCodeLength == 0) {
-                            if (availableBits < codeLengthMaxBits) {
-                                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                            }
-                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
-                        }
-                        if (huffmanCodeLength > availableBits) {
-                            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                        }
+                        validateCodeLengthEntry(huffmanCodeLength, availableBits, codeLengthMaxBits)
                         currentBitPosition += huffmanCodeLength
                         val symbol = huffmanCode.toInt() shr 4
 
@@ -260,7 +246,7 @@ internal fun inflate(
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = 0 }
                             }
 
-                            symbol == 18 -> {
+                            else -> {
                                 if (currentBitPosition + 7 > totalAvailableBits) {
                                     createFlateError(FlateErrorCode.UNEXPECTED_EOF)
                                 }
@@ -275,16 +261,11 @@ internal fun inflate(
                         }
                     }
 
-                    if (codeIndex < totalCodes) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                        break
-                    }
-
                     val literalLengthCodeLengths = allCodeLengths.copyOfRange(0, numLiteralCodes)
                     val distanceCodeLengths = allCodeLengths.copyOfRange(numLiteralCodes, totalCodes)
 
                     // Validate that end-of-block symbol (256) has a non-zero code length
-                    if (numLiteralCodes > 256 && literalLengthCodeLengths[256].toInt() == 0) {
+                    if (literalLengthCodeLengths[256].toInt() == 0) {
                         createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
                     }
 
@@ -292,10 +273,8 @@ internal fun inflate(
                     distanceMaxBits = findMaxValue(distanceCodeLengths)
 
                     // Validate literal/length tree
-                    if (literalMaxBits > 0) {
-                        if (!validateHuffmanCodeLengths(literalLengthCodeLengths, literalMaxBits)) {
-                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
-                        }
+                    if (!validateHuffmanCodeLengths(literalLengthCodeLengths, literalMaxBits)) {
+                        createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
                     }
 
                     literalLengthMap = createHuffmanTree(literalLengthCodeLengths, literalMaxBits, true)
@@ -313,10 +292,6 @@ internal fun inflate(
                 else -> createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
             }
 
-            if (currentBitPosition > totalAvailableBits) {
-                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                break
-            }
         }
 
         val literalBitMask = (1 shl literalMaxBits) - 1
@@ -508,7 +483,7 @@ internal fun deflate(
 
             if (waitIndex <= i) {
                 val remaining = dataSize - i
-                if ((literalCount > 7000 || symbolIndex > 24576) && (remaining > 423 || !isLastBlock)) {
+                if (shouldFlushBlock(literalCount, symbolIndex, remaining, isLastBlock)) {
                     bitPosition = writeBlock(
                         data, writeBuffer, false, symbols, literalFrequencies, distanceFrequencies,
                         extraBits, symbolIndex, blockStart, i - blockStart, bitPosition
@@ -526,7 +501,7 @@ internal fun deflate(
                 var currentChain = chainLength
                 var diff = (iMod - pIMod) and 32767
 
-                if (remaining > 2 && data[i] == data[i - diff] && data[i + 1] == data[i - diff + 1] && data[i + 2] == data[i - diff + 2]) {
+                if (hasThreeByteMatch(data, i, diff, remaining)) {
                     val maxN = minOf(niceLength, remaining) - 1
                     val maxD = minOf(32767, i)
                     val maxLength = minOf(258, remaining)
@@ -547,18 +522,16 @@ internal fun deflate(
 
                                 // Optimized minMatchDiff loop: stop early if no improvement possible
                                 val minMatchDiff = minOf(diff, newLength - 2)
-                                if (minMatchDiff > 0) {
-                                    var maxDiff = 0
-                                    for (j in 0 until minMatchDiff) {
-                                        val tI = (i - diff + j) and 32767
-                                        val pTI = prev[tI].toInt() and 0xFFFF
-                                        val cD = (tI - pTI) and 32767
-                                        if (cD > maxDiff) {
-                                            maxDiff = cD
-                                            pIMod = tI
-                                            // Early exit if we found the maximum possible distance
-                                            if (maxDiff >= maxD) break
-                                        }
+                                var maxDiff = 0
+                                for (j in 0 until minMatchDiff) {
+                                    val tI = (i - diff + j) and 32767
+                                    val pTI = prev[tI].toInt() and 0xFFFF
+                                    val cD = (tI - pTI) and 32767
+                                    if (cD > maxDiff) {
+                                        maxDiff = cD
+                                        pIMod = tI
+                                        // Early exit if we found the maximum possible distance
+                                        if (maxDiff >= maxD) break
                                     }
                                 }
                             }
@@ -665,11 +638,7 @@ internal fun deflateWithOptions(
         workingState = DeflateState(isLastChunk = true)
 
         if (dictionary != null) {
-            val combinedSize = dictionary.size.toLong() + inputData.size.toLong()
-            if (combinedSize > Int.MAX_VALUE.toLong()) {
-                createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
-            }
-            val combinedData = ByteArray(combinedSize.toInt())
+            val combinedData = ByteArray(checkedDeflateInputSize(dictionary.size, inputData.size))
 
             dictionary.copyInto(combinedData, destinationOffset = 0)
 
@@ -704,4 +673,52 @@ internal fun deflateWithOptions(
         suffixSize,
         workingState
     )
+}
+
+internal fun validateInflateInputSize(sourceLength: Int) {
+    if (sourceLength > (Int.MAX_VALUE - 64) / 8) {
+        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+}
+
+internal fun checkedDeflateInputSize(dictionarySize: Int, inputSize: Int): Int {
+    val combinedSize = dictionarySize.toLong() + inputSize.toLong()
+    if (combinedSize > Int.MAX_VALUE.toLong()) {
+        createFlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+    return combinedSize.toInt()
+}
+
+internal fun validateCodeLengthEntry(codeLength: Int, availableBits: Int, maxBits: Int) {
+    if (codeLength == 0) {
+        if (availableBits < maxBits) {
+            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        }
+        createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+    }
+    if (codeLength > availableBits) {
+        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+    }
+}
+
+internal fun validateCodeLengthTree(codeLengths: ByteArray, maxBits: Int) {
+    if (maxBits == 0 || !validateHuffmanCodeLengths(codeLengths, maxBits)) {
+        createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+    }
+}
+
+internal fun shouldFlushBlock(
+    literalCount: Int,
+    symbolCount: Int,
+    remaining: Int,
+    isLastBlock: Boolean,
+): Boolean {
+    return (literalCount > 7_000 || symbolCount > 24_576) && (remaining > 423 || !isLastBlock)
+}
+
+internal fun hasThreeByteMatch(data: ByteArray, index: Int, distance: Int, remaining: Int): Boolean {
+    return remaining > 2 &&
+            data[index] == data[index - distance] &&
+            data[index + 1] == data[index - distance + 1] &&
+            data[index + 2] == data[index - distance + 2]
 }

@@ -4,4 +4,5 @@ plugins {
     alias(libs.plugins.maven.publish).apply(false)
     alias(libs.plugins.android.application).apply(false)
     alias(libs.plugins.benchmark).apply(false)
+    alias(libs.plugins.kover).apply(false)
 }

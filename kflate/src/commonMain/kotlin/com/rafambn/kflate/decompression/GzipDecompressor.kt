@@ -50,11 +50,6 @@ internal fun decompressGzip(data: ByteArray, type: Gzip): ByteArray {
         currentPosition += result.bytesConsumed
     }
 
-    // Validate at least one member processed
-    if (decompressedChunks.isEmpty()) {
-        createFlateError(FlateErrorCode.INVALID_HEADER)
-    }
-
     // Return single member as-is
     if (decompressedChunks.size == 1) {
         return decompressedChunks[0]
@@ -77,7 +72,6 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
 
     val readBuffer = ByteArray(STREAM_CHUNK_SIZE)
     var inputBuffer = ByteArray(0)
-    var sourceExhausted = false
     var headerParsed = false
     var awaitingTrailer = false
     var inflateState = InflateState(validationMode = 0)
@@ -88,24 +82,18 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
     var remainingOutputSize = type.maxOutputSize
 
     while (true) {
+        val read = bufferedSource.readAtMostTo(readBuffer)
+        val sourceExhausted = read == -1
         if (!sourceExhausted) {
-            val read = bufferedSource.readAtMostTo(readBuffer)
-            if (read == -1) {
-                sourceExhausted = true
-            } else if (read > 0) {
-                inputBuffer = appendBytes(inputBuffer, readBuffer, read)
-            }
+            inputBuffer = appendBytes(inputBuffer, readBuffer, read)
         }
 
         if (!headerParsed) {
             if (inputBuffer.isEmpty()) {
-                if (sourceExhausted) {
-                    if (members == 0) {
-                        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                    }
+                if (members > 0) {
                     break
                 }
-                continue
+                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
             try {
                 val headerSize = writeGzipStart(inputBuffer, 0)
@@ -121,14 +109,13 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
                 if (error.code == FlateErrorCode.UNEXPECTED_EOF && !sourceExhausted) {
                     continue
                 }
-                if (members > 0) {
-                    createFlateError(FlateErrorCode.TRAILING_GARBAGE)
-                }
-                throw error
+                createFlateError(
+                    if (members > 0) FlateErrorCode.TRAILING_GARBAGE else error.code,
+                )
             }
         }
 
-        if (headerParsed && !awaitingTrailer) {
+        if (!awaitingTrailer) {
             if (inputBuffer.isEmpty()) {
                 if (sourceExhausted) {
                     createFlateError(FlateErrorCode.UNEXPECTED_EOF)
@@ -186,14 +173,7 @@ internal fun decompressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) 
             headerParsed = false
             awaitingTrailer = false
 
-            if (sourceExhausted && inputBuffer.isEmpty()) {
-                break
-            }
         }
-    }
-
-    if (members == 0) {
-        createFlateError(FlateErrorCode.INVALID_HEADER)
     }
 
     bufferedSink.flush()

@@ -24,24 +24,17 @@ internal fun decompressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
     var history = type.dictionary ?: ByteArray(0)
     val readBuffer = ByteArray(STREAM_CHUNK_SIZE)
     var inputBuffer = ByteArray(0)
-    var sourceExhausted = false
     var remainingOutputSize = type.maxOutputSize
 
     while (true) {
+        val read = bufferedSource.readAtMostTo(readBuffer)
+        val sourceExhausted = read == -1
         if (!sourceExhausted) {
-            val read = bufferedSource.readAtMostTo(readBuffer)
-            if (read == -1) {
-                sourceExhausted = true
-            } else if (read > 0) {
-                inputBuffer = appendBytes(inputBuffer, readBuffer, read)
-            }
+            inputBuffer = appendBytes(inputBuffer, readBuffer, read)
         }
 
         if (inputBuffer.isEmpty()) {
-            if (sourceExhausted) {
-                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-            }
-            continue
+            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
 
         state.outputOffset = 0

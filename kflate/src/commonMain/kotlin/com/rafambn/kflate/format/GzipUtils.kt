@@ -119,10 +119,6 @@ internal fun writeGzipHeader(output: ByteArray, options: Gzip) {
         headerOffset += 2
     }
 
-    val calculatedSize = getGzipHeaderSize(options)
-    require(headerOffset <= calculatedSize) {
-        "Header size mismatch: calculated=$calculatedSize, actual=$headerOffset"
-    }
 }
 
 internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {

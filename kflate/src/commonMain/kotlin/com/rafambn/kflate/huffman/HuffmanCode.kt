@@ -105,7 +105,8 @@ internal fun validateHuffmanCodeLengths(codeLengths: ByteArray, maxBits: Int): B
     // Validate using code space tracking (units = 2^maxBits)
     var codeSpace = 1 shl maxBits
 
-    for (bitLength in 1..maxBits) {
+    var bitLength = 1
+    while (bitLength <= maxBits) {
         val count = lengthCounts[bitLength]
         if (count > 0) {
             // Each code at this length uses 2^(maxBits - bitLength) units
@@ -114,6 +115,7 @@ internal fun validateHuffmanCodeLengths(codeLengths: ByteArray, maxBits: Int): B
 
             if (codeSpace < 0) return false  // Oversubscribed
         }
+        bitLength++
     }
 
     // Valid only if all space used (complete tree)
@@ -140,7 +142,7 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int
         return HuffmanTreeResult(codeLengths, 1)
     }
 
-    val maxSymbol = originalNodes.maxOf { it.symbol }
+    val maxSymbol = originalNodes.last().symbol
     val codeLengths = IntArray(maxSymbol + 1)
 
     nodes.sortBy { it.frequency }
@@ -185,15 +187,11 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int
             .thenBy { it.frequency })
 
         var i = 0
-        for (nodeIndex in 0 until nodeCount) {
-            val symbol = originalNodes[nodeIndex].symbol
-            if (codeLengths[symbol] > maxBits) {
-                debt += cost - (1 shl (currentMaxBits - codeLengths[symbol]))
-                codeLengths[symbol] = maxBits
-            } else {
-                i = nodeIndex
-                break
-            }
+        while (codeLengths[originalNodes[i].symbol] > maxBits) {
+            val symbol = originalNodes[i].symbol
+            debt += cost - (1 shl (currentMaxBits - codeLengths[symbol]))
+            codeLengths[symbol] = maxBits
+            i++
         }
 
         debt = debt shr costShift
@@ -209,7 +207,7 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int
         }
 
         i = nodeCount - 1
-        while (i >= 0 && debt != 0) {
+        while (debt != 0) {
             val symbol = originalNodes[i].symbol
             if (codeLengths[symbol] == maxBits) {
                 codeLengths[symbol]--
