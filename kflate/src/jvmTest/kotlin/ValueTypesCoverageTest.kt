@@ -29,66 +29,58 @@ class ValueTypesCoverageTest {
     @Test
     fun compressionRawValueContract() {
         val dictionary = byteArrayOf(1, 2)
-        val value = CompressionRaw(1, 2, dictionary)
+        val value = CompressionRaw(level = 1, dictionary = dictionary)
 
         assertSame(value, value)
         assertEqualsAcceptsSame(value)
         assertFalse(value.equals(null))
         assertFalse(value.equals(nullValue))
         assertEqualsRejectsNull(value)
-        assertFalse(value.equals(CompressionZlib(1, 2, dictionary)))
-        assertEqualsRejects(value, CompressionZlib(1, 2, dictionary))
+        assertFalse(value.equals(CompressionZlib(level = 1, dictionary = dictionary)))
+        assertEqualsRejects(value, CompressionZlib(level = 1, dictionary = dictionary))
         assertFalse(valuesEqual(value, Any()))
-        assertNotEquals(value, CompressionRaw(2, 2, dictionary))
-        assertNotEquals(value, CompressionRaw(1, 3, dictionary))
-        assertNotEquals(value, CompressionRaw(1, 2, byteArrayOf(2, 1)))
-        assertEquals(value, CompressionRaw(1, 2, dictionary.copyOf()))
-        assertTrue(valuesEqual(value, CompressionRaw(1, 2, dictionary.copyOf())))
-        assertEquals(value.hashCode(), CompressionRaw(1, 2, dictionary.copyOf()).hashCode())
+        assertNotEquals(value, CompressionRaw(level = 2, dictionary = dictionary))
+        assertNotEquals(value, CompressionRaw(level = 1, dictionary = byteArrayOf(2, 1)))
+        assertEquals(value, CompressionRaw(level = 1, dictionary = dictionary.copyOf()))
+        assertTrue(valuesEqual(value, CompressionRaw(level = 1, dictionary = dictionary.copyOf())))
+        assertEquals(value.hashCode(), CompressionRaw(level = 1, dictionary = dictionary.copyOf()).hashCode())
         assertEquals(CompressionRaw().hashCode(), CompressionRaw().copy().hashCode())
         assertEquals(1, value.component1())
-        assertEquals(2, value.component2())
-        assertTrue(value.component3()!!.contentEquals(dictionary))
-        assertEquals(CompressionRaw(3, 2, dictionary), value.copy(level = 3))
+        assertTrue(value.component2()!!.contentEquals(dictionary))
+        assertEquals(CompressionRaw(level = 3, dictionary = dictionary), value.copy(level = 3))
         assertTrue(value.toString().contains("level=1"))
 
         assertFailsWith<IllegalArgumentException> { CompressionRaw(level = -1) }
         assertFailsWith<IllegalArgumentException> { CompressionRaw(level = 10) }
-        assertFailsWith<IllegalArgumentException> { CompressionRaw(mem = -1) }
-        assertFailsWith<IllegalArgumentException> { CompressionRaw(mem = 13) }
         assertFailsWith<IllegalArgumentException> { CompressionRaw(dictionary = ByteArray(32_769)) }
     }
 
     @Test
     fun compressionZlibValueContract() {
         val dictionary = byteArrayOf(1, 2)
-        val value = CompressionZlib(1, 2, dictionary)
+        val value = CompressionZlib(level = 1, dictionary = dictionary)
 
         assertSame(value, value)
         assertEqualsAcceptsSame(value)
         assertFalse(value.equals(null))
         assertFalse(value.equals(nullValue))
         assertEqualsRejectsNull(value)
-        assertFalse(value.equals(CompressionRaw(1, 2, dictionary)))
-        assertEqualsRejects(value, CompressionRaw(1, 2, dictionary))
+        assertFalse(value.equals(CompressionRaw(level = 1, dictionary = dictionary)))
+        assertEqualsRejects(value, CompressionRaw(level = 1, dictionary = dictionary))
         assertFalse(valuesEqual(value, Any()))
-        assertNotEquals(value, CompressionZlib(2, 2, dictionary))
-        assertNotEquals(value, CompressionZlib(1, 3, dictionary))
-        assertNotEquals(value, CompressionZlib(1, 2, byteArrayOf(2, 1)))
-        assertEquals(value, CompressionZlib(1, 2, dictionary.copyOf()))
-        assertTrue(valuesEqual(value, CompressionZlib(1, 2, dictionary.copyOf())))
-        assertEquals(value.hashCode(), CompressionZlib(1, 2, dictionary.copyOf()).hashCode())
+        assertNotEquals(value, CompressionZlib(level = 2, dictionary = dictionary))
+        assertNotEquals(value, CompressionZlib(level = 1, dictionary = byteArrayOf(2, 1)))
+        assertEquals(value, CompressionZlib(level = 1, dictionary = dictionary.copyOf()))
+        assertTrue(valuesEqual(value, CompressionZlib(level = 1, dictionary = dictionary.copyOf())))
+        assertEquals(value.hashCode(), CompressionZlib(level = 1, dictionary = dictionary.copyOf()).hashCode())
         assertEquals(CompressionZlib().hashCode(), CompressionZlib().copy().hashCode())
         assertEquals(1, value.component1())
-        assertEquals(2, value.component2())
-        assertTrue(value.component3()!!.contentEquals(dictionary))
-        assertEquals(CompressionZlib(3, 2, dictionary), value.copy(level = 3))
+        assertTrue(value.component2()!!.contentEquals(dictionary))
+        assertEquals(CompressionZlib(level = 3, dictionary = dictionary), value.copy(level = 3))
         assertTrue(value.toString().contains("level=1"))
 
         assertFailsWith<IllegalArgumentException> { CompressionZlib(level = -1) }
         assertFailsWith<IllegalArgumentException> { CompressionZlib(level = 10) }
-        assertFailsWith<IllegalArgumentException> { CompressionZlib(mem = -1) }
-        assertFailsWith<IllegalArgumentException> { CompressionZlib(mem = 13) }
         assertFailsWith<IllegalArgumentException> { CompressionZlib(dictionary = ByteArray(32_769)) }
     }
 
@@ -96,7 +88,14 @@ class ValueTypesCoverageTest {
     fun compressionGzipValueContract() {
         val mtime = Instant.fromEpochSeconds(123)
         val fields = mapOf("AB" to byteArrayOf(1))
-        val value = CompressionGzip(1, 2, "file", mtime, "comment", fields, true)
+        val value = CompressionGzip(
+            level = 1,
+            filename = "file",
+            mtime = mtime,
+            comment = "comment",
+            extraFields = fields,
+            includeHeaderCrc = true,
+        )
 
         assertSame(value, value)
         assertEqualsAcceptsSame(value)
@@ -107,7 +106,6 @@ class ValueTypesCoverageTest {
         assertEqualsRejects(value, CompressionRaw())
         assertFalse(valuesEqual(value, Any()))
         assertNotEquals(value, value.copy(level = 2))
-        assertNotEquals(value, value.copy(mem = 3))
         assertNotEquals(value, value.copy(filename = "other"))
         assertNotEquals(value, value.copy(mtime = Instant.fromEpochSeconds(124)))
         assertNotEquals(value, value.copy(comment = "other"))
@@ -118,18 +116,15 @@ class ValueTypesCoverageTest {
         assertEquals(value.hashCode(), value.copy().hashCode())
         assertEquals(CompressionGzip().hashCode(), CompressionGzip().copy().hashCode())
         assertEquals(1, value.component1())
-        assertEquals(2, value.component2())
-        assertEquals("file", value.component3())
-        assertEquals(mtime, value.component4())
-        assertEquals("comment", value.component5())
-        assertEquals(fields, value.component6())
-        assertTrue(value.component7())
+        assertEquals("file", value.component2())
+        assertEquals(mtime, value.component3())
+        assertEquals("comment", value.component4())
+        assertEquals(fields, value.component5())
+        assertTrue(value.component6())
         assertTrue(value.toString().contains("filename=file"))
 
         assertFailsWith<IllegalArgumentException> { CompressionGzip(level = -1) }
         assertFailsWith<IllegalArgumentException> { CompressionGzip(level = 10) }
-        assertFailsWith<IllegalArgumentException> { CompressionGzip(mem = -1) }
-        assertFailsWith<IllegalArgumentException> { CompressionGzip(mem = 13) }
         assertFailsWith<IllegalArgumentException> { CompressionGzip(filename = "a".repeat(65_536)) }
         assertFailsWith<IllegalArgumentException> { CompressionGzip(comment = "a".repeat(65_536)) }
         assertFailsWith<IllegalArgumentException> { CompressionGzip(extraFields = mapOf("A" to byteArrayOf())) }
