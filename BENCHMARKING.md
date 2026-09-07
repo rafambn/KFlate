@@ -109,6 +109,26 @@ These measurement checks apply even with `--allow-partial`; invalid samples are 
 It never mixes files from different directories or rejects a platform because another target took longer to finish.
 `--allow-partial` and `--allow-missing-sizes` exist for local investigation, not release reports.
 
+## Results on the demo page
+
+`benchmarkAll` also publishes the complete comparison to `performance/latest.json`.
+Commit this snapshot with the benchmark reports to update the demo's latest run.
+Smoke benchmarks and partial comparisons never replace it.
+
+The demo build copies this tracked file to `benchmark-results.json`. Both local
+browser builds and `assembleWebDemo` use that same source. GitHub Pages deploys
+the assembled snapshot and checks that it matches the tracked file; deployment
+does not rerun the benchmark suite or search timestamp directories.
+
+To publish an archived complete run, invoke `scripts/benchmark_comparison.py`
+with `--publish-latest`, its `--run-dir` and `--metadata`, and
+`--benchmark-commit <measured SHA>`. Abbreviated commits are resolved to their full SHA.
+If the archived directory is named `raw` rather than a timestamp, also pass
+`--run-id <measured date or timestamp>`. Publication rejects undated run IDs.
+Otherwise publication records the current
+Git HEAD. Keep the checkout unchanged while running `benchmarkAll`.
+The page identifies the measured run and commit, which can predate the demo code.
+
 ## Benchmark matrix
 
 Compression times each library's own level-6 compressor and records its compressed size:

@@ -379,6 +379,27 @@
     <div class="error-msg" id="error-msg"></div>
   </div>
 
+  <section class="card benchmarks" aria-labelledby="benchmark-title">
+    <h2 id="benchmark-title">Latest benchmark run</h2>
+    <p id="benchmark-status" role="status">Loading benchmark results…</p>
+    <div id="benchmark-content" hidden>
+      <p id="benchmark-run"></p>
+      <p>RAW DEFLATE at level 6, measured on Linux. Times include allocation and backend bridge costs. These results describe the recorded commit, which may differ from this demo.</p>
+      <div class="benchmark-controls">
+        <label>Platform <select id="benchmark-platform"><option>Wasm/JS</option><option>JVM</option><option>Linux x64 Native</option></select></label>
+        <label>Operation <select id="benchmark-operation"><option value="compression">Compression</option><option value="decompression">Decompression</option></select></label>
+      </div>
+      <p id="benchmark-baseline"></p>
+      <div class="benchmark-table" tabindex="0" role="region" aria-label="Benchmark comparison, scroll horizontally for more columns">
+        <table><caption>Mean time ± reported error [ms]. Lower times and output sizes are better.</caption><thead id="benchmark-head"></thead><tbody id="benchmark-rows"></tbody></table>
+      </div>
+      <p>Compare libraries within the same platform. Native and Wasm each represent one runner session; repeat measurements before drawing release-wide conclusions.</p>
+      <a href="benchmark-results.json" download>Download results and raw samples</a>
+    </div>
+  </section>
+  <link rel="stylesheet" href="benchmarks.css">
+  <script type="module" src="benchmarks.js"></script>
+
   <!-- Result modal -->
   <div class="modal-backdrop" id="modal-backdrop">
     <div class="modal" role="dialog" aria-modal="true">

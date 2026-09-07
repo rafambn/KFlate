@@ -243,7 +243,8 @@ tasks.register<Exec>("benchmarkComparison") {
         "python3",
         "scripts/benchmark_comparison.py",
         "--metadata",
-        "kflate/performance/benchmark-metadata.jsonl"
+        "kflate/performance/benchmark-metadata.jsonl",
+        "--publish-latest",
     )
 }
 
