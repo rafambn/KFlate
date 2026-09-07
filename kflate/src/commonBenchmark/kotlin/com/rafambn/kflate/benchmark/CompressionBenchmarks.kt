@@ -3,6 +3,7 @@ package com.rafambn.kflate.benchmark
 import com.rafambn.kflate.KFlate
 import com.rafambn.kflate.compression.Raw as CompressionRaw
 import com.rafambn.kflate.decompression.Raw as DecompressionRaw
+import dev.karmakrafts.kompress.Deflater
 import kotlinx.benchmark.Benchmark
 import kotlinx.benchmark.BenchmarkMode
 import kotlinx.benchmark.BenchmarkTimeUnit
@@ -19,21 +20,33 @@ open class CompressionBenchmarks : RawBenchmarkState() {
     @Setup
     open fun setup() {
         setupRawBenchmark(
-            libraryName = "KFlate",
+            library = BenchmarkLibrary.KFlate,
             reportPrefix = "BENCHMARK_CORPUS",
-            compress = { KFlate.compress(it, CompressionRaw()) },
-            decompressionInput = { KFlate.compress(it, CompressionRaw()) },
+            compressWithKFlate = { KFlate.compress(it, compressionOptions) },
+            compressWithKompress = { Deflater.deflate(it, raw = true, level = BENCHMARK_COMPRESSION_LEVEL) },
             decompress = { KFlate.decompress(it, DecompressionRaw()) }
         )
     }
 
     @Benchmark
     open fun rawDeflateCompression(): ByteArray {
-        return KFlate.compress(input, CompressionRaw())
+        return KFlate.compress(input, compressionOptions)
     }
 
     @Benchmark
-    open fun rawDeflateDecompression(): ByteArray {
-        return KFlate.decompress(compressed, DecompressionRaw())
+    open fun rawDeflateDecompressionFromKFlate(): ByteArray {
+        return KFlate.decompress(kflateCompressed, DecompressionRaw())
+    }
+
+    @Benchmark
+    open fun rawDeflateDecompressionFromKompress(): ByteArray {
+        return KFlate.decompress(kompressCompressed, DecompressionRaw())
+    }
+
+    private companion object {
+        val compressionOptions = CompressionRaw(
+            level = BENCHMARK_COMPRESSION_LEVEL,
+            mem = BENCHMARK_MEMORY_LEVEL
+        )
     }
 }

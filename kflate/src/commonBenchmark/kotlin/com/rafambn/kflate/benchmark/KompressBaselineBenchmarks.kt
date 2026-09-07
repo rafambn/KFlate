@@ -20,21 +20,26 @@ open class KompressBaselineBenchmarks : RawBenchmarkState() {
     @Setup
     open fun setup() {
         setupRawBenchmark(
-            libraryName = "Kompress",
+            library = BenchmarkLibrary.Kompress,
             reportPrefix = "BENCHMARK_BASELINE_CORPUS",
-            compress = { Deflater.deflate(it, raw = true) },
-            decompressionInput = { KFlate.compress(it, Raw()) },
+            compressWithKFlate = { KFlate.compress(it, Raw(BENCHMARK_COMPRESSION_LEVEL, BENCHMARK_MEMORY_LEVEL)) },
+            compressWithKompress = { Deflater.deflate(it, raw = true, level = BENCHMARK_COMPRESSION_LEVEL) },
             decompress = { Inflater.inflate(it, raw = true) }
         )
     }
 
     @Benchmark
     open fun rawDeflateCompression(): ByteArray {
-        return Deflater.deflate(input, raw = true)
+        return Deflater.deflate(input, raw = true, level = BENCHMARK_COMPRESSION_LEVEL)
     }
 
     @Benchmark
-    open fun rawDeflateDecompression(): ByteArray {
-        return Inflater.inflate(compressed, raw = true)
+    open fun rawDeflateDecompressionFromKFlate(): ByteArray {
+        return Inflater.inflate(kflateCompressed, raw = true)
+    }
+
+    @Benchmark
+    open fun rawDeflateDecompressionFromKompress(): ByteArray {
+        return Inflater.inflate(kompressCompressed, raw = true)
     }
 }
