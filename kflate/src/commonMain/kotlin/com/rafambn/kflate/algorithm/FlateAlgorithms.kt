@@ -27,9 +27,6 @@ import com.rafambn.kflate.util.shiftToNextByte
 import com.rafambn.kflate.util.writeBlock
 import com.rafambn.kflate.util.writeFixedBlock
 import kotlin.math.ceil
-import kotlin.math.ln
-import kotlin.math.max
-import kotlin.math.min
 
 internal fun inflate(
     inputData: ByteArray,
@@ -433,7 +430,7 @@ internal fun inflate(
 internal fun deflate(
     data: ByteArray,
     level: Int,
-    compressionLevel: Int,
+    hashBits: Int,
     prefixSize: Int,
     postfixSize: Int,
     state: DeflateState
@@ -454,10 +451,10 @@ internal fun deflate(
             writeBuffer[0] = (state.bitBuffer shr 3).toByte()
         }
         val levelOptions = DEFLATE_LEVELS[level]
-        val mask = (1 shl compressionLevel) - 1
+        val mask = (1 shl hashBits) - 1
         val prev = state.prev ?: ShortArray(MATCH_DISTANCE_MASK + 1)
         val head = state.head ?: ShortArray(mask + 1)
-        val baseShift1 = ceil(compressionLevel / 3.0).toInt()
+        val baseShift1 = ceil(hashBits / 3.0).toInt()
         val baseShift2 = 2 * baseShift1
 
         val symbols = IntArray(65536)
@@ -685,7 +682,6 @@ internal fun deflateWithOptions(
     var workingData = inputData
 
     val level = type.level
-    val mem = type.mem
     val dictionary = when (type) {
         is Raw -> type.dictionary
         is Gzip -> null
@@ -707,16 +703,18 @@ internal fun deflateWithOptions(
         }
     }
 
-    val memoryUsage = if (workingState.isLastChunk && mem == 8) {
-        minOf(DEFLATE_LEVELS[level].maxHashBits, ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt())
+    val maxHashBitsForLevel = DEFLATE_LEVELS[level].maxHashBits
+    val hashBits = if (deflateState == null) {
+        val inputHashBits = 32 - (workingData.size.coerceAtLeast(1) - 1).countLeadingZeroBits()
+        minOf(maxHashBitsForLevel, maxOf(12, inputHashBits))
     } else {
-        mem + 12
+        maxHashBitsForLevel
     }
 
     return deflate(
         workingData,
         level,
-        memoryUsage,
+        hashBits,
         prefixSize,
         suffixSize,
         workingState

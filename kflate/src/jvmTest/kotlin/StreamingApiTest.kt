@@ -101,19 +101,7 @@ class StreamingApiTest {
         }
     }
 
-    // 3. MEMORY LEVELS
-
-    @Test
-    fun testMemoryLevels() {
-        val original = readResourceFile("text")
-        for (mem in listOf(1, 4, 8, 12)) {
-            val compressed = streamCompress(original, CompressionZlib(mem = mem))
-            val decompressed = streamDecompress(compressed, DecompressionZlib())
-            assertContentEquals(original, decompressed, "Mem $mem roundtrip failed")
-        }
-    }
-
-    // 4. DICTIONARY SUPPORT
+    // 3. DICTIONARY SUPPORT
 
     @Test
     fun testRawDictionaryRoundtrip() {
@@ -146,7 +134,7 @@ class StreamingApiTest {
         }
     }
 
-    // 5. BLOCKING VS STREAMING EQUIVALENCE
+    // 4. BLOCKING VS STREAMING EQUIVALENCE
 
     @Test
     fun testBlockingCompressStreamingDecompress() {
@@ -176,7 +164,7 @@ class StreamingApiTest {
         assertContentEquals(original, KFlate.decompress(zlibCompressed, DecompressionZlib()), "ZLIB streaming->blocking failed")
     }
 
-    // 6. EDGE CASES
+    // 5. EDGE CASES
 
     @Test
     fun testEmptyInput() {
@@ -228,7 +216,7 @@ class StreamingApiTest {
         assert(compressed.size < original.size / 10) { "Repeated pattern should compress significantly" }
     }
 
-    // 7. GZIP OPTIONAL FIELDS (STREAMING)
+    // 6. GZIP OPTIONAL FIELDS (STREAMING)
 
     @Test
     fun testGzipOptionalFieldsStreaming() {
@@ -262,7 +250,7 @@ class StreamingApiTest {
         assertContentEquals(original, decompressed)
     }
 
-    // 8. ERROR HANDLING (STREAMING)
+    // 7. ERROR HANDLING (STREAMING)
 
     @Test
     fun testTruncatedStream() {

@@ -101,10 +101,9 @@ val zWithDict = KFlate.compress(input, ZLIB(dictionary = dict))
 
 - **`level`**: Compression level 0–9 (default: 6)
   - 0: No compression
-  - 1–3: Fast compression
-  - 4–6: Balanced (6 is default)
-  - 7–9: Maximum compression (9 uses full 1M entry hash table)
-- **`bufferSize`**: Internal hash table size (optional, auto-sized per level)
+  - 1–3: Greedy parsing
+  - 4–8: Lazy parsing (6 is default)
+  - 9: Cost-aware parsing
 - **`dictionary`**: Preset dictionary up to 32 KB (DEFLATE/ZLIB only)
 
 ### GZIP-Specific Options
