@@ -62,5 +62,3 @@ internal val FIXED_DISTANCE_MAP = createHuffmanTree(FIXED_DISTANCE_TREE, 5, fals
 internal val FIXED_LENGTH_REVERSE_MAP = createHuffmanTree(FIXED_LENGTH_TREE, 9, true)
 
 internal val FIXED_DISTANCE_REVERSE_MAP = createHuffmanTree(FIXED_DISTANCE_TREE, 5, true)
-
-internal val DEFLATE_OPTIONS = intArrayOf(65540, 131080, 131088, 131104, 262176, 1048704, 1048832, 2114560, 2117632)
