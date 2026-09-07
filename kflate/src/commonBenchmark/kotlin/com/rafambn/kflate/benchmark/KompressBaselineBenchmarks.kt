@@ -22,7 +22,7 @@ open class KompressBaselineBenchmarks : RawBenchmarkState() {
         setupRawBenchmark(
             library = BenchmarkLibrary.Kompress,
             reportPrefix = "BENCHMARK_BASELINE_CORPUS",
-            compressWithKFlate = { KFlate.compress(it, Raw(BENCHMARK_COMPRESSION_LEVEL, BENCHMARK_MEMORY_LEVEL)) },
+            compressWithKFlate = { KFlate.compress(it, Raw(level = BENCHMARK_COMPRESSION_LEVEL)) },
             compressWithKompress = { Deflater.deflate(it, raw = true, level = BENCHMARK_COMPRESSION_LEVEL) },
             decompress = { Inflater.inflate(it, raw = true) }
         )

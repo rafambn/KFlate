@@ -66,7 +66,6 @@ abstract class RawBenchmarkState {
 }
 
 const val BENCHMARK_COMPRESSION_LEVEL: Int = 6
-const val BENCHMARK_MEMORY_LEVEL: Int = 8
 
 expect fun appendBenchmarkMetadata(line: String)
 

@@ -44,9 +44,6 @@ open class CompressionBenchmarks : RawBenchmarkState() {
     }
 
     private companion object {
-        val compressionOptions = CompressionRaw(
-            level = BENCHMARK_COMPRESSION_LEVEL,
-            mem = BENCHMARK_MEMORY_LEVEL
-        )
+        val compressionOptions = CompressionRaw(level = BENCHMARK_COMPRESSION_LEVEL)
     }
 }

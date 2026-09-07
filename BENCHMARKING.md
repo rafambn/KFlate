@@ -5,7 +5,7 @@ KFlate keeps correctness tests separate from performance benchmarks.
 ## What the suite measures
 
 The suite measures the one-shot RAW DEFLATE APIs of KFlate and Kompress on JVM, Linux x64 Native, and Wasm/JS.
-Both compressors use compression level 6. KFlate uses memory level 8. Kompress maps to a different backend on each platform:
+Both compressors use compression level 6. KFlate sizes its hash table automatically from the compression level and input size. Kompress maps to a different backend on each platform:
 
 | Platform | Kompress backend |
 | --- | --- |
