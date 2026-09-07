@@ -14,7 +14,10 @@ sealed interface CompressionType {
      * The level of compression to use, ranging from 0-9.
      *
      * 0 will store the data without compression.
-     * 1 is fastest but compresses the worst, 9 is slowest but compresses the best.
+     * Levels 1-3 greedily select matches with progressively larger search budgets.
+     * Levels 4-8 also look one byte ahead before accepting short matches.
+     * Level 9 uses bounded cost-aware parsing to minimize the estimated number of DEFLATE bits.
+     * Level 1 is usually fastest, while level 9 usually produces the smallest output.
      * The default level is 6.
      *
      * Typically, binary data benefits much more from higher values than text data.
@@ -26,30 +29,14 @@ sealed interface CompressionType {
      * - become 320 kB with level 9 in 100ms
      */
     val level: Int
-
-    /**
-     * The memory level to use, ranging from 0-12. Increasing this increases speed and compression ratio at the cost of memory.
-     *
-     * Note that this is exponential: level 0 uses 8 KiB, level 4 uses 128 KiB,
-     * level 8 uses 2 MiB, and level 12 uses 32 MiB for the hash table.
-     * Compression also uses a 64 KiB history table and temporary input and output buffers.
-     * It is recommended not to lower the value below 4, since that tends to hurt performance.
-     * In addition, values above 8 tend to help very little on most data and can even hurt performance.
-     *
-     * The default is 8. Blocking compression may select a smaller table for small inputs.
-     */
-    val mem: Int
-
 }
 
 data class Raw(
     override val level: Int = 6,
-    override val mem: Int = 8,
     val dictionary: ByteArray? = null
 ) : CompressionType {
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
-        require(mem in 0..12) { "mem must be in range 0..12, but was $mem" }
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
@@ -62,7 +49,6 @@ data class Raw(
         other as Raw
 
         if (level != other.level) return false
-        if (mem != other.mem) return false
         if (!dictionary.contentEquals(other.dictionary)) return false
 
         return true
@@ -70,7 +56,6 @@ data class Raw(
 
     override fun hashCode(): Int {
         var result = level
-        result = 31 * result + mem
         result = 31 * result + (dictionary?.contentHashCode() ?: 0)
         return result
     }
@@ -78,7 +63,6 @@ data class Raw(
 
 data class Gzip(
     override val level: Int = 6,
-    override val mem: Int = 8,
     val filename: String? = null,
     val mtime: Instant? = null,
     val comment: String? = null,
@@ -87,7 +71,6 @@ data class Gzip(
 ) : CompressionType {
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
-        require(mem in 0..12) { "mem must be in range 0..12, but was $mem" }
         require(mtime == null || mtime.epochSeconds in 0..MAX_GZIP_TIMESTAMP) {
             "mtime must fit the unsigned 32-bit GZIP timestamp field"
         }
@@ -128,7 +111,6 @@ data class Gzip(
         other as Gzip
 
         if (level != other.level) return false
-        if (mem != other.mem) return false
         if (filename != other.filename) return false
         if (mtime != other.mtime) return false
         if (comment != other.comment) return false
@@ -140,7 +122,6 @@ data class Gzip(
 
     override fun hashCode(): Int {
         var result = level
-        result = 31 * result + mem
         result = 31 * result + (filename?.hashCode() ?: 0)
         result = 31 * result + (mtime?.hashCode() ?: 0)
         result = 31 * result + (comment?.hashCode() ?: 0)
@@ -152,12 +133,10 @@ data class Gzip(
 
 data class Zlib(
     override val level: Int = 6,
-    override val mem: Int = 8,
     val dictionary: ByteArray? = null
 ) : CompressionType {
     init {
         require(level in 0..9) { "level must be in range 0..9, but was $level" }
-        require(mem in 0..12) { "mem must be in range 0..12, but was $mem" }
         dictionary?.let {
             require(it.size <= 32768) { "dictionary must be 32kB or smaller, but was ${it.size} bytes" }
         }
@@ -170,7 +149,6 @@ data class Zlib(
         other as Zlib
 
         if (level != other.level) return false
-        if (mem != other.mem) return false
         if (!dictionary.contentEquals(other.dictionary)) return false
 
         return true
@@ -178,7 +156,6 @@ data class Zlib(
 
     override fun hashCode(): Int {
         var result = level
-        result = 31 * result + mem
         result = 31 * result + (dictionary?.contentHashCode() ?: 0)
         return result
     }

@@ -129,6 +129,16 @@ benchmark {
             iterationTime = 1
             iterationTimeUnit = "s"
             reportFormat = "json"
+            advanced("jvmForks", 3)
+        }
+        register("smoke") {
+            warmups = 1
+            iterations = 1
+            iterationTime = 1
+            iterationTimeUnit = "ms"
+            param("corpus", "simpleText")
+            reportFormat = "json"
+            advanced("jvmForks", 1)
         }
     }
 }
@@ -150,10 +160,13 @@ kover {
     }
 }
 
+val benchmarkTaskNames = setOf("jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchmark", "wasmJsBenchmarkBenchmark")
+val benchmarkTasks = tasks.matching { it.name in benchmarkTaskNames }
+
 tasks.register("benchmarkAll") {
     group = "benchmark"
     description = "Run all performance benchmarks (JVM + Native Release + WASM/JS) and generate comparison tables"
-    dependsOn("prepareBenchmarkAll", "jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchmark", "wasmJsBenchmarkBenchmark")
+    dependsOn("prepareBenchmarkAll", benchmarkTasks)
     doFirst {
         println("\n" + "=".repeat(60))
         println("Running KFlate Performance Benchmarks (All Platforms)")
@@ -181,10 +194,8 @@ val prepareBenchmarkAll by tasks.registering(Delete::class) {
     )
 }
 
-val benchmarkTaskNames = setOf("jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchmark", "wasmJsBenchmarkBenchmark")
-
-tasks.matching { it.name in benchmarkTaskNames }.configureEach {
-        mustRunAfter(prepareBenchmarkAll)
+benchmarkTasks.configureEach {
+    mustRunAfter(prepareBenchmarkAll)
 }
 
 tasks.withType<AbstractArchiveTask>().configureEach {
@@ -196,7 +207,7 @@ tasks.withType<AbstractArchiveTask>().configureEach {
 val collectBenchmarkMetadata by tasks.registering(Exec::class) {
     group = "benchmark"
     description = "Consolidate platform metadata into kflate/performance/benchmark-metadata.jsonl."
-    mustRunAfter(benchmarkTaskNames)
+    mustRunAfter(benchmarkTasks)
     workingDir = rootProject.projectDir
     commandLine(
         "bash",
@@ -225,7 +236,7 @@ val collectBenchmarkMetadata by tasks.registering(Exec::class) {
 tasks.register<Exec>("benchmarkComparison") {
     group = "benchmark"
     description = "Generate benchmark markdown/json comparison tables."
-    mustRunAfter(benchmarkTaskNames)
+    mustRunAfter(benchmarkTasks)
     dependsOn(collectBenchmarkMetadata)
     workingDir = rootProject.projectDir
     commandLine(

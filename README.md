@@ -32,7 +32,7 @@
 
 - Raw DEFLATE, RFC 1952 GZIP, and RFC 1950 ZLIB.
 - Blocking `ByteArray` and streaming `kotlinx-io` APIs.
-- Compression levels from 0 through 9 and configurable hash-table memory.
+- Compression levels from 0 through 9 with automatic hash-table sizing.
 - Preset dictionaries for raw DEFLATE and ZLIB.
 - GZIP filename, comment, extra fields, modification time, and header CRC.
 - JVM, Android, JS, Wasm, and Kotlin/Native targets.
@@ -115,12 +115,14 @@ KFlate.decompress(
 
 ## Options
 
-All compression formats accept:
+All compression formats accept `level` from 0 through 9. The default is 6.
 
-- `level`: compression level from 0 through 9. The default is 6.
-- `mem`: hash-table memory level from 0 through 12. The default is 8.
+- 0: No compression
+- 1–3: Greedy parsing
+- 4–8: Lazy parsing
+- 9: Cost-aware parsing
 
-The hash table uses approximately 8 KiB at `mem = 0`, 128 KiB at `mem = 4`, 2 MiB at `mem = 8`, and 32 MiB at `mem = 12`. Compression also uses a 64 KiB history table and temporary input and output buffers. Blocking compression may select a smaller table for small inputs.
+KFlate sizes the hash table automatically from the compression level and input size. Streaming compression keeps a fixed level-based hash-table size for the entire stream.
 
 Raw DEFLATE and ZLIB also accept a preset `dictionary` of at most 32 KiB. Decompression requires the same dictionary.
 
