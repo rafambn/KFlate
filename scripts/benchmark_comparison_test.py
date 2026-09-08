@@ -1,5 +1,7 @@
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,6 +16,49 @@ from benchmark_comparison import (
 
 
 class BenchmarkComparisonTest(unittest.TestCase):
+    def test_latest_publication_requires_complete_results(self):
+        script = Path(__file__).with_name("benchmark_comparison.py").resolve()
+        archive = script.parent.parent / "performance/pr30-linux-e5992df"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            command = [
+                sys.executable, str(script), "--run-dir", str(archive / "raw"),
+                "--metadata", str(archive / "benchmark-metadata.jsonl"),
+                "--output", str(root / "comparison.md"), "--publish-latest",
+                "--benchmark-commit", "e5992dfce45cac68322edfa581807c82ee9373a1",
+                "--run-id", "2026-09-06T20.57.38.873936619",
+            ]
+            result = subprocess.run(command, cwd=root, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            latest = root / "performance/latest.json"
+            published = latest.read_bytes()
+            data = json.loads(published)
+            self.assertEqual(21, len(data["compression"]))
+            self.assertEqual(42, len(data["decompression"]))
+            self.assertEqual("e5992dfce45cac68322edfa581807c82ee9373a1", data["benchmarkCommit"])
+            self.assertEqual("2026-09-06T20.57.38.873936619", data["runId"])
+            head = subprocess.check_output(
+                ["git", "-C", str(script.parent.parent), "rev-parse", "HEAD"], text=True,
+            ).strip()
+            abbreviated = command.copy()
+            abbreviated[abbreviated.index("--benchmark-commit") + 1] = head[:12]
+            result = subprocess.run(abbreviated, cwd=root, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual(head, json.loads(latest.read_text())["benchmarkCommit"])
+            published = latest.read_bytes()
+            for option, value in (("--benchmark-commit", "not-a-commit"), ("--run-id", "raw")):
+                invalid = command.copy()
+                invalid[invalid.index(option) + 1] = value
+                with self.subTest(option=option):
+                    result = subprocess.run(invalid, cwd=root, capture_output=True, text=True)
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertEqual(published, latest.read_bytes())
+            for flag in ("--allow-partial", "--allow-missing-sizes"):
+                with self.subTest(flag=flag):
+                    result = subprocess.run(command + [flag], cwd=root, capture_output=True, text=True)
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertEqual(published, latest.read_bytes())
+
     def test_invalid_scores_are_rejected(self):
         for score in (None, True, "0.1", 0, -1, float("nan"), float("inf"), -float("inf"), 1e308):
             with self.subTest(score=score), self.assertRaisesRegex(SystemExit, "Invalid benchmark score"):

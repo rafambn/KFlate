@@ -23,8 +23,10 @@ import com.rafambn.kflate.decompression.decompressStreamZlib
 import kotlinx.io.RawSink
 import kotlinx.io.RawSource
 
+/** Blocking and streaming DEFLATE, GZIP, and ZLIB operations. */
 object KFlate {
 
+    /** Compresses [data] with the selected format. */
     fun compress(data: ByteArray, type: CompressionType): ByteArray {
         return when (type) {
             is CompressionRaw -> compressRaw(data, type)
@@ -33,6 +35,12 @@ object KFlate {
         }
     }
 
+    /**
+     * Decompresses [data] with the selected format.
+     *
+     * @throws com.rafambn.kflate.error.FlateError if the input is invalid, truncated,
+     * or exceeds the configured output limit.
+     */
     fun decompress(data: ByteArray, type: DecompressionType): ByteArray {
         return when (type) {
             is DecompressionRaw -> decompressRaw(data, type)
@@ -41,6 +49,10 @@ object KFlate {
         }
     }
 
+    /**
+     * Reads [source], writes compressed bytes to [sink], and flushes the buffered sink.
+     * The caller retains ownership of both resources.
+     */
     fun compress(type: CompressionType, source: RawSource, sink: RawSink) {
         when (type) {
             is CompressionRaw -> compressStreamRaw(type, source, sink)
@@ -49,6 +61,13 @@ object KFlate {
         }
     }
 
+    /**
+     * Reads [source], writes decompressed bytes to [sink], and flushes the buffered sink.
+     * The caller retains ownership of both resources. A failure may leave partial output in [sink].
+     *
+     * @throws com.rafambn.kflate.error.FlateError if the input is invalid, truncated,
+     * or exceeds the configured output limit.
+     */
     fun decompress(type: DecompressionType, source: RawSource, sink: RawSink) {
         when (type) {
             is DecompressionRaw -> decompressStreamRaw(type, source, sink)

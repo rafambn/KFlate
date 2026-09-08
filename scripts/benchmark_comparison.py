@@ -2,6 +2,8 @@
 import argparse
 import json
 import math
+import re
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -76,6 +78,9 @@ def parse_args():
         default=None,
         help="JSON output path.",
     )
+    parser.add_argument("--publish-latest", action="store_true", help="Publish a complete run to performance/latest.json for the demo.")
+    parser.add_argument("--benchmark-commit", help="Measured commit when publishing an archived run; otherwise use HEAD.")
+    parser.add_argument("--run-id", help="Measured timestamp when the archived directory is not named after its run.")
     return parser.parse_args()
 
 
@@ -463,8 +468,29 @@ def write_json(summary, output):
     output.write_text(json.dumps(summary, indent=2, allow_nan=False) + "\n")
 
 
+def publication_metadata(commit, run_id):
+    try:
+        datetime.strptime(run_id[:10], "%Y-%m-%d")
+        if len(run_id) > 10 and run_id[10] != "T":
+            raise ValueError("Expected a timestamp")
+    except ValueError:
+        raise SystemExit("Publishing requires a dated run directory or --run-id with the measured date/timestamp.")
+    if commit is None or not re.fullmatch(r"[0-9a-fA-F]{40}", commit):
+        repository = Path(__file__).resolve().parent.parent
+        try:
+            commit = subprocess.check_output(
+                ["git", "-C", str(repository), "rev-parse", "--verify", "--end-of-options", f"{commit or 'HEAD'}^{{commit}}"],
+                text=True, stderr=subprocess.PIPE,
+            ).strip()
+        except subprocess.CalledProcessError:
+            raise SystemExit("Cannot resolve --benchmark-commit to a measured commit.")
+    return {"runId": run_id, "benchmarkCommit": commit.lower()}
+
+
 def main():
     args = parse_args()
+    if args.publish_latest and (args.allow_partial or args.allow_missing_sizes):
+        raise SystemExit("Publishing latest requires a complete run with size metadata.")
     output = args.output or default_output_path()
     json_output = args.json_output or output.with_suffix(".json")
     report_dir = select_report_dir(args.report_root, args.run_dir)
@@ -502,8 +528,12 @@ def main():
             + "\nRun the matching benchmarks again or pass --allow-missing-sizes for local investigation."
         )
 
+    if args.publish_latest:
+        summary.update(publication_metadata(args.benchmark_commit, args.run_id or report_dir.name))
     write_report(summary, output)
     write_json(summary, json_output)
+    if args.publish_latest:
+        write_json(summary, Path("performance/latest.json"))
     print(f"Using benchmark report directory: {report_dir}")
     print(f"Wrote benchmark comparison tables to {output}")
     print(f"Wrote benchmark metric JSON to {json_output}")
