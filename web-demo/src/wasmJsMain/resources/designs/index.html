@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KFlate · Design gallery</title>
+  <style>
+    @font-face {font-family:Inter;src:url("../fonts/InterVariable.woff2") format("woff2");font-weight:100 900;font-display:swap;}
+    :root { color-scheme:dark; font-family:Inter,system-ui,sans-serif; background:#0f172a; color:#e2e8f0; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:32px clamp(20px,5vw,88px) 80px; }
+    a { color:inherit; text-decoration:none; }
+    a:focus-visible,button:focus-visible { outline:3px solid #9fdbcc; outline-offset:5px; }
+    header { display:flex; justify-content:space-between; align-items:center; padding-bottom:28px; border-bottom:1px solid #363839; }
+    .brand { font-weight:750; font-size:22px; letter-spacing:-1px; }
+    header a:last-child { color:#aaa; font-size:13px; }
+    .intro { max-width:820px; padding:24px 0 18px; }
+    .eyebrow { color:#b5b2aa; text-transform:uppercase; letter-spacing:2px; font-size:11px; }
+    h1 { font-size:28px; font-weight:500; line-height:1.06; letter-spacing:-.06em; margin:12px 0; }
+    .intro p:last-child { max-width:650px; color:#a7a7a3; line-height:1.7; font-size:15px; }
+    nav { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:28px; }
+    button { font:inherit; font-size:12px; border:1px solid #434648; background:transparent; color:#bbb; padding:10px 15px; border-radius:30px; cursor:pointer; }
+    button[aria-pressed="true"] { background:#e7e3da; color:#181a1a; border-color:#e7e3da; }
+    .category { margin:0 0 36px; }
+    .section-title { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:10px; padding-bottom:15px; margin-bottom:18px; border-bottom:1px solid #37393a; }
+    h2 { font-size:22px; font-weight:500; margin:0; letter-spacing:-.5px; }
+    .reference { font-size:12px; color:#a5a5a0; }
+    .description { color:#999c98; font-size:13px; margin:15px 0 24px; }
+    .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
+    .card { display:block; min-width:0; }
+    .preview { overflow:hidden; background:#25282a; aspect-ratio:1.44; border:1px solid #424444; border-radius:6px; }
+    img { display:block; width:100%; height:100%; object-fit:cover; object-position:top; transition:transform .25s; }
+    .card:hover img { transform:scale(1.025); }
+    .card:hover .card-title { color:var(--accent); }
+    .card-label { display:flex; justify-content:space-between; align-items:center; padding:16px 1px; }
+    .card-title { font-weight:500; font-size:16px; }
+    .number { font-size:11px; color:#92968e; margin-right:10px; }
+    .arrow { color:var(--accent); }
+    footer { border-top:1px solid #37393a; padding-top:25px; font-size:12px; color:#898e89; line-height:1.7; }
+    @media(max-width:1000px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media(max-width:600px) { .grid { grid-template-columns:1fr; } .intro { padding-top:35px; } }
+    @media(prefers-reduced-motion:reduce) { img { transition:none; } }
+  </style>
+</head>
+<body>
+  <header><a class="brand" href="../">KFlate</a><a href="../">Open current page ↗</a></header>
+  <div class="intro"><p class="eyebrow">3 new designs</p><h1>Compression demo</h1><p>Three layouts for the experimental library. Each opens with the demo and a link to the benchmarks below.</p></div>
+  <nav aria-label="Filter design categories" id="filters"></nav>
+  <main id="categories" aria-live="polite">Loading designs…</main>
+  <footer>All versions use the same compressor and benchmark data.</footer>
+  <script type="module">
+    const categories = document.getElementById('categories');
+    try {
+      const response = await fetch('catalog.json');
+      if (!response.ok) throw new Error('Catalog unavailable');
+      const catalog = await response.json();
+      categories.replaceChildren();
+      for (const category of catalog) {
+        const section = document.createElement('section');
+        section.className = 'category'; section.dataset.category = category.id;
+        section.style.setProperty('--accent',category.color);
+        const title = document.createElement('div'); title.className = 'section-title';
+        const h2 = document.createElement('h2'); h2.textContent = category.title;
+        const reference = document.createElement('span'); reference.className = 'reference'; reference.textContent = category.reference;
+        title.append(h2,reference);
+        const description = document.createElement('p'); description.className = 'description'; description.textContent = category.description;
+        const grid = document.createElement('div'); grid.className = 'grid';
+        category.versions.forEach((name,index) => {
+          const link = document.createElement('a'); link.className = 'card'; link.href = `${category.id}-${index+1}.html`;
+          const preview = document.createElement('div'); preview.className = 'preview';
+          const img = document.createElement('img'); img.src = `previews/${category.id}-${index+1}.png`; img.alt = `${category.title}: ${name}`; img.loading = 'lazy'; preview.append(img);
+          const label = document.createElement('div'); label.className = 'card-label';
+          const text = document.createElement('span'); text.className = 'card-title';
+          const number = document.createElement('span'); number.className = 'number'; number.textContent = `0${index+1}`;
+          text.append(number,name); const arrow = document.createElement('span'); arrow.className = 'arrow'; arrow.textContent = '↗';
+          label.append(text,arrow); link.append(preview,label); grid.append(link);
+        });
+        section.append(title,grid); categories.append(section);
+      }
+      const filters = document.getElementById('filters');
+      for (const entry of [{id:'all',title:'All 3'},...catalog]) {
+        const button = document.createElement('button'); button.textContent = entry.title; button.setAttribute('aria-pressed',String(entry.id==='all'));
+        button.addEventListener('click',()=>{
+          for(const other of filters.children) other.setAttribute('aria-pressed',String(other===button));
+          for(const section of categories.children) section.hidden = entry.id!=='all' && section.dataset.category!==entry.id;
+        }); filters.append(button);
+      }
+    } catch(error) { categories.textContent = 'The design gallery could not load. Please reload the page.'; console.error(error); }
+  </script>
+</body>
+</html>

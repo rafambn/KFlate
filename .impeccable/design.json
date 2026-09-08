@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-07T15:21:16.294Z",
+  "title": "Design System: KFlate",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Cyan"
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Dark slate"
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Slate panel"
+      },
+      "inset": {
+        "role": "neutral",
+        "displayName": "Inset slate"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Brand",
+        "purpose": "KFlate wordmark beside the exact SVG logo."
+      },
+      "measurement": {
+        "displayName": "Benchmark measurements",
+        "purpose": "Tabular values in recorded benchmark tables."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "button-feedback",
+        "value": "background-color 160ms ease-out, border-color 160ms ease-out",
+        "purpose": "Button hover feedback."
+      },
+      {
+        "name": "processing",
+        "value": "working 1s ease-in-out infinite alternate; to { opacity: .35; }",
+        "purpose": "Processing icon pulse. Disabled under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "1800px"
+      },
+      {
+        "name": "compact-desktop",
+        "value": "1200px"
+      },
+      {
+        "name": "stacked",
+        "value": "900px"
+      },
+      {
+        "name": "phone",
+        "value": "480px"
+      },
+      {
+        "name": "short-desktop",
+        "value": "(max-height: 980px) and (min-width: 901px)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Process button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Full-width processing action.",
+      "html": "<button class=\"ds-primary\">Compress</button>",
+      "css": ".ds-primary{font-family:Inter,system-ui,sans-serif;font-size:20px;width:100%;min-height:62px;border:1px solid #00c5e8;border-radius:6px;padding:12px 24px;background:var(--accent,#00b4db);color:#041723;font-size:1.3rem;font-weight:500;line-height:1.3;cursor:pointer;transition:background-color 160ms ease-out,border-color 160ms ease-out}.ds-primary:hover{background:var(--accent-hover,#38cdeb)}.ds-primary:focus-visible{outline:3px solid var(--accent-hover,#38cdeb);outline-offset:4px}.ds-primary:disabled{background:#089cbc;border-color:#00b4db;color:#06212b;cursor:not-allowed}"
+    },
+    {
+      "name": "Download",
+      "kind": "button",
+      "refersTo": "button-download",
+      "description": "Outlined link for an available result.",
+      "html": "<a class=\"ds-download\" href=\"#download\">Download</a>",
+      "css": ".ds-download{font-family:Inter,system-ui,sans-serif;font-size:20px;display:inline-flex;align-items:center;min-height:60px;padding:12px 20px;border:1px solid var(--accent,#00b4db);border-radius:6px;color:var(--accent,#00b4db);text-decoration:none}.ds-download:hover{background:#12374b}.ds-download:focus-visible{outline:3px solid var(--accent-hover,#38cdeb);outline-offset:4px}"
+    },
+    {
+      "name": "Benchmark select",
+      "kind": "input",
+      "refersTo": "select",
+      "description": "Native platform selection.",
+      "html": "<label class=\"ds-label\">Platform<select class=\"ds-select\"><option>Wasm/JS</option><option>JVM</option><option>Linux x64 Native</option></select></label>",
+      "css": ".ds-label{font-family:Inter,system-ui,sans-serif;font-size:20px;color:var(--text,#f1f2f6);font-size:.95rem}.ds-select{display:block;font:inherit;min-height:44px;padding:.5rem;margin-top:.3rem;background:var(--bg,#0c1b2b);color:var(--text,#f1f2f6);border:1px solid var(--border,#37485a);border-radius:4px}.ds-select:focus-visible{outline:3px solid var(--accent-hover,#38cdeb);outline-offset:4px}"
+    },
+    {
+      "name": "Operation selection",
+      "kind": "nav",
+      "description": "Two mutually exclusive operation buttons.",
+      "html": "<div class=\"ds-modes\" role=\"group\" aria-label=\"Operation\"><button class=\"ds-mode ds-active\" aria-pressed=\"true\">Compress</button><button class=\"ds-mode\" aria-pressed=\"false\">Decompress</button></div>",
+      "css": ".ds-modes{display:flex;min-height:56px;background:var(--inset,#0f1f2f);border:1px solid var(--border,#37485a);border-radius:6px;overflow:hidden}.ds-mode{font-family:Inter,system-ui,sans-serif;font-size:20px;flex:1;border:0;border-bottom:2px solid transparent;padding:10px;background:transparent;color:var(--muted,#b7c2d1);font-size:1.2rem;cursor:pointer}.ds-mode+.ds-mode{border-left:1px solid var(--border,#37485a)}.ds-mode.ds-active{color:var(--accent,#00b4db);border-bottom-color:var(--accent,#00b4db)}.ds-mode:hover{background:#153144}.ds-mode:focus-visible{outline:3px solid var(--accent-hover,#38cdeb);outline-offset:-4px}"
+    },
+    {
+      "name": "Result panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat bordered container with a dashed status well.",
+      "html": "<section class=\"ds-panel\"><h2>Result</h2><div class=\"ds-well\">Run compression to inspect the result</div></section>",
+      "css": ".ds-panel{font-family:Inter,system-ui,sans-serif;font-size:20px;padding:30px 34px;border:1px solid var(--border,#37485a);border-radius:12px;background:var(--card,#182838);color:var(--text,#f1f2f6)}.ds-panel h2{margin:0;font-size:1.25rem;font-weight:500;line-height:1.25;letter-spacing:-.02em}.ds-well{margin-top:24px;min-height:160px;padding:24px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed var(--border,#37485a);border-radius:12px;background:var(--inset,#0f1f2f);color:var(--muted,#b7c2d1);line-height:1.45}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Measurement report",
+    "overview": "Dark slate panels hold readable controls and measured results. Cyan identifies actions and selected values. Preserve the exact repository SVG and describe the Kotlin library as experimental.",
+    "keyCharacteristics": [
+      "Dark slate tonal layers",
+      "Cyan actions and selection",
+      "Readable Inter with Gothic A1 branding",
+      "Measured results with literal copy"
+    ],
+    "rules": [
+      {
+        "name": "Status text",
+        "body": "Retain a text message alongside success, error, and readiness colors.",
+        "section": "colors"
+      }
+    ],
+    "dos": [
+      "Do preserve the exact KFlate SVG.",
+      "Do retain native input semantics and visible keyboard focus.",
+      "Do stack panels and keep controls scrollable on small screens."
+    ],
+    "donts": [
+      "Don't redraw the logo.",
+      "Don't add promotional performance claims."
+    ]
+  }
+}
