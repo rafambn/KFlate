@@ -99,3 +99,7 @@ Measurements ran on the uncommitted implementation subsequently committed with t
 Build the benchmark artifacts with `./gradlew :kflate:assembleBenchmarks :kflate:wasmJsBenchmarkSmokeBenchmark -PbenchmarkLibrary=kflate`. Compile `RatioSweep.java` against the JVM main classes and benchmark JAR, then run it with `kflate/src/jvmTest/resources` as its argument.
 
 JMH filter: `.*CompressionBenchmarks.rawDeflateCompression`, with `-wi 3 -i 5 -w 1s -r 1s -f 1 -foe true -rf json`. The classpath includes main classes, benchmark classes and the generated JMH JAR. `native_bench.py` runs the equivalent Native configuration. Wasm uses the same generated runner configuration with the report path changed, passed to its generated `.mjs` entry point through Node.
+
+## Timing calibration
+
+A later three-fork unchanged-baseline run measured text at 60.37, 85.43, and 64.00 ms per fork. This spread means the initial single-fork text comparison cannot establish a causal speed change. The deterministic size results are unaffected. See `baseline-recheck-jmh.json` for all samples.
