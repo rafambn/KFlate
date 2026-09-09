@@ -10,7 +10,7 @@
           "corpus" : "simpleText"
     },
     "advanced" : {
-          
+
     },
     "primaryMetric" : {
        "score": 6.512260282447882E-5,
@@ -55,7 +55,7 @@
           "corpus" : "text"
     },
     "advanced" : {
-          
+
     },
     "primaryMetric" : {
        "score": 0.06730547945333334,
@@ -100,7 +100,7 @@
           "corpus" : "model3D"
     },
     "advanced" : {
-          
+
     },
     "primaryMetric" : {
        "score": 1.3318452991367447E-4,
@@ -145,7 +145,7 @@
           "corpus" : "Rainier.bmp"
     },
     "advanced" : {
-          
+
     },
     "primaryMetric" : {
        "score": 0.14964745754285716,
@@ -190,7 +190,7 @@
           "corpus" : "Maltese.bmp"
     },
     "advanced" : {
-          
+
     },
     "primaryMetric" : {
        "score": 0.4632164346666666,
@@ -235,7 +235,7 @@
           "corpus" : "Sunrise.bmp"
     },
     "advanced" : {
-          
+
     },
     "primaryMetric" : {
        "score": 1.6133915289999998,
@@ -280,7 +280,7 @@
           "corpus" : "compressed_MVT.pbf"
     },
     "advanced" : {
-          
+
     },
     "primaryMetric" : {
        "score": 0.004544770251141552,
