@@ -137,21 +137,6 @@ internal fun writeBlock(
     for (index in 0 until firstSymbolCount) {
         firstBlockLength += encodedSymbolByteLength(symbols[index])
     }
-    if (firstBlockLength <= 0 || firstBlockLength >= blockLength) {
-        return writeDeflateBlock(
-            data,
-            output,
-            isFinal,
-            symbols,
-            symbolStart = 0,
-            symbolCount = symbolCount,
-            blockStart = blockStart,
-            blockLength = blockLength,
-            bitPosition = bitPosition,
-            plan = fullPlan,
-        )
-    }
-
     val secondBlockLength = blockLength - firstBlockLength
     val firstLiteralFrequencies = IntArray(288)
     val firstDistanceFrequencies = IntArray(32)

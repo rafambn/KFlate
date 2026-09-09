@@ -358,6 +358,35 @@ class AlgorithmCoverageTest {
     }
 
     @Test
+    fun blockWriterHonorsUnavailableSourceSentinel() {
+        val data = byteArrayOf(7, 8)
+        val symbols = intArrayOf(7, 8)
+        val literalFrequencies = IntArray(288)
+        for (symbol in symbols) {
+            literalFrequencies[symbol]++
+        }
+
+        val output = ByteArray(128)
+        val endBitPosition = writeBlock(
+            data = data,
+            output = output,
+            isFinal = true,
+            symbols = symbols,
+            literalFrequencies = literalFrequencies,
+            distanceFrequencies = IntArray(32),
+            extraBits = 0,
+            symbolCount = symbols.size,
+            blockStart = -1,
+            blockLength = data.size,
+            bitPosition = 0,
+        )
+        assertContentEquals(
+            data,
+            inflate(output.copyOf(shiftToNextByte(endBitPosition)), InflateState(validationMode = 2)),
+        )
+    }
+
+    @Test
     fun costAwareLevelRoundTripsWindowsAndDictionaries() {
         val multipleWindows = ByteArray(COST_AWARE_WINDOW_SIZE * 2 + 3)
         val compressedWindows = KFlate.compress(multipleWindows, CompressionRaw(level = 9))

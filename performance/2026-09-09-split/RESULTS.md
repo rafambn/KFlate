@@ -1,6 +1,6 @@
 # Split blocks when a midpoint reduces their encoded bit count
 
-Compare the original block with two blocks divided at the midpoint token boundary. Reuse the selected Huffman plans to emit only the lower-bit-cost option. Account for stored-block alignment and synthetic distance codes without counting nonexistent distance tokens. The main measured benefit is the map-tile fixture; the weighted aggregate gain is small. The exact stored-block cost helper overlaps PR33 and should be deduplicated when merging.
+Compare the original block with two blocks divided at the midpoint token boundary. Reuse the selected Huffman plans to emit the lower-bit-cost option. Account for stored-block alignment and synthetic distance codes without counting nonexistent distance tokens. The main measured benefit is the map-tile fixture; the weighted aggregate gain is small. Planning adds CPU work and allocations. The exact stored-block cost helper overlaps PR33 and should be deduplicated when merging.
 
 Base: `fe2ff51`, `dev-1.1.0`. Measured on September 9, 2026 on Linux x86_64, Intel Core i7-11800H. JVM uses JBR 17.0.14; Node uses 22.22.1.
 
@@ -57,23 +57,27 @@ Development measurements use three one-second warmups and five one-second measur
 
 | Corpus | Before ms | After ms | Before/after speedup | Saved Kompress/after speedup |
 | --- | ---: | ---: | ---: | ---: |
-| simpleText | 0.0279 | 0.0277 | 1.007x | 0.154x |
-| text | 60.4159 | 62.7368 | 0.963x | 0.830x |
-| model3D | 0.0669 | 0.0997 | 0.670x | 0.303x |
-| Rainier.bmp | 108.3289 | 130.9123 | 0.827x | 0.788x |
-| Maltese.bmp | 477.9739 | 460.6953 | 1.038x | 0.820x |
-| Sunrise.bmp | 1673.0244 | 1859.3441 | 0.900x | 0.665x |
-| compressed_MVT.pbf | 4.5006 | 5.0198 | 0.897x | 0.777x |
+| simpleText | 0.0279 | 0.0277 | 1.005x | 0.153x |
+| text | 60.4159 | 62.6884 | 0.964x | 0.831x |
+| model3D | 0.0669 | 0.1156 | 0.579x | 0.261x |
+| Rainier.bmp | 108.3289 | 122.2448 | 0.886x | 0.844x |
+| Maltese.bmp | 477.9739 | 516.8326 | 0.925x | 0.731x |
+| Sunrise.bmp | 1673.0244 | 1674.0776 | 0.999x | 0.739x |
+| compressed_MVT.pbf | 4.5006 | 4.4917 | 1.002x | 0.869x |
 
 
 ## Validation and reproduction
 
-Linux JVM tests passed, including literal-only and mixed block cost/end-position checks. All 70 corpus/level outputs passed both JDK and KFlate decoding, with no fixture size regressions. All seven level 6 JMH compression cases completed. No Native or Wasm timing claim is made.
+Linux JVM tests and 100% instruction/branch coverage verification passed. Coverage includes literal-only and mixed block cost/end-position checks and unavailable-source sentinel behavior. All 70 outputs passed both JDK and KFlate decoding with no fixture size regressions; their hashes matched the previous corrected split run after removing an unreachable guard. All seven level 6 JMH compression cases completed. No Native or Wasm timing claim is made for this standalone variant.
 
-Tracked source diff SHA-256: `d68a58a2a6eb57a1a9b31d997eba62564d1802dd7fe0c8a271c753958109f602`. Added source/test files are present in this commit.
+Tracked source diff SHA-256: `f3e6457d40e0d6104061209a66fa277db8452484f3622f33ca8d0fc40cfeff44`. Added source/test files are present in this commit.
 
 Linux build: `ANDROID_HOME=/home/rafael/Android/Sdk ./gradlew :kflate:jvmTest :kflate:jvmBenchmarkBenchmarkJar --no-parallel --max-workers=1`.
 
 For level 9 timing, set `BENCHMARK_COMPRESSION_LEVEL` to 9 in `BenchmarkState.kt` before building; leave it at 6 otherwise. Use JBR 17.0.14 and the generated JMH jar with the main and benchmark classes on its classpath. Run `org.openjdk.jmh.Main` with the relevant `CompressionBenchmarks` method filter and `-wi 3 -i 5 -w 1s -r 1s -f 1 -foe true -rf json -rff result.json`. Only KFlate benchmark methods should be selected.
 
 Compile `RatioSweep.java` against the KFlate classes and generated benchmark jar, then run it with `kflate/src/jvmTest/resources FIRST_LEVEL LAST_LEVEL`. It checks both JDK and KFlate decompression and records deterministic sizes and output hashes.
+
+## Timing calibration
+
+A later three-fork unchanged-baseline run measured text at 60.37, 85.43, and 64.00 ms per fork. This spread means the initial single-fork text comparison cannot establish a causal speed change. The deterministic size results are unaffected. See `baseline-recheck-jmh.json` for all samples.
