@@ -73,3 +73,7 @@ All 177 JVM tests passed on Linux. All 70 corpus/level outputs passed KFlate rou
 Build with `./gradlew :kflate:jvmTest :kflate:jvmBenchmarkBenchmarkJar`. Compile and run `RatioSweep.java` against the main classes and benchmark JAR with `kflate/src/jvmTest/resources` as its argument. JMH used filter `.*CompressionBenchmarks.rawDeflateCompression`, `-wi 3 -i 5 -w 1s -r 1s -f 1 -foe true -rf json`, and main/benchmark classes plus the generated JMH JAR on its classpath.
 
 Measurements ran before committing the same implementation and report. The measured algorithm source is identified by `source-sha256.json`.
+
+## Timing calibration
+
+A later three-fork unchanged-baseline run measured text at 60.37, 85.43, and 64.00 ms per fork. This spread means the initial single-fork text comparison cannot establish a causal speed change. The deterministic size results are unaffected. See `baseline-recheck-jmh.json` for all samples.
