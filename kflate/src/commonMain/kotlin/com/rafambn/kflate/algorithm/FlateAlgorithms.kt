@@ -836,12 +836,9 @@ private fun findLongestMatch(
         distance += (currentIndex - candidateIndex) and MATCH_DISTANCE_MASK
     }
 
-    // The extra distance bits make a far three-byte match costlier than three literals in most blocks.
-    if (bestLength == 3 && bestDistance > MAX_DISTANCE_FOR_THREE_BYTE_MATCH) return 0
     return (bestLength shl MATCH_DISTANCE_BITS) or bestDistance
 }
 
 internal const val MATCH_DISTANCE_BITS = 15
 internal const val MATCH_DISTANCE_MASK = 32767
 private const val MAX_MATCH_LENGTH = 258
-private const val MAX_DISTANCE_FOR_THREE_BYTE_MATCH = 4096
