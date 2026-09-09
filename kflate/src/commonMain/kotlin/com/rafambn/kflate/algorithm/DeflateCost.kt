@@ -25,12 +25,15 @@ internal fun chooseCostAwarePath(
         var bestLength = 1
         val match = matches[offset]
         val distance = match and MATCH_DISTANCE_MASK
+        val distanceSymbol = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
+        val distanceCost = (FIXED_DISTANCE_TREE[distanceSymbol].toInt() and 0xFF) +
+                (FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF)
         val maximumLength = match ushr MATCH_DISTANCE_BITS
         val containedLength = minOf(maximumLength, size - offset)
         val searchedLength = minOf(containedLength, COST_AWARE_LENGTH_SEARCH)
 
         for (length in 3..searchedLength) {
-            val candidateCost = fixedMatchBitCost(length, distance) + costs[offset + length]
+            val candidateCost = FIXED_LENGTH_TOKEN_COSTS[length] + distanceCost + costs[offset + length]
             if (candidateCost <= bestCost) {
                 bestCost = candidateCost
                 bestLength = length
@@ -39,7 +42,7 @@ internal fun chooseCostAwarePath(
 
         if (maximumLength > searchedLength) {
             val nextCost = if (offset + maximumLength <= size) costs[offset + maximumLength] else 0
-            val candidateCost = fixedMatchBitCost(maximumLength, distance) + nextCost
+            val candidateCost = FIXED_LENGTH_TOKEN_COSTS[maximumLength] + distanceCost + nextCost
             if (candidateCost <= bestCost) {
                 bestCost = candidateCost
                 bestLength = maximumLength
@@ -56,10 +59,8 @@ internal fun fixedLiteralBitCost(literal: Int): Int {
 }
 
 internal fun fixedMatchBitCost(length: Int, distance: Int): Int {
-    val lengthSymbol = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
     val distanceSymbol = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
-    return (FIXED_LENGTH_TREE[257 + lengthSymbol].toInt() and 0xFF) +
-            (FIXED_LENGTH_EXTRA_BITS[lengthSymbol].toInt() and 0xFF) +
+    return FIXED_LENGTH_TOKEN_COSTS[length] +
             (FIXED_DISTANCE_TREE[distanceSymbol].toInt() and 0xFF) +
             (FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF)
 }
@@ -68,3 +69,9 @@ internal fun fixedMatchBitCost(length: Int, distance: Int): Int {
 internal const val COST_AWARE_WINDOW_SIZE = 262_144
 // Price every short match length plus the longest available match.
 private const val COST_AWARE_LENGTH_SEARCH = 64
+
+private val FIXED_LENGTH_TOKEN_COSTS = IntArray(259) { length ->
+    val lengthSymbol = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
+    (FIXED_LENGTH_TREE[257 + lengthSymbol].toInt() and 0xFF) +
+            (FIXED_LENGTH_EXTRA_BITS[lengthSymbol].toInt() and 0xFF)
+}
