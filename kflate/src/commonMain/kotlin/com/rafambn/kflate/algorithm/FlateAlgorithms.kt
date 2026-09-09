@@ -452,12 +452,13 @@ internal fun deflate(
         }
         val levelOptions = DEFLATE_LEVELS[level]
         val mask = (1 shl hashBits) - 1
-        val prev = state.prev ?: ShortArray(MATCH_DISTANCE_MASK + 1)
+        val prevSize = if (isLastBlock) minOf(MATCH_DISTANCE_MASK + 1, dataSize) else MATCH_DISTANCE_MASK + 1
+        val prev = state.prev ?: ShortArray(prevSize)
         val head = state.head ?: ShortArray(mask + 1)
         val baseShift1 = ceil(hashBits / 3.0).toInt()
         val baseShift2 = 2 * baseShift1
 
-        val symbols = IntArray(65536)
+        val symbols = IntArray(minOf(65536, dataSize))
         val literalFrequencies = IntArray(288)
         val distanceFrequencies = IntArray(32)
         var matchCount = 0
