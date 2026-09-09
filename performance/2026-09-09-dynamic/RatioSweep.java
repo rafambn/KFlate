@@ -13,6 +13,7 @@ public class RatioSweep {
         int first = args.length > 1 ? Integer.parseInt(args[1]) : 0;
         int last = args.length > 2 ? Integer.parseInt(args[2]) : 9;
         for (String name : names) {
+            if (args.length > 3 && !name.equals(args[3])) continue;
             byte[] input = Files.readAllBytes(Path.of(args[0], name));
             for (int level = first; level <= last; level++) {
                 long start = System.nanoTime();
@@ -24,7 +25,9 @@ public class RatioSweep {
                     byte[] decoded = new byte[input.length + 1];
                     int count = inflater.inflate(decoded);
                     if (!inflater.finished() || count != input.length || !Arrays.equals(input, Arrays.copyOf(decoded, count))) {
-                        throw new AssertionError("Invalid output: " + name + " level " + level);
+                        Files.write(Path.of("/tmp/kflate-invalid-" + name + "-" + level + ".deflate"), output);
+                        int mismatch = Arrays.mismatch(input, Arrays.copyOf(decoded, count));
+                        throw new AssertionError("Invalid output: " + name + " level " + level + " decoded=" + count + " expected=" + input.length + " finished=" + inflater.finished() + " remaining=" + inflater.getRemaining() + " mismatch=" + mismatch);
                     }
                 } finally {
                     inflater.end();

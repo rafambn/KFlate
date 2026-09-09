@@ -1,6 +1,6 @@
 # Refine level 9 parsing with dynamic Huffman prices
 
-Build Huffman prices from the fixed-cost parse, try one dynamic-cost refinement, and keep it only if the rebuilt full-window estimate improves. This reduces actual level 9 output in all changed fixtures. It adds a second parsing pass and scratch allocations. The estimate spans a parser window, which may become multiple encoded blocks, so it is not a guarantee against output regressions on arbitrary inputs. The Huffman builder sentinel changes to Int.MAX_VALUE because window frequencies can exceed its old 25001 bound.
+Build Huffman prices from the fixed-cost parse, try one dynamic-cost refinement, and keep it only if the rebuilt full-window estimate improves. This adds parsing work and scratch allocations. The estimate spans a parser window, which may become multiple encoded blocks, so it does not guarantee against size regressions on arbitrary inputs. Reject candidates shorter than the DEFLATE minimum of three bytes, including the packed two-byte no-match sentinel at window boundaries. The Huffman builder sentinel becomes Int.MAX_VALUE because window frequencies can exceed 25001.
 
 Base: `fe2ff51`, `dev-1.1.0`. Measured on September 9, 2026 on Linux x86_64, Intel Core i7-11800H. JVM uses JBR 17.0.14; Node uses 22.22.1.
 
@@ -14,7 +14,28 @@ Output reduction is `(beforeBytes - afterBytes) / beforeBytes`. Totals weight ea
 
 | Level | Before bytes | After bytes | Output reduction |
 | ---: | ---: | ---: | ---: |
+| 0 | 76,379,868 | 76,379,868 | 0.0000% |
+| 1 | 40,222,941 | 40,222,941 | 0.0000% |
+| 2 | 39,269,936 | 39,269,936 | 0.0000% |
+| 3 | 38,906,551 | 38,906,551 | 0.0000% |
+| 4 | 38,333,169 | 38,333,169 | 0.0000% |
+| 5 | 38,293,272 | 38,293,272 | 0.0000% |
+| 6 | 37,882,044 | 37,882,044 | 0.0000% |
+| 7 | 37,868,330 | 37,868,330 | 0.0000% |
+| 8 | 37,737,043 | 37,737,043 | 0.0000% |
 | 9 | 37,251,418 | 36,780,911 | 1.2631% |
+
+### Level 6
+
+| Corpus | Before bytes | After bytes | Reduction | Saved JVM Kompress bytes |
+| --- | ---: | ---: | ---: | ---: |
+| simpleText | 84 | 84 | 0.0000% | 84 |
+| text | 506,455 | 506,455 | 0.0000% | 505,318 |
+| model3D | 2,153 | 2,153 | 0.0000% | 2,149 |
+| Rainier.bmp | 3,283,450 | 3,283,450 | 0.0000% | 3,275,337 |
+| Maltese.bmp | 7,158,472 | 7,158,472 | 0.0000% | 7,096,685 |
+| Sunrise.bmp | 26,838,825 | 26,838,825 | 0.0000% | 26,698,992 |
+| compressed_MVT.pbf | 92,605 | 92,605 | 0.0000% | 91,408 |
 
 ### Level 9
 
@@ -36,20 +57,20 @@ Development measurements use three one-second warmups and five one-second measur
 
 | Corpus | Before ms | After ms | Before/after speedup | Saved Kompress/after speedup |
 | --- | ---: | ---: | ---: | ---: |
-| simpleText | 0.0272 | 0.0273 | 0.996x | 0.148x |
-| text | 192.2328 | 194.8697 | 0.986x | 0.382x |
-| model3D | 0.0969 | 0.1522 | 0.637x | 0.197x |
-| Rainier.bmp | 2551.1684 | 2882.2180 | 0.885x | 0.038x |
-| Maltese.bmp | 1206.9043 | 1639.5376 | 0.736x | 0.242x |
-| Sunrise.bmp | 11385.8072 | 13942.4601 | 0.817x | 0.121x |
-| compressed_MVT.pbf | 9.3247 | 10.8204 | 0.862x | 0.384x |
+| simpleText | 0.0272 | 0.0272 | 1.000x | 0.149x |
+| text | 192.2328 | 233.2505 | 0.824x | 0.319x |
+| model3D | 0.0969 | 0.1644 | 0.589x | 0.183x |
+| Rainier.bmp | 2551.1684 | 2680.9962 | 0.952x | 0.041x |
+| Maltese.bmp | 1206.9043 | 1650.6747 | 0.731x | 0.240x |
+| Sunrise.bmp | 11385.8072 | 12729.0296 | 0.894x | 0.132x |
+| compressed_MVT.pbf | 9.3247 | 11.5040 | 0.811x | 0.362x |
 
 
 ## Validation and reproduction
 
-Linux JVM tests passed, including multiple parser windows, dictionaries, and high Huffman frequencies. All seven level 9 fixture outputs passed both JDK and KFlate decoding and had no size regressions. All seven level 9 JMH compression cases completed. No Native or Wasm timing claim is made.
+Linux JVM tests and 100% instruction/branch coverage verification passed, including the packed two-byte boundary regression, multiple windows, dictionaries and high Huffman frequencies. All 70 corpus/level outputs passed JDK and KFlate decompression; levels 0 through 8 are unchanged and level 9 has no fixture size regressions. All seven level 9 JMH compression cases completed. The combined variant also passed all 70 cases after the minimum-length fix. No Native or Wasm timing claim is made for this standalone variant.
 
-Tracked source diff SHA-256: `c5ac518b7849a2fe92ae788dff7a5c162a4bf520a3c819051959a652e01b5c0d`. Added source/test files are present in this commit.
+Tracked source diff SHA-256: `9450056c9788829eb49cd6364321384fa4b483f912838ebe34855b1947e79591`. Added source/test files are present in this commit.
 
 Linux build: `ANDROID_HOME=/home/rafael/Android/Sdk ./gradlew :kflate:jvmTest :kflate:jvmBenchmarkBenchmarkJar --no-parallel --max-workers=1`.
 

@@ -179,7 +179,7 @@ private fun chooseCostAwarePath(
             }
         }
 
-        if (maximumLength > searchedLength) {
+        if (maximumLength >= 3 && maximumLength > searchedLength) {
             val nextCost = if (offset + maximumLength <= size) costs[offset + maximumLength] else 0
             val candidateCost = matchBitCost(maximumLength, distance, lengthCosts, distanceCosts) + nextCost
             if (candidateCost <= bestCost) {

@@ -289,6 +289,28 @@ class AlgorithmCoverageTest {
     }
 
     @Test
+    fun costAwareParsingRejectsPackedTwoByteNoMatchAtWindowEnd() {
+        val data = ByteArray(2_048)
+        val matches = IntArray(data.size)
+        var literalSymbol = 0
+        for (offset in 0 until data.size - 1) {
+            if (offset % 3 == 0 && offset + 3 <= data.size) {
+                matches[offset] = (3 shl MATCH_DISTANCE_BITS) or 1
+            } else {
+                data[offset] = (if (literalSymbol < 255) literalSymbol++ else 0).toByte()
+            }
+        }
+        data[data.lastIndex] = 255.toByte()
+        matches[data.lastIndex] = 2 shl MATCH_DISTANCE_BITS
+
+        val costs = IntArray(data.size + 1)
+        val choices = IntArray(data.size)
+        chooseCostAwarePath(data, 0, data.size, matches, costs, choices)
+
+        assertEquals(1, choices[data.lastIndex])
+    }
+
+    @Test
     fun costAwareLevelRoundTripsWindowsAndDictionaries() {
         val multipleWindows = ByteArray(COST_AWARE_WINDOW_SIZE * 2 + 3)
         val compressedWindows = KFlate.compress(multipleWindows, CompressionRaw(level = 9))
