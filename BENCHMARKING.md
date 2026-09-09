@@ -40,8 +40,8 @@ Do not rename corpus files, classes, or methods casually. Result history uses th
 
 ## Measurement configuration
 
-The main configuration uses average-time mode, JSON output, 8 warmup iterations, and 15 one-second measurement iterations.
-JVM benchmarks use 3 fresh JVM forks. Native and Wasm use their runner's process model and do not inherit the JVM fork setting.
+The main configuration uses average-time mode, JSON output, 8 warmup iterations, and 10 one-second measurement iterations.
+JVM benchmarks use 1 fresh JVM fork. Native and Wasm use their runner's process model and do not inherit the JVM fork setting.
 For release claims, repeat the full Native and Wasm commands in separate quiet system sessions and compare the retained raw samples.
 
 The generated JSON summary preserves:
