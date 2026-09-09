@@ -401,9 +401,10 @@ internal fun inflate(
                         bytesWrittenToOutput = dictionaryEndIndex
                     }
 
-                    while (bytesWrittenToOutput < copyEndIndex) {
-                        buffer[bytesWrittenToOutput] = buffer[bytesWrittenToOutput - matchDistance]
-                        bytesWrittenToOutput++
+                    val remainingMatchLength = copyEndIndex - bytesWrittenToOutput
+                    if (remainingMatchLength > 0) {
+                        copyMatch(buffer, bytesWrittenToOutput, matchDistance, remainingMatchLength)
+                        bytesWrittenToOutput = copyEndIndex
                     }
                     lastBitPosition = currentBitPosition
                 }
@@ -425,6 +426,47 @@ internal fun inflate(
     } while (!isFinalBlock)
 
     return workingBuffer.copyOfRange(0, bytesWrittenToOutput)
+}
+
+internal fun copyMatch(
+    buffer: ByteArray,
+    destinationOffset: Int,
+    distance: Int,
+    length: Int,
+) {
+    if (distance == 1) {
+        buffer.fill(buffer[destinationOffset - 1], destinationOffset, destinationOffset + length)
+        return
+    }
+
+    if (distance >= length) {
+        buffer.copyInto(
+            destination = buffer,
+            destinationOffset = destinationOffset,
+            startIndex = destinationOffset - distance,
+            endIndex = destinationOffset - distance + length,
+        )
+        return
+    }
+
+    buffer.copyInto(
+        destination = buffer,
+        destinationOffset = destinationOffset,
+        startIndex = destinationOffset - distance,
+        endIndex = destinationOffset,
+    )
+
+    var copied = distance
+    while (copied < length) {
+        val copyLength = minOf(copied, length - copied)
+        buffer.copyInto(
+            destination = buffer,
+            destinationOffset = destinationOffset + copied,
+            startIndex = destinationOffset,
+            endIndex = destinationOffset + copyLength,
+        )
+        copied += copyLength
+    }
 }
 
 internal fun deflate(
