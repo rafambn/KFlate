@@ -1,0 +1,7 @@
+{"corpus":"simpleText","level":6,"originalSizeBytes":100,"compressedSizeBytes":84,"singleRunMs":31.336882,"sha256":"dfc6c55d533c49b70bb5f358f19c146ad3443a985e6f76144b1ee4e16286e499"}
+{"corpus":"text","level":6,"originalSizeBytes":1232923,"compressedSizeBytes":506455,"singleRunMs":99.439416,"sha256":"3ba0571fcc563672f279cad303810e537dfc18ce61680207dfcd3e2e91abaf67"}
+{"corpus":"model3D","level":6,"originalSizeBytes":2478,"compressedSizeBytes":2153,"singleRunMs":1.304129,"sha256":"4b0cd916546275b9ae57fab7c6d88d94ed1e669669b30c158eb4c06e85e8f0ad"}
+{"corpus":"Rainier.bmp","level":6,"originalSizeBytes":6220854,"compressedSizeBytes":3283450,"singleRunMs":136.401175,"sha256":"fba9e4496d79c376317229a92a905be4351f5487e3db2a91d2287826db2bc7e3"}
+{"corpus":"Maltese.bmp","level":6,"originalSizeBytes":16427390,"compressedSizeBytes":7158472,"singleRunMs":552.101098,"sha256":"cb10f06b36e0eaf03ebf81b8743a321d751979f5e671deb340405dfa6b8986b1"}
+{"corpus":"Sunrise.bmp","level":6,"originalSizeBytes":52344054,"compressedSizeBytes":26838825,"singleRunMs":1687.994252,"sha256":"34a1e5b94bf2344b565dc7b11b44f6908bda919a1fea479b2b2e0f557fd26346"}
+{"corpus":"compressed_MVT.pbf","level":6,"originalSizeBytes":146224,"compressedSizeBytes":92605,"singleRunMs":4.639995,"sha256":"87d498941e1d7cae4ee47930a9becc40606244a9e9e4c06d0ef21a3434093459"}
