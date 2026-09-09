@@ -3,6 +3,7 @@ package com.rafambn.kflate.util
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_EXTRA_BITS
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_TREE
 import com.rafambn.kflate.huffman.FIXED_LENGTH_EXTRA_BITS
+import com.rafambn.kflate.huffman.FIXED_LENGTH_BASE
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_MAP
 import com.rafambn.kflate.huffman.FIXED_LENGTH_MAP
 import com.rafambn.kflate.huffman.FIXED_LENGTH_TREE
@@ -104,9 +105,140 @@ internal fun writeBlock(
     blockLength: Int,
     bitPosition: Long
 ): Long {
-    var currentBitPosition = bitPosition
-    writeBits(output, currentBitPosition++, if (isFinal) 1 else 0)
-    literalFrequencies[256]++
+    // Compare one midpoint split using the exact bit end position. The split
+    // candidate uses only two small frequency sets and never copies output.
+    val fullPlan = buildDeflateBlockPlan(
+        literalFrequencies,
+        distanceFrequencies,
+        extraBits,
+        blockStart,
+        blockLength,
+        bitPosition,
+    )
+    val fullEnd = deflateBlockEndBitPosition(fullPlan, bitPosition, blockLength)
+
+    if (blockStart < 0 || symbolCount < 2) {
+        return writeDeflateBlock(
+            data,
+            output,
+            isFinal,
+            symbols,
+            symbolStart = 0,
+            symbolCount = symbolCount,
+            blockStart = blockStart,
+            blockLength = blockLength,
+            bitPosition = bitPosition,
+            plan = fullPlan,
+        )
+    }
+
+    val firstSymbolCount = symbolCount / 2
+    var firstBlockLength = 0
+    for (index in 0 until firstSymbolCount) {
+        firstBlockLength += encodedSymbolByteLength(symbols[index])
+    }
+    if (firstBlockLength <= 0 || firstBlockLength >= blockLength) {
+        return writeDeflateBlock(
+            data,
+            output,
+            isFinal,
+            symbols,
+            symbolStart = 0,
+            symbolCount = symbolCount,
+            blockStart = blockStart,
+            blockLength = blockLength,
+            bitPosition = bitPosition,
+            plan = fullPlan,
+        )
+    }
+
+    val secondBlockLength = blockLength - firstBlockLength
+    val firstLiteralFrequencies = IntArray(288)
+    val firstDistanceFrequencies = IntArray(32)
+    val firstExtraBits = populateBlockFrequencies(
+        symbols,
+        symbolStart = 0,
+        symbolCount = firstSymbolCount,
+        literalFrequencies = firstLiteralFrequencies,
+        distanceFrequencies = firstDistanceFrequencies,
+    )
+    val secondLiteralFrequencies = IntArray(288)
+    val secondDistanceFrequencies = IntArray(32)
+    val secondExtraBits = populateBlockFrequencies(
+        symbols,
+        symbolStart = firstSymbolCount,
+        symbolCount = symbolCount - firstSymbolCount,
+        literalFrequencies = secondLiteralFrequencies,
+        distanceFrequencies = secondDistanceFrequencies,
+    )
+    val firstPlan = buildDeflateBlockPlan(
+        firstLiteralFrequencies,
+        firstDistanceFrequencies,
+        firstExtraBits,
+        blockStart,
+        firstBlockLength,
+        bitPosition,
+    )
+    val firstEnd = deflateBlockEndBitPosition(firstPlan, bitPosition, firstBlockLength)
+    val secondPlan = buildDeflateBlockPlan(
+        secondLiteralFrequencies,
+        secondDistanceFrequencies,
+        secondExtraBits,
+        blockStart + firstBlockLength,
+        secondBlockLength,
+        firstEnd,
+    )
+    val splitEnd = deflateBlockEndBitPosition(secondPlan, firstEnd, secondBlockLength)
+
+    if (splitEnd < fullEnd) {
+        val writtenFirstEnd = writeDeflateBlock(
+            data,
+            output,
+            false,
+            symbols,
+            symbolStart = 0,
+            symbolCount = firstSymbolCount,
+            blockStart = blockStart,
+            blockLength = firstBlockLength,
+            bitPosition = bitPosition,
+            plan = firstPlan,
+        )
+        return writeDeflateBlock(
+            data,
+            output,
+            isFinal,
+            symbols,
+            symbolStart = firstSymbolCount,
+            symbolCount = symbolCount - firstSymbolCount,
+            blockStart = blockStart + firstBlockLength,
+            blockLength = secondBlockLength,
+            bitPosition = writtenFirstEnd,
+            plan = secondPlan,
+        )
+    }
+
+    return writeDeflateBlock(
+        data,
+        output,
+        isFinal,
+        symbols,
+        symbolStart = 0,
+        symbolCount = symbolCount,
+        blockStart = blockStart,
+        blockLength = blockLength,
+        bitPosition = bitPosition,
+        plan = fullPlan,
+    )
+}
+
+private fun buildDeflateBlockPlan(
+    literalFrequencies: IntArray,
+    distanceFrequencies: IntArray,
+    extraBits: Int,
+    blockStart: Int,
+    blockLength: Int,
+    bitPosition: Long,
+): DeflateBlockPlan {
     var hasDistance = false
     for (frequency in distanceFrequencies) {
         if (frequency > 0) {
@@ -114,72 +246,157 @@ internal fun writeBlock(
             break
         }
     }
+    literalFrequencies[256]++
     if (!hasDistance) {
         distanceFrequencies[0] = 1
     }
 
-    val (dynamicLiteralTree, maxLiteralBits) = buildHuffmanTreeFromFrequencies(literalFrequencies, 15)
-    val (dynamicDistanceTree, maxDistanceBits) = buildHuffmanTreeFromFrequencies(distanceFrequencies, 15)
-    val (literalCodeLengths, numLiteralCodes) = generateLengthCodes(dynamicLiteralTree)
-    val (distanceCodeLengths, numDistanceCodes) = generateLengthCodes(dynamicDistanceTree)
+    val dynamicLiteralTree = buildHuffmanTreeFromFrequencies(literalFrequencies, 15)
+    val dynamicDistanceTree = buildHuffmanTreeFromFrequencies(distanceFrequencies, 15)
+    val (literalCodeLengths, numLiteralCodes) = generateLengthCodes(dynamicLiteralTree.tree)
+    val (distanceCodeLengths, numDistanceCodes) = generateLengthCodes(dynamicDistanceTree.tree)
 
     val codeLengthFrequencies = IntArray(19)
-    for (i in literalCodeLengths.indices) {
-        codeLengthFrequencies[(literalCodeLengths[i].toInt() and 31)]++
+    for (code in literalCodeLengths) {
+        codeLengthFrequencies[code.toInt() and 31]++
     }
-    for (i in distanceCodeLengths.indices) {
-        codeLengthFrequencies[(distanceCodeLengths[i].toInt() and 31)]++
+    for (code in distanceCodeLengths) {
+        codeLengthFrequencies[code.toInt() and 31]++
     }
 
-    val (codeLengthTree, maxCodeLengthBits) = buildHuffmanTreeFromFrequencies(codeLengthFrequencies, 7)
-    val numCodeLengthCodes = countCodeLengthCodes(codeLengthTree)
-
-    val fixedBlockLength = (blockLength + 5) shl 3
+    val codeLengthTree = buildHuffmanTreeFromFrequencies(codeLengthFrequencies, 7)
+    val numCodeLengthCodes = countCodeLengthCodes(codeLengthTree.tree)
+    val codeLengthCodes = ShortArray(literalCodeLengths.size + distanceCodeLengths.size)
+    literalCodeLengths.copyInto(codeLengthCodes, endIndex = literalCodeLengths.size)
+    distanceCodeLengths.copyInto(
+        codeLengthCodes,
+        destinationOffset = literalCodeLengths.size,
+        endIndex = distanceCodeLengths.size,
+    )
     val fixedTypedLength = calculateCodeLength(literalFrequencies, FIXED_LENGTH_TREE) +
             calculateCodeLength(distanceFrequencies, FIXED_DISTANCE_TREE) + extraBits
-    val dynamicTypedLength = calculateCodeLength(literalFrequencies, dynamicLiteralTree) +
-            calculateCodeLength(distanceFrequencies, dynamicDistanceTree) + extraBits + 14 + 3 * numCodeLengthCodes +
-            calculateCodeLength(codeLengthFrequencies, codeLengthTree) + 2 * codeLengthFrequencies[16] +
-            3 * codeLengthFrequencies[17] + 7 * codeLengthFrequencies[18]
+    val dynamicTypedLength = calculateCodeLength(literalFrequencies, dynamicLiteralTree.tree) +
+            calculateCodeLength(distanceFrequencies, dynamicDistanceTree.tree) + extraBits +
+            14 + 3 * numCodeLengthCodes +
+            calculateCodeLength(codeLengthFrequencies, codeLengthTree.tree) +
+            2 * codeLengthFrequencies[16] + 3 * codeLengthFrequencies[17] +
+            7 * codeLengthFrequencies[18]
 
-    if (shouldUseStoredBlock(blockStart, fixedBlockLength, fixedTypedLength, dynamicTypedLength)) {
+    val usesStoredBlock = shouldUseStoredBlock(
+        blockStart,
+        storedBlockBitLength(blockLength, bitPosition),
+        fixedTypedLength,
+        dynamicTypedLength,
+    )
+    val blockType = when {
+        usesStoredBlock -> DeflateBlockType.STORED
+        dynamicTypedLength < fixedTypedLength -> DeflateBlockType.DYNAMIC
+        else -> DeflateBlockType.FIXED
+    }
+    val typedLength = when (blockType) {
+        DeflateBlockType.DYNAMIC -> dynamicTypedLength
+        DeflateBlockType.FIXED -> fixedTypedLength
+        DeflateBlockType.STORED -> 0
+    }
+    // A distance symbol is synthesized for an otherwise empty distance tree,
+    // but literal-only blocks do not emit that symbol in their token stream.
+    val syntheticDistanceBitLength = if (hasDistance || blockType == DeflateBlockType.STORED) {
+        0
+    } else {
+        val distanceTree = if (blockType == DeflateBlockType.DYNAMIC) {
+            dynamicDistanceTree.tree
+        } else {
+            FIXED_DISTANCE_TREE
+        }
+        calculateCodeLength(distanceFrequencies, distanceTree)
+    }
+
+    return DeflateBlockPlan(
+        literalTree = dynamicLiteralTree,
+        distanceTree = dynamicDistanceTree,
+        codeLengthTree = codeLengthTree,
+        codeLengthCodes = codeLengthCodes,
+        numLiteralCodes = numLiteralCodes,
+        numDistanceCodes = numDistanceCodes,
+        fixedTypedLength = fixedTypedLength,
+        dynamicTypedLength = dynamicTypedLength,
+        blockType = blockType,
+        emittedTypedLength = typedLength - syntheticDistanceBitLength,
+    )
+}
+
+private fun deflateBlockEndBitPosition(
+    plan: DeflateBlockPlan,
+    bitPosition: Long,
+    blockLength: Int,
+): Long {
+    if (plan.blockType == DeflateBlockType.STORED) {
+        val bytePosition = shiftToNextByte(bitPosition + 3L)
+        return (bytePosition.toLong() + 4L + blockLength.toLong()) * 8L
+    }
+    return bitPosition + 3L + plan.emittedTypedLength.toLong()
+}
+
+private fun writeDeflateBlock(
+    data: ByteArray,
+    output: ByteArray,
+    isFinal: Boolean,
+    symbols: IntArray,
+    symbolStart: Int,
+    symbolCount: Int,
+    blockStart: Int,
+    blockLength: Int,
+    bitPosition: Long,
+    plan: DeflateBlockPlan,
+): Long {
+    var currentBitPosition = bitPosition
+    writeBits(output, currentBitPosition++, if (isFinal) 1 else 0)
+
+    if (plan.blockType == DeflateBlockType.STORED) {
         return writeFixedBlock(output, currentBitPosition, data.sliceArray(blockStart until blockStart + blockLength))
     }
 
-    var literalMap: ShortArray
-    var literalLengths: ByteArray
-    var distanceMap: ShortArray
-    var distanceLengths: ByteArray
-
-    writeBits(output, currentBitPosition, 1 + if (dynamicTypedLength < fixedTypedLength) 1 else 0)
+    val usesDynamicTree = plan.blockType == DeflateBlockType.DYNAMIC
+    writeBits(output, currentBitPosition, 1 + if (usesDynamicTree) 1 else 0)
     currentBitPosition += 2
 
-    if (dynamicTypedLength < fixedTypedLength) {
-        literalMap = createHuffmanTree(dynamicLiteralTree, maxLiteralBits, false)
-        literalLengths = dynamicLiteralTree
-        distanceMap = createHuffmanTree(dynamicDistanceTree, maxDistanceBits, false)
-        distanceLengths = dynamicDistanceTree
+    val literalMap: ShortArray
+    val literalLengths: ByteArray
+    val distanceMap: ShortArray
+    val distanceLengths: ByteArray
+    if (usesDynamicTree) {
+        literalMap = createHuffmanTree(plan.literalTree.tree, plan.literalTree.maxBits, false)
+        literalLengths = plan.literalTree.tree
+        distanceMap = createHuffmanTree(plan.distanceTree.tree, plan.distanceTree.maxBits, false)
+        distanceLengths = plan.distanceTree.tree
 
-        val codeLengthMap = createHuffmanTree(codeLengthTree, maxCodeLengthBits, false)
-        writeBits(output, currentBitPosition, numLiteralCodes - 257)
-        writeBits(output, currentBitPosition + 5, numDistanceCodes - 1)
+        val codeLengthMap = createHuffmanTree(
+            plan.codeLengthTree.tree,
+            plan.codeLengthTree.maxBits,
+            false,
+        )
+        val numCodeLengthCodes = countCodeLengthCodes(plan.codeLengthTree.tree)
+        writeBits(output, currentBitPosition, plan.numLiteralCodes - 257)
+        writeBits(output, currentBitPosition + 5, plan.numDistanceCodes - 1)
         writeBits(output, currentBitPosition + 10, numCodeLengthCodes - 4)
         currentBitPosition += 14
 
-        for (i in 0 until numCodeLengthCodes)
-            writeBits(output, currentBitPosition + 3 * i, codeLengthTree.getOrNull(CODE_LENGTH_INDEX_MAP[i].toInt())?.toInt() ?: 0)
+        for (i in 0 until numCodeLengthCodes) {
+            writeBits(
+                output,
+                currentBitPosition + 3 * i,
+                plan.codeLengthTree.tree.getOrNull(CODE_LENGTH_INDEX_MAP[i].toInt())?.toInt() ?: 0,
+            )
+        }
         currentBitPosition += 3 * numCodeLengthCodes
 
-        val codeLengthTrees = arrayOf(literalCodeLengths, distanceCodeLengths)
-        for (tree in codeLengthTrees) {
-            for (i in tree.indices) {
-                val len = tree[i].toInt() and 31
-                writeBits(output, currentBitPosition, (codeLengthMap[len].toInt() and 0xFFFF))
-                currentBitPosition += codeLengthTree[len].toInt() and 0xFF
-                if (len > 15) {
-                    writeBits(output, currentBitPosition, (tree[i].toInt() shr 5) and 127)
-                    currentBitPosition += (tree[i].toInt() shr 12)
-                }
+        for (code in plan.codeLengthCodes) {
+            val len = code.toInt() and 31
+            writeBits(output, currentBitPosition, codeLengthMap[len].toInt() and 0xFFFF)
+            currentBitPosition += plan.codeLengthTree.tree[len].toInt() and 0xFF
+            if (len > 15) {
+                writeBits(output, currentBitPosition, (code.toInt() shr 5) and 127)
+                currentBitPosition += code.toInt() shr 12
             }
         }
     } else {
@@ -189,31 +406,61 @@ internal fun writeBlock(
         distanceLengths = FIXED_DISTANCE_TREE
     }
 
-    for (i in 0 until symbolCount) {
+    for (i in symbolStart until symbolStart + symbolCount) {
         val symbol = symbols[i]
         if (symbol > 255) {
             val lengthSymbol = (symbol shr 18) and 31
-            writeBits16(output, currentBitPosition, (literalMap[lengthSymbol + 257].toInt() and 0xFFFF))
+            writeBits16(output, currentBitPosition, literalMap[lengthSymbol + 257].toInt() and 0xFFFF)
             currentBitPosition += literalLengths[lengthSymbol + 257].toInt() and 0xFF
             if (lengthSymbol > 7) {
                 writeBits(output, currentBitPosition, (symbol shr 23) and 31)
                 currentBitPosition += FIXED_LENGTH_EXTRA_BITS[lengthSymbol].toInt() and 0xFF
             }
             val distanceSymbol = symbol and 31
-            writeBits16(output, currentBitPosition, (distanceMap[distanceSymbol].toInt() and 0xFFFF))
+            writeBits16(output, currentBitPosition, distanceMap[distanceSymbol].toInt() and 0xFFFF)
             currentBitPosition += distanceLengths[distanceSymbol].toInt() and 0xFF
             if (distanceSymbol > 3) {
                 writeBits16(output, currentBitPosition, (symbol shr 5) and 8191)
                 currentBitPosition += FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF
             }
         } else {
-            writeBits16(output, currentBitPosition, (literalMap[symbol].toInt() and 0xFFFF))
+            writeBits16(output, currentBitPosition, literalMap[symbol].toInt() and 0xFFFF)
             currentBitPosition += literalLengths[symbol].toInt() and 0xFF
         }
     }
 
-    writeBits16(output, currentBitPosition, (literalMap[256].toInt() and 0xFFFF))
+    writeBits16(output, currentBitPosition, literalMap[256].toInt() and 0xFFFF)
     return currentBitPosition + (literalLengths[256].toInt() and 0xFF)
+}
+
+private fun populateBlockFrequencies(
+    symbols: IntArray,
+    symbolStart: Int,
+    symbolCount: Int,
+    literalFrequencies: IntArray,
+    distanceFrequencies: IntArray,
+): Int {
+    var extraBits = 0
+    for (index in symbolStart until symbolStart + symbolCount) {
+        val symbol = symbols[index]
+        if (symbol > 255) {
+            val lengthSymbol = (symbol shr 18) and 31
+            val distanceSymbol = symbol and 31
+            literalFrequencies[257 + lengthSymbol]++
+            distanceFrequencies[distanceSymbol]++
+            extraBits += (FIXED_LENGTH_EXTRA_BITS[lengthSymbol].toInt() and 0xFF)
+            extraBits += (FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF)
+        } else {
+            literalFrequencies[symbol]++
+        }
+    }
+    return extraBits
+}
+
+private fun encodedSymbolByteLength(symbol: Int): Int {
+    if (symbol <= 255) return 1
+    val lengthSymbol = (symbol shr 18) and 31
+    return (FIXED_LENGTH_BASE[lengthSymbol].toInt() and 0xFFFF) + ((symbol shr 23) and 31)
 }
 
 internal fun readTwoBytes(data: ByteArray, offset: Int): Int {
@@ -267,4 +514,16 @@ internal fun shouldUseStoredBlock(
     dynamicLength: Int,
 ): Boolean {
     return blockStart >= 0 && storedLength <= fixedLength && storedLength <= dynamicLength
+}
+
+/**
+ * Returns the stored block cost after the three bit block header.
+ *
+ * The block type comparison excludes the common three bit header, while a stored block
+ * includes the padding and four byte length header that follow it.
+ */
+internal fun storedBlockBitLength(blockLength: Int, bitPosition: Long): Int {
+    val headerEnd = bitPosition + 3L
+    val padding = ((8L - (headerEnd and 7L)) and 7L).toInt()
+    return (blockLength shl 3) + 32 + padding
 }

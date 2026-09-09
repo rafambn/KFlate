@@ -20,11 +20,15 @@ import com.rafambn.kflate.compression.Raw as CompressionRaw
 import com.rafambn.kflate.decompression.Raw as DecompressionRaw
 import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.error.FlateErrorCode
+import com.rafambn.kflate.huffman.FIXED_DISTANCE_REVERSE_LOOKUP
+import com.rafambn.kflate.huffman.FIXED_LENGTH_REVERSE_LOOKUP
 import com.rafambn.kflate.huffman.buildHuffmanTreeFromFrequencies
 import com.rafambn.kflate.huffman.generateLengthCodes
 import com.rafambn.kflate.huffman.validateHuffmanCodeLengths
 import com.rafambn.kflate.streaming.DeflateState
 import com.rafambn.kflate.streaming.InflateState
+import com.rafambn.kflate.util.shiftToNextByte
+import com.rafambn.kflate.util.writeBlock
 import java.util.zip.Deflater
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -270,6 +274,87 @@ class AlgorithmCoverageTest {
         chooseCostAwarePath(data, 0, data.size, matches, costs, choices)
         assertEquals(1, choices[0])
         assertEquals(4, choices[1])
+    }
+
+    @Test
+    fun blockSplittingRoundTripsWhenLiteralRangesUseDifferentTrees() {
+        val symbols = IntArray(1_024) { index ->
+            if (index < 512) index and 63 else 192 + (index and 63)
+        }
+        val data = ByteArray(symbols.size) { symbols[it].toByte() }
+        val literalFrequencies = IntArray(288)
+        for (symbol in symbols) {
+            literalFrequencies[symbol]++
+        }
+        val output = ByteArray(4_096)
+        val endBitPosition = writeBlock(
+            data = data,
+            output = output,
+            isFinal = true,
+            symbols = symbols,
+            literalFrequencies = literalFrequencies,
+            distanceFrequencies = IntArray(32),
+            extraBits = 0,
+            symbolCount = symbols.size,
+            blockStart = 0,
+            blockLength = data.size,
+            bitPosition = 0,
+        )
+
+        assertContentEquals(
+            data,
+            inflate(output.copyOf(shiftToNextByte(endBitPosition)), InflateState(validationMode = 2)),
+        )
+    }
+
+    @Test
+    fun blockSplittingTracksLiteralOnlyAndMixedHalves() {
+        val literalHalf = ByteArray(512) { (it and 63).toByte() }
+        val mixedHalf = ByteArray(1 + 511 * 3) { 1 }
+        val data = literalHalf + mixedHalf
+        val matchSymbol = 268435456 or
+                (FIXED_LENGTH_REVERSE_LOOKUP[3] shl 18) or
+                FIXED_DISTANCE_REVERSE_LOOKUP[1]
+        val symbols = IntArray(1_024)
+        for (index in literalHalf.indices) {
+            symbols[index] = literalHalf[index].toInt() and 0xFF
+        }
+        symbols[512] = 1
+        for (index in 513 until symbols.size) {
+            symbols[index] = matchSymbol
+        }
+
+        val literalFrequencies = IntArray(288)
+        val distanceFrequencies = IntArray(32)
+        for (symbol in symbols) {
+            if (symbol <= 255) {
+                literalFrequencies[symbol]++
+            } else {
+                literalFrequencies[257 + ((symbol shr 18) and 31)]++
+                distanceFrequencies[symbol and 31]++
+            }
+        }
+
+        val output = ByteArray(4_096)
+        val endBitPosition = writeBlock(
+            data = data,
+            output = output,
+            isFinal = true,
+            symbols = symbols,
+            literalFrequencies = literalFrequencies,
+            distanceFrequencies = distanceFrequencies,
+            extraBits = 0,
+            symbolCount = symbols.size,
+            blockStart = 0,
+            blockLength = data.size,
+            bitPosition = 0,
+        )
+        val inflateState = InflateState(validationMode = 2)
+        assertContentEquals(
+            data,
+            inflate(output.copyOf(shiftToNextByte(endBitPosition)), inflateState),
+        )
+        assertEquals(endBitPosition.toInt(), inflateState.inputBitPosition)
     }
 
     @Test
