@@ -9,7 +9,7 @@ from validate_benchmark_smoke import validate_report, validate_run
 def benchmark_entry(benchmark, score=0.001, raw_data=None):
     return {
         "benchmark": f"com.rafambn.kflate.benchmark.{benchmark}",
-        "params": {"corpus": "simpleText"},
+        "params": {"corpus": "simpleText", "level": "6"},
         "primaryMetric": {
             "score": score,
             "scoreUnit": "s/op",
@@ -21,10 +21,9 @@ def benchmark_entry(benchmark, score=0.001, raw_data=None):
 def complete_report():
     return [
         benchmark_entry(f"{benchmark_class}.{operation}")
-        for benchmark_class in ("CompressionBenchmarks", "KompressBaselineBenchmarks")
+        for benchmark_class in ("CompressionBenchmarks",)
         for operation in (
             "rawDeflateCompression",
-            "rawDeflateDecompressionFromKFlate",
             "rawDeflateDecompressionFromKompress",
         )
     ]

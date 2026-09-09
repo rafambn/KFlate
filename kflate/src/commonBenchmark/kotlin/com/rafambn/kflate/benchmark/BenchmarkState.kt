@@ -3,129 +3,56 @@ package com.rafambn.kflate.benchmark
 import kotlinx.benchmark.Param
 import kotlinx.benchmark.Scope
 import kotlinx.benchmark.State
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readByteArray
 
 @State(Scope.Benchmark)
 abstract class RawBenchmarkState {
-    @Param(
-        BenchmarkCorpora.SimpleText,
-        BenchmarkCorpora.Text,
-        BenchmarkCorpora.Model3D,
-        BenchmarkCorpora.RainierBmp,
-        BenchmarkCorpora.MalteseBmp,
-        BenchmarkCorpora.SunriseBmp,
-        BenchmarkCorpora.CompressedMvtPbf
-    )
-    var corpus: String = BenchmarkCorpora.SimpleText
+    @Param("simpleText", "text", "model3D", "Rainier.bmp", "Maltese.bmp", "Sunrise.bmp", "compressed_MVT.pbf")
+    var corpus: String = "simpleText"
 
-    protected val input: ByteArray
-        get() = rawInput
+    @Param("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
+    var level: Int = 6
 
-    protected val kflateCompressed: ByteArray
-        get() = rawKFlateCompressed
-
-    protected val kompressCompressed: ByteArray
-        get() = rawKompressCompressed
-
-    private lateinit var rawInput: ByteArray
-    private lateinit var rawKFlateCompressed: ByteArray
-    private lateinit var rawKompressCompressed: ByteArray
+    protected lateinit var input: ByteArray
+    protected lateinit var kompressCompressed: ByteArray
 
     protected fun setupRawBenchmark(
         library: BenchmarkLibrary,
-        reportPrefix: String,
-        compressWithKFlate: (ByteArray) -> ByteArray,
-        compressWithKompress: (ByteArray) -> ByteArray,
+        compress: (ByteArray) -> ByteArray,
         decompress: (ByteArray) -> ByteArray
     ) {
-        rawInput = BenchmarkCorpus.load(corpus)
-        rawKFlateCompressed = compressWithKFlate(rawInput)
-        rawKompressCompressed = compressWithKompress(rawInput)
-        val libraryCompressed = when (library) {
-            BenchmarkLibrary.KFlate -> rawKFlateCompressed
-            BenchmarkLibrary.Kompress -> rawKompressCompressed
+        input = BenchmarkCorpus.load(corpus)
+        val platformDirectory = when (benchmarkPlatformName()) {
+            "JVM" -> "jvm"
+            "Linux x64 Native" -> "linuxX64"
+            else -> "wasmJs"
         }
-
-        require(decompress(rawKFlateCompressed).contentEquals(rawInput)) {
-            "${library.reportName} failed to decompress KFlate RAW output for benchmark corpus '$corpus'"
+        val root = BenchmarkCorpus.corpusDirectory.parent!!.parent!!.parent!!.parent!!
+        val directory = Path(root, "performance", "kompress-baseline", platformDirectory, "fixtures", level.toString())
+        val fixture = Path(directory, "$corpus.deflate")
+        val compressed = compress(input)
+        if (library == BenchmarkLibrary.Kompress) {
+            if (SystemFileSystem.exists(fixture)) {
+                val saved = SystemFileSystem.source(fixture).buffered().use { it.readByteArray() }
+                check(saved.contentEquals(compressed)) { "Kompress fixture changed: $fixture" }
+            } else {
+                SystemFileSystem.createDirectories(directory)
+                SystemFileSystem.sink(fixture).buffered().use { it.write(compressed) }
+            }
         }
-        require(decompress(rawKompressCompressed).contentEquals(rawInput)) {
-            "${library.reportName} failed to decompress Kompress RAW output for benchmark corpus '$corpus'"
-        }
-
-        println(rawBenchmarkReportLine(reportPrefix, library.reportName, corpus, rawInput.size, libraryCompressed.size))
+        check(SystemFileSystem.exists(fixture)) { "Missing Kompress fixture: $fixture. Run the baseline first." }
+        kompressCompressed = SystemFileSystem.source(fixture).buffered().use { it.readByteArray() }
+        check(decompress(kompressCompressed).contentEquals(input)) { "Invalid Kompress fixture for $corpus level $level" }
+        check(decompress(compressed).contentEquals(input)) { "Compression round trip failed for $corpus level $level" }
         appendBenchmarkMetadata(
-            benchmarkMetadataJsonLine(
-                platform = benchmarkPlatformName(),
-                libraryName = library.reportName,
-                corpusName = corpus,
-                originalSize = rawInput.size,
-                compressedSize = libraryCompressed.size
-            )
+            """{"platform":"${benchmarkPlatformName()}","library":"${library.reportName}","corpus":"$corpus","level":$level,"originalSizeBytes":${input.size},"compressedSizeBytes":${compressed.size}}"""
         )
     }
 }
 
-const val BENCHMARK_COMPRESSION_LEVEL: Int = 6
-
 expect fun appendBenchmarkMetadata(line: String)
-
 expect fun benchmarkMetadataPath(): String
-
 expect fun benchmarkPlatformName(): String
-
-private fun benchmarkMetadataJsonLine(
-    platform: String,
-    libraryName: String,
-    corpusName: String,
-    originalSize: Int,
-    compressedSize: Int
-): String {
-    return buildString {
-        append('{')
-        append("\"platform\":\"")
-        append(platform)
-        append("\",")
-        append("\"library\":\"")
-        append(libraryName)
-        append("\",\"corpus\":\"")
-        append(corpusName)
-        append("\",\"originalSizeBytes\":")
-        append(originalSize)
-        append(",\"compressedSizeBytes\":")
-        append(compressedSize)
-        append('}')
-    }
-}
-
-private fun rawBenchmarkReportLine(
-    prefix: String,
-    libraryName: String,
-    corpusName: String,
-    originalSize: Int,
-    compressedSize: Int
-): String {
-    val originalMiB = originalSize / BYTES_PER_MIB
-    return buildString {
-        append(prefix)
-        append(" library=")
-        append(libraryName)
-        append(" name=")
-        append(corpusName)
-        append(" originalBytes=")
-        append(originalSize)
-        append(" originalMiB=")
-        append(formatDouble(originalMiB))
-        append(" operationMiB=")
-        append(formatDouble(originalMiB))
-        append(" rawBytes=")
-        append(compressedSize)
-        append(" rawRatio=")
-        append(formatDouble(compressedSize.toDouble() / originalSize))
-    }
-}
-
-private const val BYTES_PER_MIB = 1024.0 * 1024.0
-
-private fun formatDouble(value: Double): Double {
-    return (value * 10_000).toInt() / 10_000.0
-}

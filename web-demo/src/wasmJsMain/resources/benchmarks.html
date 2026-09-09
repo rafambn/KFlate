@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KFlate benchmarks</title>
+  <link rel="stylesheet" href="benchmark-history.css">
+  <script src="benchmark-history.js" defer></script>
+</head>
+<body>
+  <header><a href="index.html">KFlate</a><a href="https://github.com/rafambn/KFlate">Source on GitHub</a></header>
+  <main>
+    <h1>Compression across levels</h1>
+    <p class="intro">Compare each KFlate run with the saved Kompress baseline. Every decoder reads the same Kompress files, at levels 0–9.</p>
+    <form class="pickers" aria-label="Filter benchmarks">
+      <label for="platform">Platform<select id="platform" disabled><option value="jvm">JVM</option><option value="linuxX64">Linux x64 Native</option><option value="wasmJs">Wasm / JS</option></select></label>
+      <label for="operation">Operation<select id="operation" disabled><option value="compression">Compression</option><option value="decompression">Decompression</option></select></label>
+    </form>
+    <div class="legend"><span class="kflate">KFlate</span><span class="kompress">Kompress</span><span id="axis-note">Compression stacks time above compressed bytes. Each plot has its own scale.</span></div>
+    <p class="reading-note">Plots show levels 1–8. Expand "Measurements and uncertainty" for the complete level 0–9 table. Each plot has its own zero-based scale, held constant across runs. Level on decompression plots is the level used to create the Kompress file.</p>
+    <p id="status" role="status">Loading benchmark results…</p>
+    <div id="runs"></div>
+    <p id="download" hidden><a href="plots/history.json" download>Download all measurements and metadata</a></p>
+  </main>
+  <footer>RAW DEFLATE · One-shot APIs including allocation · Plots generated with Kandy</footer>
+</body>
+</html>

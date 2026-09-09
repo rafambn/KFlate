@@ -1,0 +1,3812 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/rafael/.gradle/wrapper/dists/gradle-9.5.0-bin/bvnork1r7n8i6kp5cnkibsc9q/gradle-9.5.0/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Calculating task graph as no cached configuration is available for tasks: :kflate:linuxX64BenchmarkBenchmark
+> Task :kflate:linuxX64BenchmarkProcessResources NO-SOURCE
+> Task :kflate:linuxX64ProcessResources NO-SOURCE
+> Task :kflate:kmpPartiallyResolvedDependenciesChecker
+> Task :kflate:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :kflate:downloadKotlinNativeDistribution UP-TO-DATE
+> Task :kflate:compileKotlinLinuxX64 UP-TO-DATE
+> Task :kflate:linuxX64MainKlibrary UP-TO-DATE
+> Task :kflate:compileBenchmarkKotlinLinuxX64 UP-TO-DATE
+> Task :kflate:linuxX64BenchmarkKlibrary UP-TO-DATE
+> Task :kflate:linuxX64BenchmarkBenchmarkGenerate UP-TO-DATE
+> Task :kflate:compileLinuxX64BenchmarkBenchmarkKotlinLinuxX64 UP-TO-DATE
+> Task :kflate:linkLinuxX64BenchmarkBenchmarkReleaseExecutableLinuxX64 UP-TO-DATE
+
+> Task :kflate:linuxX64BenchmarkBenchmark
+Running 'main' benchmarks for 'linuxX64Benchmark'
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=0
+Warm-up #0: 0.000000214025 sec/op
+Warm-up #1: 0.000000200928 sec/op
+Warm-up #2: 0.000000221252 sec/op
+Warm-up #3: 0.000000228603 sec/op
+Warm-up #4: 0.000000223554 sec/op
+Warm-up #5: 0.000000217811 sec/op
+Warm-up #6: 0.000000216972 sec/op
+Warm-up #7: 0.000000210666 sec/op
+Iteration #0: 0.000000175260 sec/op
+Iteration #1: 0.000000176691 sec/op
+Iteration #2: 0.000000176291 sec/op
+Iteration #3: 0.000000172650 sec/op
+Iteration #4: 0.000000176848 sec/op
+Iteration #5: 0.000000178621 sec/op
+Iteration #6: 0.000000176641 sec/op
+Iteration #7: 0.000000175926 sec/op
+Iteration #8: 0.000000176855 sec/op
+Iteration #9: 0.000000165792 sec/op
+Iteration #10: 0.000000158526 sec/op
+Iteration #11: 0.000000176714 sec/op
+Iteration #12: 0.000000174932 sec/op
+Iteration #13: 0.000000157009 sec/op
+Iteration #14: 0.000000156125 sec/op
+  Success:   ~ 0.000000171659 sec/op ±2.4%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=0
+Warm-up #0: 0.00129884 sec/op
+Warm-up #1: 0.00129856 sec/op
+Warm-up #2: 0.00126513 sec/op
+Warm-up #3: 0.00126463 sec/op
+Warm-up #4: 0.00130499 sec/op
+Warm-up #5: 0.00135787 sec/op
+Warm-up #6: 0.00136489 sec/op
+Warm-up #7: 0.00125712 sec/op
+Iteration #0: 0.00131647 sec/op
+Iteration #1: 0.00126508 sec/op
+Iteration #2: 0.00142525 sec/op
+Iteration #3: 0.00141436 sec/op
+Iteration #4: 0.00133604 sec/op
+Iteration #5: 0.00135859 sec/op
+Iteration #6: 0.00127384 sec/op
+Iteration #7: 0.00125632 sec/op
+Iteration #8: 0.00126140 sec/op
+Iteration #9: 0.00125432 sec/op
+Iteration #10: 0.00126620 sec/op
+Iteration #11: 0.00132603 sec/op
+Iteration #12: 0.00139891 sec/op
+Iteration #13: 0.00139162 sec/op
+Iteration #14: 0.00129687 sec/op
+  Success:   ~ 0.00132275 sec/op ±2.4%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=1
+Warm-up #0: 0.0726595 sec/op
+Warm-up #1: 0.0722669 sec/op
+Warm-up #2: 0.0725648 sec/op
+Warm-up #3: 0.0722487 sec/op
+Warm-up #4: 0.0727710 sec/op
+Warm-up #5: 0.0720383 sec/op
+Warm-up #6: 0.0722096 sec/op
+Warm-up #7: 0.0734351 sec/op
+Iteration #0: 0.0733740 sec/op
+Iteration #1: 0.0720276 sec/op
+Iteration #2: 0.0749624 sec/op
+Iteration #3: 0.0728102 sec/op
+Iteration #4: 0.0727009 sec/op
+Iteration #5: 0.0725950 sec/op
+Iteration #6: 0.0726574 sec/op
+Iteration #7: 0.0725506 sec/op
+Iteration #8: 0.0724548 sec/op
+Iteration #9: 0.0725941 sec/op
+Iteration #10: 0.0726687 sec/op
+Iteration #11: 0.0725487 sec/op
+Iteration #12: 0.0728952 sec/op
+Iteration #13: 0.0718354 sec/op
+Iteration #14: 0.0717847 sec/op
+  Success:   ~ 0.0726973 sec/op ±0.52%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=1
+Warm-up #0: 0.225425 sec/op
+Warm-up #1: 0.224240 sec/op
+Warm-up #2: 0.224897 sec/op
+Warm-up #3: 0.225319 sec/op
+Warm-up #4: 0.225259 sec/op
+Warm-up #5: 0.225286 sec/op
+Warm-up #6: 0.225261 sec/op
+Warm-up #7: 0.225319 sec/op
+Iteration #0: 0.224594 sec/op
+Iteration #1: 0.225006 sec/op
+Iteration #2: 0.225139 sec/op
+Iteration #3: 0.225655 sec/op
+Iteration #4: 0.225282 sec/op
+Iteration #5: 0.225560 sec/op
+Iteration #6: 0.225553 sec/op
+Iteration #7: 0.225654 sec/op
+Iteration #8: 0.225926 sec/op
+Iteration #9: 0.226216 sec/op
+Iteration #10: 0.227634 sec/op
+Iteration #11: 0.225665 sec/op
+Iteration #12: 0.226051 sec/op
+Iteration #13: 0.225509 sec/op
+Iteration #14: 0.225853 sec/op
+  Success:   ~ 0.225686 sec/op ±0.15%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=1
+Warm-up #0: 0.806297 sec/op
+Warm-up #1: 0.792491 sec/op
+Warm-up #2: 0.789598 sec/op
+Warm-up #3: 0.787955 sec/op
+Warm-up #4: 0.787808 sec/op
+Warm-up #5: 0.787208 sec/op
+Warm-up #6: 0.790600 sec/op
+Warm-up #7: 0.786162 sec/op
+Iteration #0: 0.790262 sec/op
+Iteration #1: 0.790704 sec/op
+Iteration #2: 0.788951 sec/op
+Iteration #3: 0.788657 sec/op
+Iteration #4: 0.786737 sec/op
+Iteration #5: 0.787614 sec/op
+Iteration #6: 0.789201 sec/op
+Iteration #7: 0.790182 sec/op
+Iteration #8: 0.793392 sec/op
+Iteration #9: 0.792660 sec/op
+Iteration #10: 0.787461 sec/op
+Iteration #11: 0.786731 sec/op
+Iteration #12: 0.787910 sec/op
+Iteration #13: 0.785811 sec/op
+Iteration #14: 0.791868 sec/op
+  Success:   ~ 0.789209 sec/op ±0.15%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=1
+Warm-up #0: 0.00251616 sec/op
+Warm-up #1: 0.00253552 sec/op
+Warm-up #2: 0.00234758 sec/op
+Warm-up #3: 0.00222875 sec/op
+Warm-up #4: 0.00221137 sec/op
+Warm-up #5: 0.00221041 sec/op
+Warm-up #6: 0.00222049 sec/op
+Warm-up #7: 0.00221894 sec/op
+Iteration #0: 0.00219086 sec/op
+Iteration #1: 0.00218536 sec/op
+Iteration #2: 0.00219368 sec/op
+Iteration #3: 0.00219905 sec/op
+Iteration #4: 0.00219726 sec/op
+Iteration #5: 0.00219534 sec/op
+Iteration #6: 0.00219164 sec/op
+Iteration #7: 0.00218457 sec/op
+Iteration #8: 0.00221928 sec/op
+Iteration #9: 0.00218908 sec/op
+Iteration #10: 0.00218986 sec/op
+Iteration #11: 0.00218855 sec/op
+Iteration #12: 0.00219014 sec/op
+Iteration #13: 0.00218539 sec/op
+Iteration #14: 0.00218522 sec/op
+  Success:   ~ 0.00219235 sec/op ±0.20%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=2
+Warm-up #0: 0.0000671736 sec/op
+Warm-up #1: 0.0000621326 sec/op
+Warm-up #2: 0.0000581920 sec/op
+Warm-up #3: 0.0000637606 sec/op
+Warm-up #4: 0.0000693349 sec/op
+Warm-up #5: 0.0000711681 sec/op
+Warm-up #6: 0.0000654764 sec/op
+Warm-up #7: 0.0000638761 sec/op
+Iteration #0: 0.0000619448 sec/op
+Iteration #1: 0.0000638227 sec/op
+Iteration #2: 0.0000723997 sec/op
+Iteration #3: 0.0000683656 sec/op
+Iteration #4: 0.0000665732 sec/op
+Iteration #5: 0.0000699405 sec/op
+Iteration #6: 0.0000699026 sec/op
+Iteration #7: 0.0000695203 sec/op
+Iteration #8: 0.0000676628 sec/op
+Iteration #9: 0.0000687323 sec/op
+Iteration #10: 0.0000696359 sec/op
+Iteration #11: 0.0000763243 sec/op
+Iteration #12: 0.0000783589 sec/op
+Iteration #13: 0.0000792930 sec/op
+Iteration #14: 0.0000718448 sec/op
+  Success:   ~ 0.0000702881 sec/op ±3.5%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=2
+Warm-up #0: 0.0217070 sec/op
+Warm-up #1: 0.0217813 sec/op
+Warm-up #2: 0.0217893 sec/op
+Warm-up #3: 0.0217270 sec/op
+Warm-up #4: 0.0217320 sec/op
+Warm-up #5: 0.0219630 sec/op
+Warm-up #6: 0.0221579 sec/op
+Warm-up #7: 0.0216884 sec/op
+Iteration #0: 0.0218088 sec/op
+Iteration #1: 0.0217682 sec/op
+Iteration #2: 0.0218050 sec/op
+Iteration #3: 0.0218006 sec/op
+Iteration #4: 0.0218163 sec/op
+Iteration #5: 0.0217615 sec/op
+Iteration #6: 0.0217318 sec/op
+Iteration #7: 0.0217781 sec/op
+Iteration #8: 0.0231842 sec/op
+Iteration #9: 0.0218455 sec/op
+Iteration #10: 0.0217935 sec/op
+Iteration #11: 0.0218069 sec/op
+Iteration #12: 0.0236917 sec/op
+Iteration #13: 0.0251523 sec/op
+Iteration #14: 0.0250714 sec/op
+  Success:   ~ 0.0224544 sec/op ±2.8%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=2
+Warm-up #0: 0.000120165 sec/op
+Warm-up #1: 0.000118813 sec/op
+Warm-up #2: 0.000119579 sec/op
+Warm-up #3: 0.000112393 sec/op
+Warm-up #4: 0.000112893 sec/op
+Warm-up #5: 0.000120797 sec/op
+Warm-up #6: 0.000130818 sec/op
+Warm-up #7: 0.000133287 sec/op
+Iteration #0: 0.000113959 sec/op
+Iteration #1: 0.000113969 sec/op
+Iteration #2: 0.000113598 sec/op
+Iteration #3: 0.000115297 sec/op
+Iteration #4: 0.000113423 sec/op
+Iteration #5: 0.000134020 sec/op
+Iteration #6: 0.000139127 sec/op
+Iteration #7: 0.000144227 sec/op
+Iteration #8: 0.000136688 sec/op
+Iteration #9: 0.000133076 sec/op
+Iteration #10: 0.000133470 sec/op
+Iteration #11: 0.000137326 sec/op
+Iteration #12: 0.000138014 sec/op
+Iteration #13: 0.000137446 sec/op
+Iteration #14: 0.000135464 sec/op
+  Success:   ~ 0.000129274 sec/op ±4.5%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=2
+Warm-up #0: 0.0859145 sec/op
+Warm-up #1: 0.0853003 sec/op
+Warm-up #2: 0.0852761 sec/op
+Warm-up #3: 0.0852593 sec/op
+Warm-up #4: 0.0856133 sec/op
+Warm-up #5: 0.0854606 sec/op
+Warm-up #6: 0.0855814 sec/op
+Warm-up #7: 0.0854009 sec/op
+Iteration #0: 0.0849644 sec/op
+Iteration #1: 0.0846302 sec/op
+Iteration #2: 0.0846030 sec/op
+Iteration #3: 0.0843948 sec/op
+Iteration #4: 0.0843424 sec/op
+Iteration #5: 0.0849082 sec/op
+Iteration #6: 0.0853265 sec/op
+Iteration #7: 0.0851277 sec/op
+Iteration #8: 0.0850447 sec/op
+Iteration #9: 0.0846220 sec/op
+Iteration #10: 0.0850821 sec/op
+Iteration #11: 0.0841557 sec/op
+Iteration #12: 0.0842985 sec/op
+Iteration #13: 0.0844550 sec/op
+Iteration #14: 0.0843225 sec/op
+  Success:   ~ 0.0846852 sec/op ±0.22%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=2
+Warm-up #0: 0.298102 sec/op
+Warm-up #1: 0.294951 sec/op
+Warm-up #2: 0.294734 sec/op
+Warm-up #3: 0.294739 sec/op
+Warm-up #4: 0.295299 sec/op
+Warm-up #5: 0.293609 sec/op
+Warm-up #6: 0.293245 sec/op
+Warm-up #7: 0.293191 sec/op
+Iteration #0: 0.296334 sec/op
+Iteration #1: 0.294266 sec/op
+Iteration #2: 0.295338 sec/op
+Iteration #3: 0.293964 sec/op
+Iteration #4: 0.294511 sec/op
+Iteration #5: 0.293968 sec/op
+Iteration #6: 0.295293 sec/op
+Iteration #7: 0.295872 sec/op
+Iteration #8: 0.295893 sec/op
+Iteration #9: 0.295229 sec/op
+Iteration #10: 0.295997 sec/op
+Iteration #11: 0.294865 sec/op
+Iteration #12: 0.293850 sec/op
+Iteration #13: 0.294005 sec/op
+Iteration #14: 0.293343 sec/op
+  Success:   ~ 0.294849 sec/op ±0.16%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=2
+Warm-up #0: 0.956060 sec/op
+Warm-up #1: 0.943010 sec/op
+Warm-up #2: 0.940235 sec/op
+Warm-up #3: 0.942568 sec/op
+Warm-up #4: 0.942944 sec/op
+Warm-up #5: 0.949072 sec/op
+Warm-up #6: 0.947720 sec/op
+Warm-up #7: 0.947634 sec/op
+Iteration #0: 0.955456 sec/op
+Iteration #1: 0.941608 sec/op
+Iteration #2: 0.940528 sec/op
+Iteration #3: 0.943052 sec/op
+Iteration #4: 0.941285 sec/op
+Iteration #5: 0.951378 sec/op
+Iteration #6: 0.943833 sec/op
+Iteration #7: 0.940646 sec/op
+Iteration #8: 0.941350 sec/op
+Iteration #9: 0.942379 sec/op
+Iteration #10: 0.941821 sec/op
+Iteration #11: 0.942677 sec/op
+Iteration #12: 0.938815 sec/op
+Iteration #13: 0.940648 sec/op
+Iteration #14: 0.939020 sec/op
+  Success:   ~ 0.942966 sec/op ±0.24%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=0
+Warm-up #0: 0.00000203774 sec/op
+Warm-up #1: 0.00000210390 sec/op
+Warm-up #2: 0.00000210558 sec/op
+Warm-up #3: 0.00000199522 sec/op
+Warm-up #4: 0.00000210886 sec/op
+Warm-up #5: 0.00000207000 sec/op
+Warm-up #6: 0.00000194355 sec/op
+Warm-up #7: 0.00000188812 sec/op
+Iteration #0: 0.00000189611 sec/op
+Iteration #1: 0.00000199673 sec/op
+Iteration #2: 0.00000204978 sec/op
+Iteration #3: 0.00000205214 sec/op
+Iteration #4: 0.00000206074 sec/op
+Iteration #5: 0.00000203674 sec/op
+Iteration #6: 0.00000205009 sec/op
+Iteration #7: 0.00000206979 sec/op
+Iteration #8: 0.00000204146 sec/op
+Iteration #9: 0.00000205141 sec/op
+Iteration #10: 0.00000204317 sec/op
+Iteration #11: 0.00000205478 sec/op
+Iteration #12: 0.00000203291 sec/op
+Iteration #13: 0.00000204916 sec/op
+Iteration #14: 0.00000203054 sec/op
+  Success:   ~ 0.00000203437 sec/op ±1.0%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=2
+Warm-up #0: 0.00251689 sec/op
+Warm-up #1: 0.00254242 sec/op
+Warm-up #2: 0.00250202 sec/op
+Warm-up #3: 0.00250293 sec/op
+Warm-up #4: 0.00250154 sec/op
+Warm-up #5: 0.00249945 sec/op
+Warm-up #6: 0.00250323 sec/op
+Warm-up #7: 0.00249978 sec/op
+Iteration #0: 0.00251376 sec/op
+Iteration #1: 0.00251580 sec/op
+Iteration #2: 0.00252232 sec/op
+Iteration #3: 0.00253188 sec/op
+Iteration #4: 0.00253204 sec/op
+Iteration #5: 0.00251924 sec/op
+Iteration #6: 0.00252715 sec/op
+Iteration #7: 0.00252065 sec/op
+Iteration #8: 0.00252279 sec/op
+Iteration #9: 0.00253649 sec/op
+Iteration #10: 0.00256657 sec/op
+Iteration #11: 0.00289193 sec/op
+Iteration #12: 0.00289787 sec/op
+Iteration #13: 0.00290410 sec/op
+Iteration #14: 0.00289650 sec/op
+  Success:   ~ 0.00262661 sec/op ±3.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=3
+Warm-up #0: 0.0000646219 sec/op
+Warm-up #1: 0.0000650265 sec/op
+Warm-up #2: 0.0000690244 sec/op
+Warm-up #3: 0.0000669487 sec/op
+Warm-up #4: 0.0000703570 sec/op
+Warm-up #5: 0.0000705636 sec/op
+Warm-up #6: 0.0000713759 sec/op
+Warm-up #7: 0.0000575379 sec/op
+Iteration #0: 0.0000553170 sec/op
+Iteration #1: 0.0000630962 sec/op
+Iteration #2: 0.0000620475 sec/op
+Iteration #3: 0.0000613602 sec/op
+Iteration #4: 0.0000632077 sec/op
+Iteration #5: 0.0000639457 sec/op
+Iteration #6: 0.0000692574 sec/op
+Iteration #7: 0.0000730611 sec/op
+Iteration #8: 0.0000719562 sec/op
+Iteration #9: 0.0000664565 sec/op
+Iteration #10: 0.0000602971 sec/op
+Iteration #11: 0.0000632207 sec/op
+Iteration #12: 0.0000590399 sec/op
+Iteration #13: 0.0000714371 sec/op
+Iteration #14: 0.0000714048 sec/op
+  Success:   ~ 0.0000650070 sec/op ±4.2%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=3
+Warm-up #0: 0.0263315 sec/op
+Warm-up #1: 0.0263388 sec/op
+Warm-up #2: 0.0275508 sec/op
+Warm-up #3: 0.0263629 sec/op
+Warm-up #4: 0.0262912 sec/op
+Warm-up #5: 0.0262895 sec/op
+Warm-up #6: 0.0263080 sec/op
+Warm-up #7: 0.0263937 sec/op
+Iteration #0: 0.0262294 sec/op
+Iteration #1: 0.0262353 sec/op
+Iteration #2: 0.0262626 sec/op
+Iteration #3: 0.0261258 sec/op
+Iteration #4: 0.0261413 sec/op
+Iteration #5: 0.0262095 sec/op
+Iteration #6: 0.0261948 sec/op
+Iteration #7: 0.0262139 sec/op
+Iteration #8: 0.0262791 sec/op
+Iteration #9: 0.0261965 sec/op
+Iteration #10: 0.0261265 sec/op
+Iteration #11: 0.0262231 sec/op
+Iteration #12: 0.0262402 sec/op
+Iteration #13: 0.0262212 sec/op
+Iteration #14: 0.0262941 sec/op
+  Success:   ~ 0.0262129 sec/op ±0.098%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=3
+Warm-up #0: 0.000130612 sec/op
+Warm-up #1: 0.000132525 sec/op
+Warm-up #2: 0.000138880 sec/op
+Warm-up #3: 0.000133501 sec/op
+Warm-up #4: 0.000113280 sec/op
+Warm-up #5: 0.000114930 sec/op
+Warm-up #6: 0.000114376 sec/op
+Warm-up #7: 0.000124055 sec/op
+Iteration #0: 0.000120392 sec/op
+Iteration #1: 0.000118570 sec/op
+Iteration #2: 0.000125985 sec/op
+Iteration #3: 0.000118415 sec/op
+Iteration #4: 0.000119115 sec/op
+Iteration #5: 0.000123076 sec/op
+Iteration #6: 0.000130245 sec/op
+Iteration #7: 0.000128478 sec/op
+Iteration #8: 0.000120807 sec/op
+Iteration #9: 0.000114958 sec/op
+Iteration #10: 0.000128343 sec/op
+Iteration #11: 0.000124140 sec/op
+Iteration #12: 0.000117545 sec/op
+Iteration #13: 0.000113993 sec/op
+Iteration #14: 0.000114257 sec/op
+  Success:   ~ 0.000121221 sec/op ±2.2%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=3
+Warm-up #0: 0.0744970 sec/op
+Warm-up #1: 0.0746159 sec/op
+Warm-up #2: 0.0746084 sec/op
+Warm-up #3: 0.0850205 sec/op
+Warm-up #4: 0.0863045 sec/op
+Warm-up #5: 0.0865309 sec/op
+Warm-up #6: 0.0771183 sec/op
+Warm-up #7: 0.0746941 sec/op
+Iteration #0: 0.0744384 sec/op
+Iteration #1: 0.0746495 sec/op
+Iteration #2: 0.0746545 sec/op
+Iteration #3: 0.0746283 sec/op
+Iteration #4: 0.0746888 sec/op
+Iteration #5: 0.0745419 sec/op
+Iteration #6: 0.0747631 sec/op
+Iteration #7: 0.0747400 sec/op
+Iteration #8: 0.0747697 sec/op
+Iteration #9: 0.0745894 sec/op
+Iteration #10: 0.0747770 sec/op
+Iteration #11: 0.0745195 sec/op
+Iteration #12: 0.0742424 sec/op
+Iteration #13: 0.0741644 sec/op
+Iteration #14: 0.0742534 sec/op
+  Success:   ~ 0.0745614 sec/op ±0.14%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=3
+Warm-up #0: 0.285004 sec/op
+Warm-up #1: 0.284912 sec/op
+Warm-up #2: 0.285843 sec/op
+Warm-up #3: 0.287041 sec/op
+Warm-up #4: 0.329460 sec/op
+Warm-up #5: 0.330250 sec/op
+Warm-up #6: 0.329702 sec/op
+Warm-up #7: 0.332428 sec/op
+Iteration #0: 0.330481 sec/op
+Iteration #1: 0.325276 sec/op
+Iteration #2: 0.326791 sec/op
+Iteration #3: 0.326145 sec/op
+Iteration #4: 0.326906 sec/op
+Iteration #5: 0.327752 sec/op
+Iteration #6: 0.328514 sec/op
+Iteration #7: 0.326849 sec/op
+Iteration #8: 0.329119 sec/op
+Iteration #9: 0.328251 sec/op
+Iteration #10: 0.328277 sec/op
+Iteration #11: 0.327841 sec/op
+Iteration #12: 0.327616 sec/op
+Iteration #13: 0.328984 sec/op
+Iteration #14: 0.327798 sec/op
+  Success:   ~ 0.327773 sec/op ±0.20%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=3
+Warm-up #0: 0.946231 sec/op
+Warm-up #1: 0.899414 sec/op
+Warm-up #2: 0.907699 sec/op
+Warm-up #3: 0.902045 sec/op
+Warm-up #4: 0.900300 sec/op
+Warm-up #5: 0.904049 sec/op
+Warm-up #6: 0.907482 sec/op
+Warm-up #7: 0.907408 sec/op
+Iteration #0: 0.908790 sec/op
+Iteration #1: 0.911214 sec/op
+Iteration #2: 0.912195 sec/op
+Iteration #3: 0.917455 sec/op
+Iteration #4: 0.914678 sec/op
+Iteration #5: 0.906685 sec/op
+Iteration #6: 0.904157 sec/op
+Iteration #7: 0.904560 sec/op
+Iteration #8: 0.903666 sec/op
+Iteration #9: 0.904410 sec/op
+Iteration #10: 0.906842 sec/op
+Iteration #11: 0.908486 sec/op
+Iteration #12: 0.905187 sec/op
+Iteration #13: 0.904279 sec/op
+Iteration #14: 0.904584 sec/op
+  Success:   ~ 0.907812 sec/op ±0.24%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=3
+Warm-up #0: 0.00271851 sec/op
+Warm-up #1: 0.00271338 sec/op
+Warm-up #2: 0.00269937 sec/op
+Warm-up #3: 0.00269314 sec/op
+Warm-up #4: 0.00269431 sec/op
+Warm-up #5: 0.00269594 sec/op
+Warm-up #6: 0.00269753 sec/op
+Warm-up #7: 0.00271447 sec/op
+Iteration #0: 0.00268113 sec/op
+Iteration #1: 0.00268336 sec/op
+Iteration #2: 0.00267660 sec/op
+Iteration #3: 0.00268003 sec/op
+Iteration #4: 0.00267848 sec/op
+Iteration #5: 0.00268272 sec/op
+Iteration #6: 0.00268234 sec/op
+Iteration #7: 0.00268508 sec/op
+Iteration #8: 0.00274398 sec/op
+Iteration #9: 0.00283064 sec/op
+Iteration #10: 0.00268208 sec/op
+Iteration #11: 0.00268555 sec/op
+Iteration #12: 0.00269237 sec/op
+Iteration #13: 0.00268490 sec/op
+Iteration #14: 0.00269183 sec/op
+  Success:   ~ 0.00269741 sec/op ±0.75%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=4
+Warm-up #0: 0.0000657808 sec/op
+Warm-up #1: 0.0000673357 sec/op
+Warm-up #2: 0.0000777721 sec/op
+Warm-up #3: 0.0000778708 sec/op
+Warm-up #4: 0.0000736970 sec/op
+Warm-up #5: 0.0000719482 sec/op
+Warm-up #6: 0.0000735258 sec/op
+Warm-up #7: 0.0000718995 sec/op
+Iteration #0: 0.0000789296 sec/op
+Iteration #1: 0.0000729950 sec/op
+Iteration #2: 0.0000784332 sec/op
+Iteration #3: 0.0000676223 sec/op
+Iteration #4: 0.0000670051 sec/op
+Iteration #5: 0.0000673592 sec/op
+Iteration #6: 0.0000678972 sec/op
+Iteration #7: 0.0000701288 sec/op
+Iteration #8: 0.0000712675 sec/op
+Iteration #9: 0.0000706220 sec/op
+Iteration #10: 0.0000678767 sec/op
+Iteration #11: 0.0000635295 sec/op
+Iteration #12: 0.0000655301 sec/op
+Iteration #13: 0.0000633780 sec/op
+Iteration #14: 0.0000693943 sec/op
+  Success:   ~ 0.0000694646 sec/op ±3.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=4
+Warm-up #0: 0.0364327 sec/op
+Warm-up #1: 0.0362925 sec/op
+Warm-up #2: 0.0362802 sec/op
+Warm-up #3: 0.0362816 sec/op
+Warm-up #4: 0.0364369 sec/op
+Warm-up #5: 0.0362754 sec/op
+Warm-up #6: 0.0361532 sec/op
+Warm-up #7: 0.0360792 sec/op
+Iteration #0: 0.0361760 sec/op
+Iteration #1: 0.0360565 sec/op
+Iteration #2: 0.0359640 sec/op
+Iteration #3: 0.0361467 sec/op
+Iteration #4: 0.0358836 sec/op
+Iteration #5: 0.0360707 sec/op
+Iteration #6: 0.0360832 sec/op
+Iteration #7: 0.0360937 sec/op
+Iteration #8: 0.0360513 sec/op
+Iteration #9: 0.0359676 sec/op
+Iteration #10: 0.0360666 sec/op
+Iteration #11: 0.0359607 sec/op
+Iteration #12: 0.0359971 sec/op
+Iteration #13: 0.0359732 sec/op
+Iteration #14: 0.0359632 sec/op
+  Success:   ~ 0.0360303 sec/op ±0.11%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=0
+Warm-up #0: 0.00724699 sec/op
+Warm-up #1: 0.00724937 sec/op
+Warm-up #2: 0.00725869 sec/op
+Warm-up #3: 0.00725884 sec/op
+Warm-up #4: 0.00724969 sec/op
+Warm-up #5: 0.00784281 sec/op
+Warm-up #6: 0.00788988 sec/op
+Warm-up #7: 0.00790600 sec/op
+Iteration #0: 0.00785907 sec/op
+Iteration #1: 0.00784591 sec/op
+Iteration #2: 0.00724963 sec/op
+Iteration #3: 0.00725432 sec/op
+Iteration #4: 0.00724865 sec/op
+Iteration #5: 0.00717455 sec/op
+Iteration #6: 0.00681196 sec/op
+Iteration #7: 0.00681075 sec/op
+Iteration #8: 0.00682447 sec/op
+Iteration #9: 0.00681820 sec/op
+Iteration #10: 0.00682661 sec/op
+Iteration #11: 0.00682059 sec/op
+Iteration #12: 0.00678863 sec/op
+Iteration #13: 0.00682467 sec/op
+Iteration #14: 0.00702024 sec/op
+  Success:   ~ 0.00707855 sec/op ±2.6%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=4
+Warm-up #0: 0.000127108 sec/op
+Warm-up #1: 0.000125097 sec/op
+Warm-up #2: 0.000141356 sec/op
+Warm-up #3: 0.000142989 sec/op
+Warm-up #4: 0.000141261 sec/op
+Warm-up #5: 0.000136157 sec/op
+Warm-up #6: 0.000131249 sec/op
+Warm-up #7: 0.000133379 sec/op
+Iteration #0: 0.000137796 sec/op
+Iteration #1: 0.000139000 sec/op
+Iteration #2: 0.000135616 sec/op
+Iteration #3: 0.000131754 sec/op
+Iteration #4: 0.000120884 sec/op
+Iteration #5: 0.000121105 sec/op
+Iteration #6: 0.000125733 sec/op
+Iteration #7: 0.000143012 sec/op
+Iteration #8: 0.000144947 sec/op
+Iteration #9: 0.000139720 sec/op
+Iteration #10: 0.000139913 sec/op
+Iteration #11: 0.000142358 sec/op
+Iteration #12: 0.000140281 sec/op
+Iteration #13: 0.000138016 sec/op
+Iteration #14: 0.000126719 sec/op
+  Success:   ~ 0.000135124 sec/op ±21.0%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=4
+Warm-up #0: 0.0874313 sec/op
+Warm-up #1: 0.0877239 sec/op
+Warm-up #2: 0.0877152 sec/op
+Warm-up #3: 0.0890866 sec/op
+Warm-up #4: 0.0891085 sec/op
+Warm-up #5: 0.0890713 sec/op
+Warm-up #6: 0.0890713 sec/op
+Warm-up #7: 0.0893947 sec/op
+Iteration #0: 0.0875136 sec/op
+Iteration #1: 0.0878483 sec/op
+Iteration #2: 0.0874668 sec/op
+Iteration #3: 0.0876302 sec/op
+Iteration #4: 0.0874521 sec/op
+Iteration #5: 0.0881529 sec/op
+Iteration #6: 0.0872136 sec/op
+Iteration #7: 0.0845849 sec/op
+Iteration #8: 0.0767964 sec/op
+Iteration #9: 0.0771038 sec/op
+Iteration #10: 0.0770993 sec/op
+Iteration #11: 0.0770080 sec/op
+Iteration #12: 0.0770509 sec/op
+Iteration #13: 0.0772042 sec/op
+Iteration #14: 0.0772385 sec/op
+  Success:   ~ 0.0824909 sec/op ±3.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=4
+Warm-up #0: 0.303282 sec/op
+Warm-up #1: 0.298237 sec/op
+Warm-up #2: 0.298457 sec/op
+Warm-up #3: 0.298912 sec/op
+Warm-up #4: 0.302610 sec/op
+Warm-up #5: 0.301514 sec/op
+Warm-up #6: 0.303565 sec/op
+Warm-up #7: 0.299262 sec/op
+Iteration #0: 0.303804 sec/op
+Iteration #1: 0.304104 sec/op
+Iteration #2: 0.303007 sec/op
+Iteration #3: 0.302123 sec/op
+Iteration #4: 0.300858 sec/op
+Iteration #5: 0.302125 sec/op
+Iteration #6: 0.301907 sec/op
+Iteration #7: 0.332691 sec/op
+Iteration #8: 0.341628 sec/op
+Iteration #9: 0.348849 sec/op
+Iteration #10: 0.343409 sec/op
+Iteration #11: 0.341105 sec/op
+Iteration #12: 0.340691 sec/op
+Iteration #13: 0.339918 sec/op
+Iteration #14: 0.341160 sec/op
+  Success:   ~ 0.323159 sec/op ±3.2%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=4
+Warm-up #0: 0.989122 sec/op
+Warm-up #1: 0.972259 sec/op
+Warm-up #2: 0.975576 sec/op
+Warm-up #3: 0.978887 sec/op
+Warm-up #4: 0.977411 sec/op
+Warm-up #5: 0.974775 sec/op
+Warm-up #6: 0.972567 sec/op
+Warm-up #7: 0.972024 sec/op
+Iteration #0: 0.975143 sec/op
+Iteration #1: 0.978559 sec/op
+Iteration #2: 0.979511 sec/op
+Iteration #3: 0.979811 sec/op
+Iteration #4: 0.976384 sec/op
+Iteration #5: 0.976189 sec/op
+Iteration #6: 1.00032 sec/op
+Iteration #7: 1.00064 sec/op
+Iteration #8: 0.978837 sec/op
+Iteration #9: 0.977686 sec/op
+Iteration #10: 0.978992 sec/op
+Iteration #11: 0.980390 sec/op
+Iteration #12: 0.982899 sec/op
+Iteration #13: 0.984203 sec/op
+Iteration #14: 0.977872 sec/op
+  Success:   ~ 0.981829 sec/op ±0.41%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=4
+Warm-up #0: 0.00325506 sec/op
+Warm-up #1: 0.00330967 sec/op
+Warm-up #2: 0.00337783 sec/op
+Warm-up #3: 0.00337304 sec/op
+Warm-up #4: 0.00335842 sec/op
+Warm-up #5: 0.00338324 sec/op
+Warm-up #6: 0.00337443 sec/op
+Warm-up #7: 0.00335018 sec/op
+Iteration #0: 0.00335606 sec/op
+Iteration #1: 0.00336959 sec/op
+Iteration #2: 0.00335871 sec/op
+Iteration #3: 0.00334665 sec/op
+Iteration #4: 0.00335333 sec/op
+Iteration #5: 0.00335869 sec/op
+Iteration #6: 0.00336031 sec/op
+Iteration #7: 0.00336794 sec/op
+Iteration #8: 0.00336940 sec/op
+Iteration #9: 0.00331807 sec/op
+Iteration #10: 0.00337014 sec/op
+Iteration #11: 0.00335549 sec/op
+Iteration #12: 0.00334689 sec/op
+Iteration #13: 0.00334246 sec/op
+Iteration #14: 0.00333637 sec/op
+  Success:   ~ 0.00335401 sec/op ±0.22%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=5
+Warm-up #0: 0.0000601633 sec/op
+Warm-up #1: 0.0000699282 sec/op
+Warm-up #2: 0.0000698827 sec/op
+Warm-up #3: 0.0000697367 sec/op
+Warm-up #4: 0.0000641651 sec/op
+Warm-up #5: 0.0000665675 sec/op
+Warm-up #6: 0.0000694519 sec/op
+Warm-up #7: 0.0000709849 sec/op
+Iteration #0: 0.0000703435 sec/op
+Iteration #1: 0.0000695295 sec/op
+Iteration #2: 0.0000620613 sec/op
+Iteration #3: 0.0000702040 sec/op
+Iteration #4: 0.0000697884 sec/op
+Iteration #5: 0.0000596637 sec/op
+Iteration #6: 0.0000702451 sec/op
+Iteration #7: 0.0000671864 sec/op
+Iteration #8: 0.0000705698 sec/op
+Iteration #9: 0.0000695026 sec/op
+Iteration #10: 0.0000683844 sec/op
+Iteration #11: 0.0000691425 sec/op
+Iteration #12: 0.0000715195 sec/op
+Iteration #13: 0.0000712010 sec/op
+Iteration #14: 0.0000732426 sec/op
+  Success:   ~ 0.0000688390 sec/op ±2.6%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=5
+Warm-up #0: 0.0476978 sec/op
+Warm-up #1: 0.0476265 sec/op
+Warm-up #2: 0.0482287 sec/op
+Warm-up #3: 0.0477175 sec/op
+Warm-up #4: 0.0479014 sec/op
+Warm-up #5: 0.0478495 sec/op
+Warm-up #6: 0.0479844 sec/op
+Warm-up #7: 0.0478091 sec/op
+Iteration #0: 0.0477834 sec/op
+Iteration #1: 0.0481200 sec/op
+Iteration #2: 0.0483853 sec/op
+Iteration #3: 0.0479984 sec/op
+Iteration #4: 0.0480952 sec/op
+Iteration #5: 0.0478150 sec/op
+Iteration #6: 0.0478987 sec/op
+Iteration #7: 0.0479317 sec/op
+Iteration #8: 0.0477198 sec/op
+Iteration #9: 0.0478330 sec/op
+Iteration #10: 0.0478812 sec/op
+Iteration #11: 0.0479605 sec/op
+Iteration #12: 0.0479126 sec/op
+Iteration #13: 0.0479780 sec/op
+Iteration #14: 0.0478848 sec/op
+  Success:   ~ 0.0479465 sec/op ±0.17%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=5
+Warm-up #0: 0.000115549 sec/op
+Warm-up #1: 0.000137273 sec/op
+Warm-up #2: 0.000139842 sec/op
+Warm-up #3: 0.000141335 sec/op
+Warm-up #4: 0.000138186 sec/op
+Warm-up #5: 0.000138936 sec/op
+Warm-up #6: 0.000141846 sec/op
+Warm-up #7: 0.000140996 sec/op
+Iteration #0: 0.000140589 sec/op
+Iteration #1: 0.000137262 sec/op
+Iteration #2: 0.000142518 sec/op
+Iteration #3: 0.000139450 sec/op
+Iteration #4: 0.000137793 sec/op
+Iteration #5: 0.000126921 sec/op
+Iteration #6: 0.000124760 sec/op
+Iteration #7: 0.000127976 sec/op
+Iteration #8: 0.000127453 sec/op
+Iteration #9: 0.000125496 sec/op
+Iteration #10: 0.000127014 sec/op
+Iteration #11: 0.000125895 sec/op
+Iteration #12: 0.000129381 sec/op
+Iteration #13: 0.000127490 sec/op
+Iteration #14: 0.000129977 sec/op
+  Success:   ~ 0.000131332 sec/op ±2.4%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=5
+Warm-up #0: 0.0948207 sec/op
+Warm-up #1: 0.0948240 sec/op
+Warm-up #2: 0.0946631 sec/op
+Warm-up #3: 0.0949517 sec/op
+Warm-up #4: 0.0959389 sec/op
+Warm-up #5: 0.0944116 sec/op
+Warm-up #6: 0.0950182 sec/op
+Warm-up #7: 0.0941738 sec/op
+Iteration #0: 0.0942944 sec/op
+Iteration #1: 0.101293 sec/op
+Iteration #2: 0.108779 sec/op
+Iteration #3: 0.100311 sec/op
+Iteration #4: 0.101946 sec/op
+Iteration #5: 0.100824 sec/op
+Iteration #6: 0.100513 sec/op
+Iteration #7: 0.0969180 sec/op
+Iteration #8: 0.0963552 sec/op
+Iteration #9: 0.0961792 sec/op
+Iteration #10: 0.0962936 sec/op
+Iteration #11: 0.0962541 sec/op
+Iteration #12: 0.0962305 sec/op
+Iteration #13: 0.0959517 sec/op
+Iteration #14: 0.0956135 sec/op
+  Success:   ~ 0.0985171 sec/op ±1.9%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=5
+Warm-up #0: 0.394257 sec/op
+Warm-up #1: 0.390307 sec/op
+Warm-up #2: 0.389166 sec/op
+Warm-up #3: 0.392774 sec/op
+Warm-up #4: 0.390099 sec/op
+Warm-up #5: 0.426110 sec/op
+Warm-up #6: 0.444025 sec/op
+Warm-up #7: 0.444624 sec/op
+Iteration #0: 0.447750 sec/op
+Iteration #1: 0.451198 sec/op
+Iteration #2: 0.446537 sec/op
+Iteration #3: 0.448222 sec/op
+Iteration #4: 0.446567 sec/op
+Iteration #5: 0.454113 sec/op
+Iteration #6: 0.443059 sec/op
+Iteration #7: 0.444454 sec/op
+Iteration #8: 0.443903 sec/op
+Iteration #9: 0.446625 sec/op
+Iteration #10: 0.446819 sec/op
+Iteration #11: 0.442065 sec/op
+Iteration #12: 0.442101 sec/op
+Iteration #13: 0.443097 sec/op
+Iteration #14: 0.401965 sec/op
+  Success:   ~ 0.443232 sec/op ±1.4%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=0
+Warm-up #0: 0.0185280 sec/op
+Warm-up #1: 0.0184437 sec/op
+Warm-up #2: 0.0193188 sec/op
+Warm-up #3: 0.0203566 sec/op
+Warm-up #4: 0.0205772 sec/op
+Warm-up #5: 0.0206081 sec/op
+Warm-up #6: 0.0205143 sec/op
+Warm-up #7: 0.0205425 sec/op
+Iteration #0: 0.0205042 sec/op
+Iteration #1: 0.0207489 sec/op
+Iteration #2: 0.0202592 sec/op
+Iteration #3: 0.0205341 sec/op
+Iteration #4: 0.0205566 sec/op
+Iteration #5: 0.0205097 sec/op
+Iteration #6: 0.0202035 sec/op
+Iteration #7: 0.0193823 sec/op
+Iteration #8: 0.0189729 sec/op
+Iteration #9: 0.0193005 sec/op
+Iteration #10: 0.0190960 sec/op
+Iteration #11: 0.0189912 sec/op
+Iteration #12: 0.0188246 sec/op
+Iteration #13: 0.0188313 sec/op
+Iteration #14: 0.0186721 sec/op
+  Success:   ~ 0.0196925 sec/op ±2.0%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=5
+Warm-up #0: 1.17174 sec/op
+Warm-up #1: 1.18733 sec/op
+Warm-up #2: 1.16784 sec/op
+Warm-up #3: 1.17249 sec/op
+Warm-up #4: 1.18173 sec/op
+Warm-up #5: 1.16913 sec/op
+Warm-up #6: 1.17906 sec/op
+Warm-up #7: 1.16773 sec/op
+Iteration #0: 1.16640 sec/op
+Iteration #1: 1.17358 sec/op
+Iteration #2: 1.17457 sec/op
+Iteration #3: 1.17563 sec/op
+Iteration #4: 1.17874 sec/op
+Iteration #5: 1.17304 sec/op
+Iteration #6: 1.17999 sec/op
+Iteration #7: 1.17894 sec/op
+Iteration #8: 1.26173 sec/op
+Iteration #9: 1.35499 sec/op
+Iteration #10: 1.35128 sec/op
+Iteration #11: 1.34654 sec/op
+Iteration #12: 1.34969 sec/op
+Iteration #13: 1.35300 sec/op
+Iteration #14: 1.35420 sec/op
+  Success:   ~ 1.25149 sec/op ±3.5%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=5
+Warm-up #0: 0.00341675 sec/op
+Warm-up #1: 0.00342859 sec/op
+Warm-up #2: 0.00351505 sec/op
+Warm-up #3: 0.00392578 sec/op
+Warm-up #4: 0.00397555 sec/op
+Warm-up #5: 0.00393527 sec/op
+Warm-up #6: 0.00349682 sec/op
+Warm-up #7: 0.00341605 sec/op
+Iteration #0: 0.00341083 sec/op
+Iteration #1: 0.00341611 sec/op
+Iteration #2: 0.00344870 sec/op
+Iteration #3: 0.00356367 sec/op
+Iteration #4: 0.00390013 sec/op
+Iteration #5: 0.00393165 sec/op
+Iteration #6: 0.00392069 sec/op
+Iteration #7: 0.00391113 sec/op
+Iteration #8: 0.00396772 sec/op
+Iteration #9: 0.00392812 sec/op
+Iteration #10: 0.00390407 sec/op
+Iteration #11: 0.00389256 sec/op
+Iteration #12: 0.00391145 sec/op
+Iteration #13: 0.00391589 sec/op
+Iteration #14: 0.00390583 sec/op
+  Success:   ~ 0.00379524 sec/op ±2.8%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=6
+Warm-up #0: 0.0000576290 sec/op
+Warm-up #1: 0.0000598055 sec/op
+Warm-up #2: 0.0000621083 sec/op
+Warm-up #3: 0.0000580966 sec/op
+Warm-up #4: 0.0000590989 sec/op
+Warm-up #5: 0.0000664289 sec/op
+Warm-up #6: 0.0000683112 sec/op
+Warm-up #7: 0.0000694995 sec/op
+Iteration #0: 0.0000624507 sec/op
+Iteration #1: 0.0000592899 sec/op
+Iteration #2: 0.0000687105 sec/op
+Iteration #3: 0.0000674260 sec/op
+Iteration #4: 0.0000672644 sec/op
+Iteration #5: 0.0000704571 sec/op
+Iteration #6: 0.0000651603 sec/op
+Iteration #7: 0.0000724032 sec/op
+Iteration #8: 0.0000722280 sec/op
+Iteration #9: 0.0000719013 sec/op
+Iteration #10: 0.0000714772 sec/op
+Iteration #11: 0.0000703509 sec/op
+Iteration #12: 0.0000651684 sec/op
+Iteration #13: 0.0000679132 sec/op
+Iteration #14: 0.0000708064 sec/op
+  Success:   ~ 0.0000682005 sec/op ±2.9%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=6
+Warm-up #0: 0.0597877 sec/op
+Warm-up #1: 0.0595308 sec/op
+Warm-up #2: 0.0596356 sec/op
+Warm-up #3: 0.0595921 sec/op
+Warm-up #4: 0.0599173 sec/op
+Warm-up #5: 0.0599453 sec/op
+Warm-up #6: 0.0599309 sec/op
+Warm-up #7: 0.0599056 sec/op
+Iteration #0: 0.0598205 sec/op
+Iteration #1: 0.0597910 sec/op
+Iteration #2: 0.0597375 sec/op
+Iteration #3: 0.0594898 sec/op
+Iteration #4: 0.0597339 sec/op
+Iteration #5: 0.0598166 sec/op
+Iteration #6: 0.0596930 sec/op
+Iteration #7: 0.0598671 sec/op
+Iteration #8: 0.0597088 sec/op
+Iteration #9: 0.0597811 sec/op
+Iteration #10: 0.0597697 sec/op
+Iteration #11: 0.0595477 sec/op
+Iteration #12: 0.0603160 sec/op
+Iteration #13: 0.0596601 sec/op
+Iteration #14: 0.0595996 sec/op
+  Success:   ~ 0.0597555 sec/op ±0.16%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=6
+Warm-up #0: 0.000119072 sec/op
+Warm-up #1: 0.000133419 sec/op
+Warm-up #2: 0.000131166 sec/op
+Warm-up #3: 0.000156269 sec/op
+Warm-up #4: 0.000149244 sec/op
+Warm-up #5: 0.000113278 sec/op
+Warm-up #6: 0.000121778 sec/op
+Warm-up #7: 0.000125529 sec/op
+Iteration #0: 0.000135809 sec/op
+Iteration #1: 0.000138996 sec/op
+Iteration #2: 0.000136733 sec/op
+Iteration #3: 0.000126176 sec/op
+Iteration #4: 0.000141271 sec/op
+Iteration #5: 0.000140178 sec/op
+Iteration #6: 0.000139053 sec/op
+Iteration #7: 0.000131550 sec/op
+Iteration #8: 0.000140595 sec/op
+Iteration #9: 0.000141727 sec/op
+Iteration #10: 0.000142549 sec/op
+Iteration #11: 0.000138185 sec/op
+Iteration #12: 0.000118620 sec/op
+Iteration #13: 0.000116152 sec/op
+Iteration #14: 0.000122610 sec/op
+  Success:   ~ 0.000134014 sec/op ±3.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=6
+Warm-up #0: 0.106687 sec/op
+Warm-up #1: 0.107736 sec/op
+Warm-up #2: 0.107301 sec/op
+Warm-up #3: 0.106061 sec/op
+Warm-up #4: 0.109800 sec/op
+Warm-up #5: 0.106013 sec/op
+Warm-up #6: 0.106058 sec/op
+Warm-up #7: 0.106045 sec/op
+Iteration #0: 0.105160 sec/op
+Iteration #1: 0.105343 sec/op
+Iteration #2: 0.105414 sec/op
+Iteration #3: 0.105336 sec/op
+Iteration #4: 0.105710 sec/op
+Iteration #5: 0.105459 sec/op
+Iteration #6: 0.105123 sec/op
+Iteration #7: 0.105522 sec/op
+Iteration #8: 0.105530 sec/op
+Iteration #9: 0.105909 sec/op
+Iteration #10: 0.105313 sec/op
+Iteration #11: 0.105027 sec/op
+Iteration #12: 0.104803 sec/op
+Iteration #13: 0.104890 sec/op
+Iteration #14: 0.104884 sec/op
+  Success:   ~ 0.105295 sec/op ±0.15%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=6
+Warm-up #0: 0.455312 sec/op
+Warm-up #1: 0.458735 sec/op
+Warm-up #2: 0.457390 sec/op
+Warm-up #3: 0.452484 sec/op
+Warm-up #4: 0.451110 sec/op
+Warm-up #5: 0.452980 sec/op
+Warm-up #6: 0.452874 sec/op
+Warm-up #7: 0.452003 sec/op
+Iteration #0: 0.452373 sec/op
+Iteration #1: 0.456590 sec/op
+Iteration #2: 0.454477 sec/op
+Iteration #3: 0.456300 sec/op
+Iteration #4: 0.456809 sec/op
+Iteration #5: 0.453819 sec/op
+Iteration #6: 0.454944 sec/op
+Iteration #7: 0.452994 sec/op
+Iteration #8: 0.454990 sec/op
+Iteration #9: 0.474747 sec/op
+Iteration #10: 0.453302 sec/op
+Iteration #11: 0.458065 sec/op
+Iteration #12: 0.457623 sec/op
+Iteration #13: 0.456488 sec/op
+Iteration #14: 0.451748 sec/op
+  Success:   ~ 0.456351 sec/op ±0.60%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=6
+Warm-up #0: 1.29993 sec/op
+Warm-up #1: 1.30964 sec/op
+Warm-up #2: 1.29179 sec/op
+Warm-up #3: 1.29426 sec/op
+Warm-up #4: 1.29552 sec/op
+Warm-up #5: 1.28696 sec/op
+Warm-up #6: 1.28605 sec/op
+Warm-up #7: 1.28797 sec/op
+Iteration #0: 1.29193 sec/op
+Iteration #1: 1.29722 sec/op
+Iteration #2: 1.30032 sec/op
+Iteration #3: 1.29683 sec/op
+Iteration #4: 1.30990 sec/op
+Iteration #5: 1.29515 sec/op
+Iteration #6: 1.29455 sec/op
+Iteration #7: 1.29759 sec/op
+Iteration #8: 1.29896 sec/op
+Iteration #9: 1.29806 sec/op
+Iteration #10: 1.29993 sec/op
+Iteration #11: 1.30776 sec/op
+Iteration #12: 1.30820 sec/op
+Iteration #13: 1.29758 sec/op
+Iteration #14: 1.30128 sec/op
+  Success:   ~ 1.29968 sec/op ±0.20%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=6
+Warm-up #0: 0.00355201 sec/op
+Warm-up #1: 0.00355440 sec/op
+Warm-up #2: 0.00355110 sec/op
+Warm-up #3: 0.00355127 sec/op
+Warm-up #4: 0.00356562 sec/op
+Warm-up #5: 0.00356304 sec/op
+Warm-up #6: 0.00355933 sec/op
+Warm-up #7: 0.00355847 sec/op
+Iteration #0: 0.00356481 sec/op
+Iteration #1: 0.00356221 sec/op
+Iteration #2: 0.00401754 sec/op
+Iteration #3: 0.00407068 sec/op
+Iteration #4: 0.00409872 sec/op
+Iteration #5: 0.00409476 sec/op
+Iteration #6: 0.00406376 sec/op
+Iteration #7: 0.00406989 sec/op
+Iteration #8: 0.00406593 sec/op
+Iteration #9: 0.00406548 sec/op
+Iteration #10: 0.00405205 sec/op
+Iteration #11: 0.00398027 sec/op
+Iteration #12: 0.00400052 sec/op
+Iteration #13: 0.00399853 sec/op
+Iteration #14: 0.00399207 sec/op
+  Success:   ~ 0.00397981 sec/op ±2.2%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=7
+Warm-up #0: 0.0000589577 sec/op
+Warm-up #1: 0.0000674312 sec/op
+Warm-up #2: 0.0000616860 sec/op
+Warm-up #3: 0.0000603602 sec/op
+Warm-up #4: 0.0000617701 sec/op
+Warm-up #5: 0.0000634990 sec/op
+Warm-up #6: 0.0000747918 sec/op
+Warm-up #7: 0.0000793417 sec/op
+Iteration #0: 0.0000695993 sec/op
+Iteration #1: 0.0000782223 sec/op
+Iteration #2: 0.0000740320 sec/op
+Iteration #3: 0.0000683649 sec/op
+Iteration #4: 0.0000727155 sec/op
+Iteration #5: 0.0000690301 sec/op
+Iteration #6: 0.0000675855 sec/op
+Iteration #7: 0.0000644349 sec/op
+Iteration #8: 0.0000604973 sec/op
+Iteration #9: 0.0000646989 sec/op
+Iteration #10: 0.0000671815 sec/op
+Iteration #11: 0.0000672084 sec/op
+Iteration #12: 0.0000614601 sec/op
+Iteration #13: 0.0000660747 sec/op
+Iteration #14: 0.0000647098 sec/op
+  Success:   ~ 0.0000677210 sec/op ±3.5%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=0
+Warm-up #0: 0.0627059 sec/op
+Warm-up #1: 0.0628447 sec/op
+Warm-up #2: 0.0643769 sec/op
+Warm-up #3: 0.0649032 sec/op
+Warm-up #4: 0.0659168 sec/op
+Warm-up #5: 0.0648808 sec/op
+Warm-up #6: 0.0641801 sec/op
+Warm-up #7: 0.0647710 sec/op
+Iteration #0: 0.0644402 sec/op
+Iteration #1: 0.0636458 sec/op
+Iteration #2: 0.0643382 sec/op
+Iteration #3: 0.0633601 sec/op
+Iteration #4: 0.0631425 sec/op
+Iteration #5: 0.0631382 sec/op
+Iteration #6: 0.0661499 sec/op
+Iteration #7: 0.0649919 sec/op
+Iteration #8: 0.0633527 sec/op
+Iteration #9: 0.0641142 sec/op
+Iteration #10: 0.0628630 sec/op
+Iteration #11: 0.0639845 sec/op
+Iteration #12: 0.0631568 sec/op
+Iteration #13: 0.0634350 sec/op
+Iteration #14: 0.0631380 sec/op
+  Success:   ~ 0.0638167 sec/op ±0.70%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=7
+Warm-up #0: 0.0616087 sec/op
+Warm-up #1: 0.0615834 sec/op
+Warm-up #2: 0.0613998 sec/op
+Warm-up #3: 0.0617385 sec/op
+Warm-up #4: 0.0618526 sec/op
+Warm-up #5: 0.0616203 sec/op
+Warm-up #6: 0.0689410 sec/op
+Warm-up #7: 0.0690733 sec/op
+Iteration #0: 0.0691456 sec/op
+Iteration #1: 0.0690158 sec/op
+Iteration #2: 0.0691893 sec/op
+Iteration #3: 0.0690985 sec/op
+Iteration #4: 0.0691275 sec/op
+Iteration #5: 0.0690195 sec/op
+Iteration #6: 0.0692476 sec/op
+Iteration #7: 0.0690292 sec/op
+Iteration #8: 0.0692270 sec/op
+Iteration #9: 0.0690468 sec/op
+Iteration #10: 0.0690906 sec/op
+Iteration #11: 0.0689657 sec/op
+Iteration #12: 0.0690862 sec/op
+Iteration #13: 0.0691209 sec/op
+Iteration #14: 0.0687409 sec/op
+  Success:   ~ 0.0690767 sec/op ±0.090%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=7
+Warm-up #0: 0.000132857 sec/op
+Warm-up #1: 0.000134538 sec/op
+Warm-up #2: 0.000128824 sec/op
+Warm-up #3: 0.000137915 sec/op
+Warm-up #4: 0.000128635 sec/op
+Warm-up #5: 0.000133311 sec/op
+Warm-up #6: 0.000140061 sec/op
+Warm-up #7: 0.000135041 sec/op
+Iteration #0: 0.000135194 sec/op
+Iteration #1: 0.000135970 sec/op
+Iteration #2: 0.000129608 sec/op
+Iteration #3: 0.000132675 sec/op
+Iteration #4: 0.000132713 sec/op
+Iteration #5: 0.000121722 sec/op
+Iteration #6: 0.000121409 sec/op
+Iteration #7: 0.000127979 sec/op
+Iteration #8: 0.000126660 sec/op
+Iteration #9: 0.000128482 sec/op
+Iteration #10: 0.000121341 sec/op
+Iteration #11: 0.000120121 sec/op
+Iteration #12: 0.000116591 sec/op
+Iteration #13: 0.000116715 sec/op
+Iteration #14: 0.000116901 sec/op
+  Success:   ~ 0.000125605 sec/op ±2.7%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=7
+Warm-up #0: 0.0928843 sec/op
+Warm-up #1: 0.0926263 sec/op
+Warm-up #2: 0.0927216 sec/op
+Warm-up #3: 0.0926805 sec/op
+Warm-up #4: 0.0926553 sec/op
+Warm-up #5: 0.0927411 sec/op
+Warm-up #6: 0.0928686 sec/op
+Warm-up #7: 0.104822 sec/op
+Iteration #0: 0.107199 sec/op
+Iteration #1: 0.107596 sec/op
+Iteration #2: 0.107730 sec/op
+Iteration #3: 0.107413 sec/op
+Iteration #4: 0.107113 sec/op
+Iteration #5: 0.106955 sec/op
+Iteration #6: 0.107254 sec/op
+Iteration #7: 0.106674 sec/op
+Iteration #8: 0.106555 sec/op
+Iteration #9: 0.106530 sec/op
+Iteration #10: 0.106891 sec/op
+Iteration #11: 0.106831 sec/op
+Iteration #12: 0.106588 sec/op
+Iteration #13: 0.106515 sec/op
+Iteration #14: 0.106858 sec/op
+  Success:   ~ 0.106980 sec/op ±0.19%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=7
+Warm-up #0: 0.457961 sec/op
+Warm-up #1: 0.454125 sec/op
+Warm-up #2: 0.460889 sec/op
+Warm-up #3: 0.464094 sec/op
+Warm-up #4: 0.457615 sec/op
+Warm-up #5: 0.454314 sec/op
+Warm-up #6: 0.455131 sec/op
+Warm-up #7: 0.455195 sec/op
+Iteration #0: 0.456753 sec/op
+Iteration #1: 0.462228 sec/op
+Iteration #2: 0.456316 sec/op
+Iteration #3: 0.455785 sec/op
+Iteration #4: 0.454687 sec/op
+Iteration #5: 0.454061 sec/op
+Iteration #6: 0.455365 sec/op
+Iteration #7: 0.462061 sec/op
+Iteration #8: 0.462347 sec/op
+Iteration #9: 0.462947 sec/op
+Iteration #10: 0.402441 sec/op
+Iteration #11: 0.400637 sec/op
+Iteration #12: 0.401200 sec/op
+Iteration #13: 0.398955 sec/op
+Iteration #14: 0.398888 sec/op
+  Success:   ~ 0.438978 sec/op ±3.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=7
+Warm-up #0: 1.48982 sec/op
+Warm-up #1: 1.50783 sec/op
+Warm-up #2: 1.47765 sec/op
+Warm-up #3: 1.47444 sec/op
+Warm-up #4: 1.47922 sec/op
+Warm-up #5: 1.47616 sec/op
+Warm-up #6: 1.48130 sec/op
+Warm-up #7: 1.48013 sec/op
+Iteration #0: 1.49225 sec/op
+Iteration #1: 1.48745 sec/op
+Iteration #2: 1.48710 sec/op
+Iteration #3: 1.48870 sec/op
+Iteration #4: 1.49248 sec/op
+Iteration #5: 1.49243 sec/op
+Iteration #6: 1.49127 sec/op
+Iteration #7: 1.48800 sec/op
+Iteration #8: 1.48685 sec/op
+Iteration #9: 1.48678 sec/op
+Iteration #10: 1.49565 sec/op
+Iteration #11: 1.49354 sec/op
+Iteration #12: 1.49154 sec/op
+Iteration #13: 1.48664 sec/op
+Iteration #14: 1.48465 sec/op
+  Success:   ~ 1.48969 sec/op ±0.11%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=7
+Warm-up #0: 0.00362154 sec/op
+Warm-up #1: 0.00363469 sec/op
+Warm-up #2: 0.00362038 sec/op
+Warm-up #3: 0.00362867 sec/op
+Warm-up #4: 0.00362371 sec/op
+Warm-up #5: 0.00363398 sec/op
+Warm-up #6: 0.00366123 sec/op
+Warm-up #7: 0.00363740 sec/op
+Iteration #0: 0.00362557 sec/op
+Iteration #1: 0.00362166 sec/op
+Iteration #2: 0.00361656 sec/op
+Iteration #3: 0.00360995 sec/op
+Iteration #4: 0.00363017 sec/op
+Iteration #5: 0.00362245 sec/op
+Iteration #6: 0.00394697 sec/op
+Iteration #7: 0.00421820 sec/op
+Iteration #8: 0.00418946 sec/op
+Iteration #9: 0.00418299 sec/op
+Iteration #10: 0.00418736 sec/op
+Iteration #11: 0.00417804 sec/op
+Iteration #12: 0.00416489 sec/op
+Iteration #13: 0.00418290 sec/op
+Iteration #14: 0.00416964 sec/op
+  Success:   ~ 0.00394312 sec/op ±3.6%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=8
+Warm-up #0: 0.0000584944 sec/op
+Warm-up #1: 0.0000601385 sec/op
+Warm-up #2: 0.0000638023 sec/op
+Warm-up #3: 0.0000556621 sec/op
+Warm-up #4: 0.0000554838 sec/op
+Warm-up #5: 0.0000582715 sec/op
+Warm-up #6: 0.0000598033 sec/op
+Warm-up #7: 0.0000610974 sec/op
+Iteration #0: 0.0000627178 sec/op
+Iteration #1: 0.0000587696 sec/op
+Iteration #2: 0.0000632798 sec/op
+Iteration #3: 0.0000669786 sec/op
+Iteration #4: 0.0000681531 sec/op
+Iteration #5: 0.0000627929 sec/op
+Iteration #6: 0.0000632871 sec/op
+Iteration #7: 0.0000709372 sec/op
+Iteration #8: 0.0000697787 sec/op
+Iteration #9: 0.0000708966 sec/op
+Iteration #10: 0.0000700550 sec/op
+Iteration #11: 0.0000713948 sec/op
+Iteration #12: 0.0000656565 sec/op
+Iteration #13: 0.0000673161 sec/op
+Iteration #14: 0.0000717506 sec/op
+  Success:   ~ 0.0000669176 sec/op ±3.0%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=8
+Warm-up #0: 0.0648042 sec/op
+Warm-up #1: 0.0646418 sec/op
+Warm-up #2: 0.0644292 sec/op
+Warm-up #3: 0.0685658 sec/op
+Warm-up #4: 0.0641325 sec/op
+Warm-up #5: 0.0645027 sec/op
+Warm-up #6: 0.0645757 sec/op
+Warm-up #7: 0.0647500 sec/op
+Iteration #0: 0.0647321 sec/op
+Iteration #1: 0.0646452 sec/op
+Iteration #2: 0.0645317 sec/op
+Iteration #3: 0.0645809 sec/op
+Iteration #4: 0.0646562 sec/op
+Iteration #5: 0.0646799 sec/op
+Iteration #6: 0.0644622 sec/op
+Iteration #7: 0.0646393 sec/op
+Iteration #8: 0.0646265 sec/op
+Iteration #9: 0.0652929 sec/op
+Iteration #10: 0.0647768 sec/op
+Iteration #11: 0.0644691 sec/op
+Iteration #12: 0.0646549 sec/op
+Iteration #13: 0.0645360 sec/op
+Iteration #14: 0.0644952 sec/op
+  Success:   ~ 0.0646519 sec/op ±0.16%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=8
+Warm-up #0: 0.000131191 sec/op
+Warm-up #1: 0.000140759 sec/op
+Warm-up #2: 0.000131087 sec/op
+Warm-up #3: 0.000116745 sec/op
+Warm-up #4: 0.000116150 sec/op
+Warm-up #5: 0.000117992 sec/op
+Warm-up #6: 0.000130419 sec/op
+Warm-up #7: 0.000138265 sec/op
+Iteration #0: 0.000134524 sec/op
+Iteration #1: 0.000139841 sec/op
+Iteration #2: 0.000140854 sec/op
+Iteration #3: 0.000139062 sec/op
+Iteration #4: 0.000143148 sec/op
+Iteration #5: 0.000143085 sec/op
+Iteration #6: 0.000133912 sec/op
+Iteration #7: 0.000137960 sec/op
+Iteration #8: 0.000137532 sec/op
+Iteration #9: 0.000137550 sec/op
+Iteration #10: 0.000137525 sec/op
+Iteration #11: 0.000141706 sec/op
+Iteration #12: 0.000144046 sec/op
+Iteration #13: 0.000141736 sec/op
+Iteration #14: 0.000125875 sec/op
+  Success:   ~ 0.000138557 sec/op ±1.7%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=8
+Warm-up #0: 0.123990 sec/op
+Warm-up #1: 0.124723 sec/op
+Warm-up #2: 0.123611 sec/op
+Warm-up #3: 0.125109 sec/op
+Warm-up #4: 0.123134 sec/op
+Warm-up #5: 0.122770 sec/op
+Warm-up #6: 0.123394 sec/op
+Warm-up #7: 0.123193 sec/op
+Iteration #0: 0.122870 sec/op
+Iteration #1: 0.122812 sec/op
+Iteration #2: 0.124198 sec/op
+Iteration #3: 0.123183 sec/op
+Iteration #4: 0.123300 sec/op
+Iteration #5: 0.122929 sec/op
+Iteration #6: 0.123304 sec/op
+Iteration #7: 0.123350 sec/op
+Iteration #8: 0.123488 sec/op
+Iteration #9: 0.122594 sec/op
+Iteration #10: 0.122763 sec/op
+Iteration #11: 0.122850 sec/op
+Iteration #12: 0.123462 sec/op
+Iteration #13: 0.122756 sec/op
+Iteration #14: 0.123777 sec/op
+  Success:   ~ 0.123176 sec/op ±0.18%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=0
+Warm-up #0: 0.000113341 sec/op
+Warm-up #1: 0.000115480 sec/op
+Warm-up #2: 0.000113117 sec/op
+Warm-up #3: 0.000110190 sec/op
+Warm-up #4: 0.000102254 sec/op
+Warm-up #5: 0.000105053 sec/op
+Warm-up #6: 0.000102887 sec/op
+Warm-up #7: 0.000101619 sec/op
+Iteration #0: 0.000101813 sec/op
+Iteration #1: 0.000102039 sec/op
+Iteration #2: 0.000100796 sec/op
+Iteration #3: 0.000101204 sec/op
+Iteration #4: 0.000110917 sec/op
+Iteration #5: 0.000102416 sec/op
+Iteration #6: 0.000102208 sec/op
+Iteration #7: 0.000101354 sec/op
+Iteration #8: 0.000101532 sec/op
+Iteration #9: 0.000102907 sec/op
+Iteration #10: 0.000103267 sec/op
+Iteration #11: 0.000109907 sec/op
+Iteration #12: 0.000104060 sec/op
+Iteration #13: 0.000104091 sec/op
+Iteration #14: 0.000102078 sec/op
+  Success:   ~ 0.000103372 sec/op ±1.5%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=8
+Warm-up #0: 0.465118 sec/op
+Warm-up #1: 0.471720 sec/op
+Warm-up #2: 0.459575 sec/op
+Warm-up #3: 0.461035 sec/op
+Warm-up #4: 0.461696 sec/op
+Warm-up #5: 0.461584 sec/op
+Warm-up #6: 0.459535 sec/op
+Warm-up #7: 0.459895 sec/op
+Iteration #0: 0.459751 sec/op
+Iteration #1: 0.467159 sec/op
+Iteration #2: 0.458376 sec/op
+Iteration #3: 0.464908 sec/op
+Iteration #4: 0.458054 sec/op
+Iteration #5: 0.457601 sec/op
+Iteration #6: 0.460889 sec/op
+Iteration #7: 0.462649 sec/op
+Iteration #8: 0.461640 sec/op
+Iteration #9: 0.458231 sec/op
+Iteration #10: 0.462950 sec/op
+Iteration #11: 0.457612 sec/op
+Iteration #12: 0.463544 sec/op
+Iteration #13: 0.462859 sec/op
+Iteration #14: 0.460731 sec/op
+  Success:   ~ 0.461130 sec/op ±0.32%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=8
+Warm-up #0: 1.87941 sec/op
+Warm-up #1: 1.89403 sec/op
+Warm-up #2: 1.88332 sec/op
+Warm-up #3: 1.89746 sec/op
+Warm-up #4: 1.88669 sec/op
+Warm-up #5: 1.86486 sec/op
+Warm-up #6: 1.86058 sec/op
+Warm-up #7: 1.87351 sec/op
+Iteration #0: 1.88472 sec/op
+Iteration #1: 1.89990 sec/op
+Iteration #2: 1.88237 sec/op
+Iteration #3: 1.88237 sec/op
+Iteration #4: 1.87697 sec/op
+Iteration #5: 1.87821 sec/op
+Iteration #6: 1.87046 sec/op
+Iteration #7: 1.96088 sec/op
+Iteration #8: 1.86195 sec/op
+Iteration #9: 1.86343 sec/op
+Iteration #10: 1.87510 sec/op
+Iteration #11: 1.86507 sec/op
+Iteration #12: 1.87962 sec/op
+Iteration #13: 1.87254 sec/op
+Iteration #14: 1.86348 sec/op
+  Success:   ~ 1.88114 sec/op ±0.65%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=8
+Warm-up #0: 0.00434055 sec/op
+Warm-up #1: 0.00442324 sec/op
+Warm-up #2: 0.00432648 sec/op
+Warm-up #3: 0.00432725 sec/op
+Warm-up #4: 0.00435651 sec/op
+Warm-up #5: 0.00435682 sec/op
+Warm-up #6: 0.00435038 sec/op
+Warm-up #7: 0.00435008 sec/op
+Iteration #0: 0.00434143 sec/op
+Iteration #1: 0.00434181 sec/op
+Iteration #2: 0.00435108 sec/op
+Iteration #3: 0.00436043 sec/op
+Iteration #4: 0.00433448 sec/op
+Iteration #5: 0.00432552 sec/op
+Iteration #6: 0.00433426 sec/op
+Iteration #7: 0.00434650 sec/op
+Iteration #8: 0.00432765 sec/op
+Iteration #9: 0.00435152 sec/op
+Iteration #10: 0.00432967 sec/op
+Iteration #11: 0.00434326 sec/op
+Iteration #12: 0.00435299 sec/op
+Iteration #13: 0.00433075 sec/op
+Iteration #14: 0.00437032 sec/op
+  Success:   ~ 0.00434278 sec/op ±0.15%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=9
+Warm-up #0: 0.0000617630 sec/op
+Warm-up #1: 0.0000654670 sec/op
+Warm-up #2: 0.0000638877 sec/op
+Warm-up #3: 0.0000631472 sec/op
+Warm-up #4: 0.0000629817 sec/op
+Warm-up #5: 0.0000647065 sec/op
+Warm-up #6: 0.0000661654 sec/op
+Warm-up #7: 0.0000705119 sec/op
+Iteration #0: 0.0000800879 sec/op
+Iteration #1: 0.0000768034 sec/op
+Iteration #2: 0.0000724914 sec/op
+Iteration #3: 0.0000734768 sec/op
+Iteration #4: 0.0000731289 sec/op
+Iteration #5: 0.0000736238 sec/op
+Iteration #6: 0.0000764751 sec/op
+Iteration #7: 0.0000657179 sec/op
+Iteration #8: 0.0000672906 sec/op
+Iteration #9: 0.0000648255 sec/op
+Iteration #10: 0.0000661303 sec/op
+Iteration #11: 0.0000714419 sec/op
+Iteration #12: 0.0000667812 sec/op
+Iteration #13: 0.0000734890 sec/op
+Iteration #14: 0.0000666630 sec/op
+  Success:   ~ 0.0000712284 sec/op ±3.4%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=9
+Warm-up #0: 0.185742 sec/op
+Warm-up #1: 0.185501 sec/op
+Warm-up #2: 0.184985 sec/op
+Warm-up #3: 0.185121 sec/op
+Warm-up #4: 0.183177 sec/op
+Warm-up #5: 0.183129 sec/op
+Warm-up #6: 0.183215 sec/op
+Warm-up #7: 0.183624 sec/op
+Iteration #0: 0.183875 sec/op
+Iteration #1: 0.187383 sec/op
+Iteration #2: 0.187021 sec/op
+Iteration #3: 0.184781 sec/op
+Iteration #4: 0.183527 sec/op
+Iteration #5: 0.183572 sec/op
+Iteration #6: 0.183172 sec/op
+Iteration #7: 0.183613 sec/op
+Iteration #8: 0.184787 sec/op
+Iteration #9: 0.185224 sec/op
+Iteration #10: 0.183268 sec/op
+Iteration #11: 0.186700 sec/op
+Iteration #12: 0.183803 sec/op
+Iteration #13: 0.183617 sec/op
+Iteration #14: 0.183189 sec/op
+  Success:   ~ 0.184502 sec/op ±0.40%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=9
+Warm-up #0: 0.000152909 sec/op
+Warm-up #1: 0.000154908 sec/op
+Warm-up #2: 0.000155380 sec/op
+Warm-up #3: 0.000155233 sec/op
+Warm-up #4: 0.000152308 sec/op
+Warm-up #5: 0.000152146 sec/op
+Warm-up #6: 0.000153752 sec/op
+Warm-up #7: 0.000155720 sec/op
+Iteration #0: 0.000169762 sec/op
+Iteration #1: 0.000156255 sec/op
+Iteration #2: 0.000161100 sec/op
+Iteration #3: 0.000161068 sec/op
+Iteration #4: 0.000164163 sec/op
+Iteration #5: 0.000175961 sec/op
+Iteration #6: 0.000181493 sec/op
+Iteration #7: 0.000180848 sec/op
+Iteration #8: 0.000173825 sec/op
+Iteration #9: 0.000156186 sec/op
+Iteration #10: 0.000153879 sec/op
+Iteration #11: 0.000155416 sec/op
+Iteration #12: 0.000160608 sec/op
+Iteration #13: 0.000176654 sec/op
+Iteration #14: 0.000182977 sec/op
+  Success:   ~ 0.000167346 sec/op ±3.2%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Rainier.bmp, level=9
+Warm-up #0: 4.71311 sec/op
+Warm-up #1: 4.73937 sec/op
+Warm-up #2: 4.72751 sec/op
+Warm-up #3: 4.70946 sec/op
+Warm-up #4: 4.68843 sec/op
+Warm-up #5: 4.75179 sec/op
+Warm-up #6: 4.79614 sec/op
+Warm-up #7: 4.70764 sec/op
+Iteration #0: 4.70828 sec/op
+Iteration #1: 4.70584 sec/op
+Iteration #2: 4.75679 sec/op
+Iteration #3: 4.65068 sec/op
+Iteration #4: 4.63163 sec/op
+Iteration #5: 4.63196 sec/op
+Iteration #6: 4.65755 sec/op
+Iteration #7: 4.63082 sec/op
+Iteration #8: 4.62513 sec/op
+Iteration #9: 4.63999 sec/op
+Iteration #10: 4.64423 sec/op
+Iteration #11: 4.63086 sec/op
+Iteration #12: 4.62867 sec/op
+Iteration #13: 4.62962 sec/op
+Iteration #14: 4.71708 sec/op
+  Success:   ~ 4.65928 sec/op ±0.45%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Maltese.bmp, level=9
+Warm-up #0: 1.61889 sec/op
+Warm-up #1: 1.58982 sec/op
+Warm-up #2: 1.61302 sec/op
+Warm-up #3: 1.63092 sec/op
+Warm-up #4: 1.59241 sec/op
+Warm-up #5: 1.57852 sec/op
+Warm-up #6: 1.58459 sec/op
+Warm-up #7: 1.58624 sec/op
+Iteration #0: 1.78400 sec/op
+Iteration #1: 1.60682 sec/op
+Iteration #2: 1.58944 sec/op
+Iteration #3: 1.59030 sec/op
+Iteration #4: 1.57896 sec/op
+Iteration #5: 1.57083 sec/op
+Iteration #6: 1.57504 sec/op
+Iteration #7: 1.57350 sec/op
+Iteration #8: 1.55459 sec/op
+Iteration #9: 1.55695 sec/op
+Iteration #10: 1.54936 sec/op
+Iteration #11: 1.56917 sec/op
+Iteration #12: 1.54345 sec/op
+Iteration #13: 1.54725 sec/op
+Iteration #14: 1.56179 sec/op
+  Success:   ~ 1.58343 sec/op ±1.9%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=Sunrise.bmp, level=9
+Warm-up #0: 12.4558 sec/op
+Warm-up #1: 12.5074 sec/op
+Warm-up #2: 12.4632 sec/op
+Warm-up #3: 12.5070 sec/op
+Warm-up #4: 12.4731 sec/op
+Warm-up #5: 12.4795 sec/op
+Warm-up #6: 12.6347 sec/op
+Warm-up #7: 12.4928 sec/op
+Iteration #0: 12.5084 sec/op
+Iteration #1: 12.5317 sec/op
+Iteration #2: 12.5276 sec/op
+Iteration #3: 12.4929 sec/op
+Iteration #4: 12.4772 sec/op
+Iteration #5: 12.5264 sec/op
+Iteration #6: 12.4679 sec/op
+Iteration #7: 12.4877 sec/op
+Iteration #8: 12.4479 sec/op
+Iteration #9: 12.4670 sec/op
+Iteration #10: 12.4784 sec/op
+Iteration #11: 12.4533 sec/op
+Iteration #12: 12.5955 sec/op
+Iteration #13: 12.5038 sec/op
+Iteration #14: 12.4311 sec/op
+  Success:   ~ 12.4931 sec/op ±0.17%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=compressed_MVT.pbf, level=9
+Warm-up #0: 0.00956111 sec/op
+Warm-up #1: 0.00953225 sec/op
+Warm-up #2: 0.00966538 sec/op
+Warm-up #3: 0.00955664 sec/op
+Warm-up #4: 0.0102616 sec/op
+Warm-up #5: 0.00957700 sec/op
+Warm-up #6: 0.00969223 sec/op
+Warm-up #7: 0.00960302 sec/op
+Iteration #0: 0.00951544 sec/op
+Iteration #1: 0.00950924 sec/op
+Iteration #2: 0.00958468 sec/op
+Iteration #3: 0.00957679 sec/op
+Iteration #4: 0.00956464 sec/op
+Iteration #5: 0.00950527 sec/op
+Iteration #6: 0.00954066 sec/op
+Iteration #7: 0.00958163 sec/op
+Iteration #8: 0.00974141 sec/op
+Iteration #9: 0.00966012 sec/op
+Iteration #10: 0.00951895 sec/op
+Iteration #11: 0.00953107 sec/op
+Iteration #12: 0.00957554 sec/op
+Iteration #13: 0.00953947 sec/op
+Iteration #14: 0.00961760 sec/op
+  Success:   ~ 0.00957083 sec/op ±0.34%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=simpleText, level=1
+Warm-up #0: 0.0000600147 sec/op
+Warm-up #1: 0.0000794401 sec/op
+Warm-up #2: 0.0000770500 sec/op
+Warm-up #3: 0.0000689607 sec/op
+Warm-up #4: 0.0000688400 sec/op
+Warm-up #5: 0.0000624820 sec/op
+Warm-up #6: 0.0000662446 sec/op
+Warm-up #7: 0.0000662156 sec/op
+Iteration #0: 0.0000583364 sec/op
+Iteration #1: 0.0000709298 sec/op
+Iteration #2: 0.0000704725 sec/op
+Iteration #3: 0.0000687967 sec/op
+Iteration #4: 0.0000701221 sec/op
+Iteration #5: 0.0000723477 sec/op
+Iteration #6: 0.0000701635 sec/op
+Iteration #7: 0.0000658553 sec/op
+Iteration #8: 0.0000698849 sec/op
+Iteration #9: 0.0000681228 sec/op
+Iteration #10: 0.0000687727 sec/op
+Iteration #11: 0.0000691342 sec/op
+Iteration #12: 0.0000620210 sec/op
+Iteration #13: 0.0000689470 sec/op
+Iteration #14: 0.0000675655 sec/op
+  Success:   ~ 0.0000680981 sec/op ±2.7%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=text, level=1
+Warm-up #0: 0.0200358 sec/op
+Warm-up #1: 0.0182685 sec/op
+Warm-up #2: 0.0182796 sec/op
+Warm-up #3: 0.0182736 sec/op
+Warm-up #4: 0.0182699 sec/op
+Warm-up #5: 0.0182687 sec/op
+Warm-up #6: 0.0183235 sec/op
+Warm-up #7: 0.0182624 sec/op
+Iteration #0: 0.0182644 sec/op
+Iteration #1: 0.0182608 sec/op
+Iteration #2: 0.0182614 sec/op
+Iteration #3: 0.0182997 sec/op
+Iteration #4: 0.0182333 sec/op
+Iteration #5: 0.0183766 sec/op
+Iteration #6: 0.0182750 sec/op
+Iteration #7: 0.0183032 sec/op
+Iteration #8: 0.0183470 sec/op
+Iteration #9: 0.0182913 sec/op
+Iteration #10: 0.0182779 sec/op
+Iteration #11: 0.0182842 sec/op
+Iteration #12: 0.0182802 sec/op
+Iteration #13: 0.0182741 sec/op
+Iteration #14: 0.0182685 sec/op
+  Success:   ~ 0.0182865 sec/op ±0.098%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression | corpus=model3D, level=1
+Warm-up #0: 0.000115482 sec/op
+Warm-up #1: 0.000122566 sec/op
+Warm-up #2: 0.000119949 sec/op
+Warm-up #3: 0.000115198 sec/op
+Warm-up #4: 0.000116506 sec/op
+Warm-up #5: 0.000114339 sec/op
+Warm-up #6: 0.000121337 sec/op
+Warm-up #7: 0.000129923 sec/op
+Iteration #0: 0.000119917 sec/op
+Iteration #1: 0.000124528 sec/op
+Iteration #2: 0.000140523 sec/op
+Iteration #3: 0.000143446 sec/op
+Iteration #4: 0.000144987 sec/op
+Iteration #5: 0.000146776 sec/op
+Iteration #6: 0.000141731 sec/op
+Iteration #7: 0.000138738 sec/op
+Iteration #8: 0.000146561 sec/op
+Iteration #9: 0.000137613 sec/op
+Iteration #10: 0.000131808 sec/op
+Iteration #11: 0.000133950 sec/op
+Iteration #12: 0.000122983 sec/op
+Iteration #13: 0.000126651 sec/op
+Iteration #14: 0.000137041 sec/op
+  Success:   ~ 0.000135817 sec/op ±3.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=0
+Warm-up #0: 0.00000116972 sec/op
+Warm-up #1: 0.00000122233 sec/op
+Warm-up #2: 0.00000122265 sec/op
+Warm-up #3: 0.00000122262 sec/op
+Warm-up #4: 0.00000120800 sec/op
+Warm-up #5: 0.00000118689 sec/op
+Warm-up #6: 0.00000119734 sec/op
+Warm-up #7: 0.00000116147 sec/op
+Iteration #0: 0.00000111725 sec/op
+Iteration #1: 0.00000112089 sec/op
+Iteration #2: 0.00000110723 sec/op
+Iteration #3: 0.00000111885 sec/op
+Iteration #4: 0.00000112769 sec/op
+Iteration #5: 0.00000113553 sec/op
+Iteration #6: 0.00000113068 sec/op
+Iteration #7: 0.00000112619 sec/op
+Iteration #8: 0.00000112664 sec/op
+Iteration #9: 0.00000112309 sec/op
+Iteration #10: 0.00000111602 sec/op
+Iteration #11: 0.00000111920 sec/op
+Iteration #12: 0.00000112756 sec/op
+Iteration #13: 0.00000115488 sec/op
+Iteration #14: 0.00000116125 sec/op
+  Success:   ~ 0.00000112753 sec/op ±0.64%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=0
+Warm-up #0: 0.000909435 sec/op
+Warm-up #1: 0.000876079 sec/op
+Warm-up #2: 0.000922822 sec/op
+Warm-up #3: 0.000899281 sec/op
+Warm-up #4: 0.000943481 sec/op
+Warm-up #5: 0.000924044 sec/op
+Warm-up #6: 0.00108747 sec/op
+Warm-up #7: 0.000993920 sec/op
+Iteration #0: 0.00107569 sec/op
+Iteration #1: 0.00103117 sec/op
+Iteration #2: 0.00110610 sec/op
+Iteration #3: 0.00106032 sec/op
+Iteration #4: 0.00107305 sec/op
+Iteration #5: 0.00107415 sec/op
+Iteration #6: 0.00107754 sec/op
+Iteration #7: 0.00109884 sec/op
+Iteration #8: 0.00106168 sec/op
+Iteration #9: 0.00105409 sec/op
+Iteration #10: 0.00107188 sec/op
+Iteration #11: 0.00105452 sec/op
+Iteration #12: 0.000994267 sec/op
+Iteration #13: 0.000963438 sec/op
+Iteration #14: 0.000941188 sec/op
+  Success:   ~ 0.00104920 sec/op ±2.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=1
+Warm-up #0: 0.0378266 sec/op
+Warm-up #1: 0.0375166 sec/op
+Warm-up #2: 0.0374015 sec/op
+Warm-up #3: 0.0372921 sec/op
+Warm-up #4: 0.0373486 sec/op
+Warm-up #5: 0.0372865 sec/op
+Warm-up #6: 0.0376629 sec/op
+Warm-up #7: 0.0375155 sec/op
+Iteration #0: 0.0379255 sec/op
+Iteration #1: 0.0377413 sec/op
+Iteration #2: 0.0373950 sec/op
+Iteration #3: 0.0374875 sec/op
+Iteration #4: 0.0374146 sec/op
+Iteration #5: 0.0407527 sec/op
+Iteration #6: 0.0374729 sec/op
+Iteration #7: 0.0373924 sec/op
+Iteration #8: 0.0373943 sec/op
+Iteration #9: 0.0374029 sec/op
+Iteration #10: 0.0373658 sec/op
+Iteration #11: 0.0374255 sec/op
+Iteration #12: 0.0373585 sec/op
+Iteration #13: 0.0374459 sec/op
+Iteration #14: 0.0374107 sec/op
+  Success:   ~ 0.0376924 sec/op ±1.2%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=1
+Warm-up #0: 0.102370 sec/op
+Warm-up #1: 0.102231 sec/op
+Warm-up #2: 0.102133 sec/op
+Warm-up #3: 0.103446 sec/op
+Warm-up #4: 0.102128 sec/op
+Warm-up #5: 0.102155 sec/op
+Warm-up #6: 0.102407 sec/op
+Warm-up #7: 0.101978 sec/op
+Iteration #0: 0.103268 sec/op
+Iteration #1: 0.103369 sec/op
+Iteration #2: 0.103255 sec/op
+Iteration #3: 0.102882 sec/op
+Iteration #4: 0.103175 sec/op
+Iteration #5: 0.104484 sec/op
+Iteration #6: 0.104210 sec/op
+Iteration #7: 0.103475 sec/op
+Iteration #8: 0.106094 sec/op
+Iteration #9: 0.105878 sec/op
+Iteration #10: 0.103019 sec/op
+Iteration #11: 0.103061 sec/op
+Iteration #12: 0.102742 sec/op
+Iteration #13: 0.103091 sec/op
+Iteration #14: 0.103214 sec/op
+  Success:   ~ 0.103681 sec/op ±0.51%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=1
+Warm-up #0: 0.357693 sec/op
+Warm-up #1: 0.352088 sec/op
+Warm-up #2: 0.353121 sec/op
+Warm-up #3: 0.352928 sec/op
+Warm-up #4: 0.353038 sec/op
+Warm-up #5: 0.352757 sec/op
+Warm-up #6: 0.351741 sec/op
+Warm-up #7: 0.354735 sec/op
+Iteration #0: 0.355340 sec/op
+Iteration #1: 0.355635 sec/op
+Iteration #2: 0.355040 sec/op
+Iteration #3: 0.355184 sec/op
+Iteration #4: 0.355024 sec/op
+Iteration #5: 0.355586 sec/op
+Iteration #6: 0.356097 sec/op
+Iteration #7: 0.356109 sec/op
+Iteration #8: 0.356562 sec/op
+Iteration #9: 0.357193 sec/op
+Iteration #10: 0.362803 sec/op
+Iteration #11: 0.358270 sec/op
+Iteration #12: 0.356622 sec/op
+Iteration #13: 0.356563 sec/op
+Iteration #14: 0.358267 sec/op
+  Success:   ~ 0.356686 sec/op ±0.28%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=1
+Warm-up #0: 0.00128440 sec/op
+Warm-up #1: 0.00129672 sec/op
+Warm-up #2: 0.00130044 sec/op
+Warm-up #3: 0.00129758 sec/op
+Warm-up #4: 0.00129958 sec/op
+Warm-up #5: 0.00128639 sec/op
+Warm-up #6: 0.00129255 sec/op
+Warm-up #7: 0.00129066 sec/op
+Iteration #0: 0.00130361 sec/op
+Iteration #1: 0.00130511 sec/op
+Iteration #2: 0.00130205 sec/op
+Iteration #3: 0.00130620 sec/op
+Iteration #4: 0.00130497 sec/op
+Iteration #5: 0.00130451 sec/op
+Iteration #6: 0.00130719 sec/op
+Iteration #7: 0.00129668 sec/op
+Iteration #8: 0.00129557 sec/op
+Iteration #9: 0.00129691 sec/op
+Iteration #10: 0.00130146 sec/op
+Iteration #11: 0.00130826 sec/op
+Iteration #12: 0.00130279 sec/op
+Iteration #13: 0.00131069 sec/op
+Iteration #14: 0.00130985 sec/op
+  Success:   ~ 0.00130372 sec/op ±0.18%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=2
+Warm-up #0: 0.00000139133 sec/op
+Warm-up #1: 0.00000171968 sec/op
+Warm-up #2: 0.00000178826 sec/op
+Warm-up #3: 0.00000181353 sec/op
+Warm-up #4: 0.00000171231 sec/op
+Warm-up #5: 0.00000180959 sec/op
+Warm-up #6: 0.00000178003 sec/op
+Warm-up #7: 0.00000173860 sec/op
+Iteration #0: 0.00000195456 sec/op
+Iteration #1: 0.00000195728 sec/op
+Iteration #2: 0.00000193121 sec/op
+Iteration #3: 0.00000191923 sec/op
+Iteration #4: 0.00000196286 sec/op
+Iteration #5: 0.00000199425 sec/op
+Iteration #6: 0.00000199173 sec/op
+Iteration #7: 0.00000197264 sec/op
+Iteration #8: 0.00000195501 sec/op
+Iteration #9: 0.00000193268 sec/op
+Iteration #10: 0.00000196515 sec/op
+Iteration #11: 0.00000193997 sec/op
+Iteration #12: 0.00000193931 sec/op
+Iteration #13: 0.00000196270 sec/op
+Iteration #14: 0.00000192352 sec/op
+  Success:   ~ 0.00000195347 sec/op ±0.59%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=2
+Warm-up #0: 0.00910348 sec/op
+Warm-up #1: 0.00909392 sec/op
+Warm-up #2: 0.00907118 sec/op
+Warm-up #3: 0.00920371 sec/op
+Warm-up #4: 0.00911450 sec/op
+Warm-up #5: 0.00907761 sec/op
+Warm-up #6: 0.00910123 sec/op
+Warm-up #7: 0.00908606 sec/op
+Iteration #0: 0.00906082 sec/op
+Iteration #1: 0.00917117 sec/op
+Iteration #2: 0.00916602 sec/op
+Iteration #3: 0.00901717 sec/op
+Iteration #4: 0.00901587 sec/op
+Iteration #5: 0.00902346 sec/op
+Iteration #6: 0.00898308 sec/op
+Iteration #7: 0.00900322 sec/op
+Iteration #8: 0.00900555 sec/op
+Iteration #9: 0.00900977 sec/op
+Iteration #10: 0.00900343 sec/op
+Iteration #11: 0.00902557 sec/op
+Iteration #12: 0.00899657 sec/op
+Iteration #13: 0.00896044 sec/op
+Iteration #14: 0.00896680 sec/op
+  Success:   ~ 0.00902726 sec/op ±0.35%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=2
+Warm-up #0: 0.0000232228 sec/op
+Warm-up #1: 0.0000235901 sec/op
+Warm-up #2: 0.0000236178 sec/op
+Warm-up #3: 0.0000235096 sec/op
+Warm-up #4: 0.0000202859 sec/op
+Warm-up #5: 0.0000199880 sec/op
+Warm-up #6: 0.0000200233 sec/op
+Warm-up #7: 0.0000199646 sec/op
+Iteration #0: 0.0000201428 sec/op
+Iteration #1: 0.0000201073 sec/op
+Iteration #2: 0.0000200578 sec/op
+Iteration #3: 0.0000201386 sec/op
+Iteration #4: 0.0000226674 sec/op
+Iteration #5: 0.0000230071 sec/op
+Iteration #6: 0.0000232055 sec/op
+Iteration #7: 0.0000233420 sec/op
+Iteration #8: 0.0000231569 sec/op
+Iteration #9: 0.0000236624 sec/op
+Iteration #10: 0.0000236076 sec/op
+Iteration #11: 0.0000234741 sec/op
+Iteration #12: 0.0000210181 sec/op
+Iteration #13: 0.0000229796 sec/op
+Iteration #14: 0.0000223074 sec/op
+  Success:   ~ 0.0000221916 sec/op ±3.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=2
+Warm-up #0: 0.0366468 sec/op
+Warm-up #1: 0.0364063 sec/op
+Warm-up #2: 0.0364968 sec/op
+Warm-up #3: 0.0364626 sec/op
+Warm-up #4: 0.0364231 sec/op
+Warm-up #5: 0.0373340 sec/op
+Warm-up #6: 0.0372955 sec/op
+Warm-up #7: 0.0377174 sec/op
+Iteration #0: 0.0373745 sec/op
+Iteration #1: 0.0374161 sec/op
+Iteration #2: 0.0365601 sec/op
+Iteration #3: 0.0364330 sec/op
+Iteration #4: 0.0364699 sec/op
+Iteration #5: 0.0370581 sec/op
+Iteration #6: 0.0365156 sec/op
+Iteration #7: 0.0365232 sec/op
+Iteration #8: 0.0365711 sec/op
+Iteration #9: 0.0400991 sec/op
+Iteration #10: 0.0368275 sec/op
+Iteration #11: 0.0366846 sec/op
+Iteration #12: 0.0365417 sec/op
+Iteration #13: 0.0365093 sec/op
+Iteration #14: 0.0366495 sec/op
+  Success:   ~ 0.0369489 sec/op ±1.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=2
+Warm-up #0: 0.0981353 sec/op
+Warm-up #1: 0.0980590 sec/op
+Warm-up #2: 0.0975091 sec/op
+Warm-up #3: 0.0974479 sec/op
+Warm-up #4: 0.0975468 sec/op
+Warm-up #5: 0.0979384 sec/op
+Warm-up #6: 0.0987720 sec/op
+Warm-up #7: 0.0988409 sec/op
+Iteration #0: 0.0989981 sec/op
+Iteration #1: 0.0987455 sec/op
+Iteration #2: 0.0981292 sec/op
+Iteration #3: 0.0973422 sec/op
+Iteration #4: 0.0974573 sec/op
+Iteration #5: 0.0973144 sec/op
+Iteration #6: 0.0971193 sec/op
+Iteration #7: 0.0977246 sec/op
+Iteration #8: 0.0972041 sec/op
+Iteration #9: 0.0981469 sec/op
+Iteration #10: 0.114913 sec/op
+Iteration #11: 0.115072 sec/op
+Iteration #12: 0.113386 sec/op
+Iteration #13: 0.112912 sec/op
+Iteration #14: 0.112790 sec/op
+  Success:   ~ 0.103150 sec/op ±3.8%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=2
+Warm-up #0: 0.348416 sec/op
+Warm-up #1: 0.342715 sec/op
+Warm-up #2: 0.343077 sec/op
+Warm-up #3: 0.342079 sec/op
+Warm-up #4: 0.350703 sec/op
+Warm-up #5: 0.344359 sec/op
+Warm-up #6: 0.342777 sec/op
+Warm-up #7: 0.342905 sec/op
+Iteration #0: 0.345284 sec/op
+Iteration #1: 0.345396 sec/op
+Iteration #2: 0.345332 sec/op
+Iteration #3: 0.346436 sec/op
+Iteration #4: 0.345789 sec/op
+Iteration #5: 0.344453 sec/op
+Iteration #6: 0.344608 sec/op
+Iteration #7: 0.345669 sec/op
+Iteration #8: 0.347431 sec/op
+Iteration #9: 0.345836 sec/op
+Iteration #10: 0.344340 sec/op
+Iteration #11: 0.345200 sec/op
+Iteration #12: 0.345615 sec/op
+Iteration #13: 0.346671 sec/op
+Iteration #14: 0.345955 sec/op
+  Success:   ~ 0.345601 sec/op ±0.12%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=0
+Warm-up #0: 0.00000145435 sec/op
+Warm-up #1: 0.00000151037 sec/op
+Warm-up #2: 0.00000151677 sec/op
+Warm-up #3: 0.00000151453 sec/op
+Warm-up #4: 0.00000163344 sec/op
+Warm-up #5: 0.00000156207 sec/op
+Warm-up #6: 0.00000146382 sec/op
+Warm-up #7: 0.00000149903 sec/op
+Iteration #0: 0.00000150058 sec/op
+Iteration #1: 0.00000155062 sec/op
+Iteration #2: 0.00000148419 sec/op
+Iteration #3: 0.00000149711 sec/op
+Iteration #4: 0.00000151034 sec/op
+Iteration #5: 0.00000148937 sec/op
+Iteration #6: 0.00000166471 sec/op
+Iteration #7: 0.00000179682 sec/op
+Iteration #8: 0.00000159222 sec/op
+Iteration #9: 0.00000150253 sec/op
+Iteration #10: 0.00000146071 sec/op
+Iteration #11: 0.00000149162 sec/op
+Iteration #12: 0.00000135653 sec/op
+Iteration #13: 0.00000134206 sec/op
+Iteration #14: 0.00000145596 sec/op
+  Success:   ~ 0.00000151302 sec/op ±3.7%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=2
+Warm-up #0: 0.00109474 sec/op
+Warm-up #1: 0.00126471 sec/op
+Warm-up #2: 0.00127550 sec/op
+Warm-up #3: 0.00127488 sec/op
+Warm-up #4: 0.00128371 sec/op
+Warm-up #5: 0.00127474 sec/op
+Warm-up #6: 0.00126914 sec/op
+Warm-up #7: 0.00126694 sec/op
+Iteration #0: 0.00128003 sec/op
+Iteration #1: 0.00126811 sec/op
+Iteration #2: 0.00126599 sec/op
+Iteration #3: 0.00126536 sec/op
+Iteration #4: 0.00126576 sec/op
+Iteration #5: 0.00127258 sec/op
+Iteration #6: 0.00126518 sec/op
+Iteration #7: 0.00126539 sec/op
+Iteration #8: 0.00126828 sec/op
+Iteration #9: 0.00126345 sec/op
+Iteration #10: 0.00126287 sec/op
+Iteration #11: 0.00126930 sec/op
+Iteration #12: 0.00127297 sec/op
+Iteration #13: 0.00126983 sec/op
+Iteration #14: 0.00125875 sec/op
+  Success:   ~ 0.00126759 sec/op ±0.20%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=3
+Warm-up #0: 0.00000129765 sec/op
+Warm-up #1: 0.00000173057 sec/op
+Warm-up #2: 0.00000170810 sec/op
+Warm-up #3: 0.00000170301 sec/op
+Warm-up #4: 0.00000172644 sec/op
+Warm-up #5: 0.00000175970 sec/op
+Warm-up #6: 0.00000183021 sec/op
+Warm-up #7: 0.00000179625 sec/op
+Iteration #0: 0.00000166314 sec/op
+Iteration #1: 0.00000167977 sec/op
+Iteration #2: 0.00000166308 sec/op
+Iteration #3: 0.00000165038 sec/op
+Iteration #4: 0.00000165147 sec/op
+Iteration #5: 0.00000171238 sec/op
+Iteration #6: 0.00000173565 sec/op
+Iteration #7: 0.00000176736 sec/op
+Iteration #8: 0.00000171415 sec/op
+Iteration #9: 0.00000165663 sec/op
+Iteration #10: 0.00000166897 sec/op
+Iteration #11: 0.00000168239 sec/op
+Iteration #12: 0.00000167638 sec/op
+Iteration #13: 0.00000169653 sec/op
+Iteration #14: 0.00000176213 sec/op
+  Success:   ~ 0.00000169203 sec/op ±1.2%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=3
+Warm-up #0: 0.00911551 sec/op
+Warm-up #1: 0.00892223 sec/op
+Warm-up #2: 0.00905960 sec/op
+Warm-up #3: 0.00873899 sec/op
+Warm-up #4: 0.00885902 sec/op
+Warm-up #5: 0.00878653 sec/op
+Warm-up #6: 0.00886559 sec/op
+Warm-up #7: 0.00883331 sec/op
+Iteration #0: 0.00847609 sec/op
+Iteration #1: 0.00743220 sec/op
+Iteration #2: 0.00746275 sec/op
+Iteration #3: 0.00760810 sec/op
+Iteration #4: 0.00743428 sec/op
+Iteration #5: 0.00745231 sec/op
+Iteration #6: 0.00742794 sec/op
+Iteration #7: 0.00826539 sec/op
+Iteration #8: 0.00780103 sec/op
+Iteration #9: 0.00756318 sec/op
+Iteration #10: 0.00783749 sec/op
+Iteration #11: 0.00873651 sec/op
+Iteration #12: 0.00870965 sec/op
+Iteration #13: 0.00857421 sec/op
+Iteration #14: 0.00818596 sec/op
+  Success:   ~ 0.00793114 sec/op ±3.2%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=3
+Warm-up #0: 0.0000239456 sec/op
+Warm-up #1: 0.0000238874 sec/op
+Warm-up #2: 0.0000240439 sec/op
+Warm-up #3: 0.0000240139 sec/op
+Warm-up #4: 0.0000238658 sec/op
+Warm-up #5: 0.0000240481 sec/op
+Warm-up #6: 0.0000243116 sec/op
+Warm-up #7: 0.0000242289 sec/op
+Iteration #0: 0.0000239347 sec/op
+Iteration #1: 0.0000238615 sec/op
+Iteration #2: 0.0000238516 sec/op
+Iteration #3: 0.0000234941 sec/op
+Iteration #4: 0.0000237509 sec/op
+Iteration #5: 0.0000235787 sec/op
+Iteration #6: 0.0000218070 sec/op
+Iteration #7: 0.0000233704 sec/op
+Iteration #8: 0.0000242135 sec/op
+Iteration #9: 0.0000241684 sec/op
+Iteration #10: 0.0000240401 sec/op
+Iteration #11: 0.0000239023 sec/op
+Iteration #12: 0.0000240453 sec/op
+Iteration #13: 0.0000203616 sec/op
+Iteration #14: 0.0000224806 sec/op
+  Success:   ~ 0.0000233907 sec/op ±2.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=3
+Warm-up #0: 0.0364476 sec/op
+Warm-up #1: 0.0360717 sec/op
+Warm-up #2: 0.0361577 sec/op
+Warm-up #3: 0.0360550 sec/op
+Warm-up #4: 0.0395866 sec/op
+Warm-up #5: 0.0361726 sec/op
+Warm-up #6: 0.0361293 sec/op
+Warm-up #7: 0.0361679 sec/op
+Iteration #0: 0.0363228 sec/op
+Iteration #1: 0.0361832 sec/op
+Iteration #2: 0.0362953 sec/op
+Iteration #3: 0.0362580 sec/op
+Iteration #4: 0.0362723 sec/op
+Iteration #5: 0.0362794 sec/op
+Iteration #6: 0.0363307 sec/op
+Iteration #7: 0.0362542 sec/op
+Iteration #8: 0.0364711 sec/op
+Iteration #9: 0.0365077 sec/op
+Iteration #10: 0.0362074 sec/op
+Iteration #11: 0.0362906 sec/op
+Iteration #12: 0.0362757 sec/op
+Iteration #13: 0.0362415 sec/op
+Iteration #14: 0.0363632 sec/op
+  Success:   ~ 0.0363035 sec/op ±0.12%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=3
+Warm-up #0: 0.0872611 sec/op
+Warm-up #1: 0.0866898 sec/op
+Warm-up #2: 0.0861396 sec/op
+Warm-up #3: 0.0861210 sec/op
+Warm-up #4: 0.0861870 sec/op
+Warm-up #5: 0.0868516 sec/op
+Warm-up #6: 0.0865731 sec/op
+Warm-up #7: 0.0862541 sec/op
+Iteration #0: 0.0862198 sec/op
+Iteration #1: 0.0861869 sec/op
+Iteration #2: 0.0863308 sec/op
+Iteration #3: 0.0871705 sec/op
+Iteration #4: 0.0862907 sec/op
+Iteration #5: 0.0861489 sec/op
+Iteration #6: 0.0862802 sec/op
+Iteration #7: 0.0864748 sec/op
+Iteration #8: 0.0863545 sec/op
+Iteration #9: 0.0861452 sec/op
+Iteration #10: 0.0862227 sec/op
+Iteration #11: 0.0862937 sec/op
+Iteration #12: 0.0872018 sec/op
+Iteration #13: 0.0864009 sec/op
+Iteration #14: 0.0862056 sec/op
+  Success:   ~ 0.0863951 sec/op ±0.20%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=3
+Warm-up #0: 0.341278 sec/op
+Warm-up #1: 0.335951 sec/op
+Warm-up #2: 0.336094 sec/op
+Warm-up #3: 0.336988 sec/op
+Warm-up #4: 0.337185 sec/op
+Warm-up #5: 0.338679 sec/op
+Warm-up #6: 0.342089 sec/op
+Warm-up #7: 0.337223 sec/op
+Iteration #0: 0.339214 sec/op
+Iteration #1: 0.340613 sec/op
+Iteration #2: 0.344527 sec/op
+Iteration #3: 0.339507 sec/op
+Iteration #4: 0.339495 sec/op
+Iteration #5: 0.339198 sec/op
+Iteration #6: 0.339848 sec/op
+Iteration #7: 0.339627 sec/op
+Iteration #8: 0.340721 sec/op
+Iteration #9: 0.340563 sec/op
+Iteration #10: 0.340496 sec/op
+Iteration #11: 0.340598 sec/op
+Iteration #12: 0.339911 sec/op
+Iteration #13: 0.339246 sec/op
+Iteration #14: 0.338736 sec/op
+  Success:   ~ 0.340153 sec/op ±0.20%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=3
+Warm-up #0: 0.00109569 sec/op
+Warm-up #1: 0.00109871 sec/op
+Warm-up #2: 0.00109870 sec/op
+Warm-up #3: 0.00120693 sec/op
+Warm-up #4: 0.00128734 sec/op
+Warm-up #5: 0.00128371 sec/op
+Warm-up #6: 0.00128061 sec/op
+Warm-up #7: 0.00128063 sec/op
+Iteration #0: 0.00128042 sec/op
+Iteration #1: 0.00127883 sec/op
+Iteration #2: 0.00127670 sec/op
+Iteration #3: 0.00127704 sec/op
+Iteration #4: 0.00127575 sec/op
+Iteration #5: 0.00127818 sec/op
+Iteration #6: 0.00128223 sec/op
+Iteration #7: 0.00127311 sec/op
+Iteration #8: 0.00126619 sec/op
+Iteration #9: 0.00109066 sec/op
+Iteration #10: 0.00109628 sec/op
+Iteration #11: 0.00108670 sec/op
+Iteration #12: 0.00108918 sec/op
+Iteration #13: 0.00109390 sec/op
+Iteration #14: 0.00109070 sec/op
+  Success:   ~ 0.00120239 sec/op ±31.0%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=4
+Warm-up #0: 0.00000169484 sec/op
+Warm-up #1: 0.00000198491 sec/op
+Warm-up #2: 0.00000198960 sec/op
+Warm-up #3: 0.00000199310 sec/op
+Warm-up #4: 0.00000197459 sec/op
+Warm-up #5: 0.00000197407 sec/op
+Warm-up #6: 0.00000201816 sec/op
+Warm-up #7: 0.00000197533 sec/op
+Iteration #0: 0.00000166832 sec/op
+Iteration #1: 0.00000167548 sec/op
+Iteration #2: 0.00000168300 sec/op
+Iteration #3: 0.00000163607 sec/op
+Iteration #4: 0.00000167970 sec/op
+Iteration #5: 0.00000166328 sec/op
+Iteration #6: 0.00000169353 sec/op
+Iteration #7: 0.00000170762 sec/op
+Iteration #8: 0.00000170081 sec/op
+Iteration #9: 0.00000171985 sec/op
+Iteration #10: 0.00000170283 sec/op
+Iteration #11: 0.00000167458 sec/op
+Iteration #12: 0.00000167986 sec/op
+Iteration #13: 0.00000167967 sec/op
+Iteration #14: 0.00000168236 sec/op
+  Success:   ~ 0.00000168313 sec/op ±0.61%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=4
+Warm-up #0: 0.00899115 sec/op
+Warm-up #1: 0.00900312 sec/op
+Warm-up #2: 0.00783951 sec/op
+Warm-up #3: 0.00868332 sec/op
+Warm-up #4: 0.00825604 sec/op
+Warm-up #5: 0.00894746 sec/op
+Warm-up #6: 0.00895939 sec/op
+Warm-up #7: 0.00846360 sec/op
+Iteration #0: 0.00822774 sec/op
+Iteration #1: 0.00894402 sec/op
+Iteration #2: 0.00895357 sec/op
+Iteration #3: 0.00889665 sec/op
+Iteration #4: 0.00892223 sec/op
+Iteration #5: 0.00892955 sec/op
+Iteration #6: 0.00897602 sec/op
+Iteration #7: 0.00902878 sec/op
+Iteration #8: 0.00914690 sec/op
+Iteration #9: 0.00888105 sec/op
+Iteration #10: 0.00891080 sec/op
+Iteration #11: 0.00890884 sec/op
+Iteration #12: 0.00890453 sec/op
+Iteration #13: 0.00891348 sec/op
+Iteration #14: 0.00892170 sec/op
+  Success:   ~ 0.00889773 sec/op ±1.1%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=0
+Warm-up #0: 0.00586018 sec/op
+Warm-up #1: 0.00596740 sec/op
+Warm-up #2: 0.00592272 sec/op
+Warm-up #3: 0.00590239 sec/op
+Warm-up #4: 0.00593610 sec/op
+Warm-up #5: 0.00583646 sec/op
+Warm-up #6: 0.00583279 sec/op
+Warm-up #7: 0.00583879 sec/op
+Iteration #0: 0.00583002 sec/op
+Iteration #1: 0.00590493 sec/op
+Iteration #2: 0.00601840 sec/op
+Iteration #3: 0.00578879 sec/op
+Iteration #4: 0.00582718 sec/op
+Iteration #5: 0.00591225 sec/op
+Iteration #6: 0.00585299 sec/op
+Iteration #7: 0.00586180 sec/op
+Iteration #8: 0.00585554 sec/op
+Iteration #9: 0.00617855 sec/op
+Iteration #10: 0.00581561 sec/op
+Iteration #11: 0.00595626 sec/op
+Iteration #12: 0.00598157 sec/op
+Iteration #13: 0.00597440 sec/op
+Iteration #14: 0.00607100 sec/op
+  Success:   ~ 0.00592195 sec/op ±0.93%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=4
+Warm-up #0: 0.0000233202 sec/op
+Warm-up #1: 0.0000235978 sec/op
+Warm-up #2: 0.0000236482 sec/op
+Warm-up #3: 0.0000235509 sec/op
+Warm-up #4: 0.0000235809 sec/op
+Warm-up #5: 0.0000235462 sec/op
+Warm-up #6: 0.0000235277 sec/op
+Warm-up #7: 0.0000237334 sec/op
+Iteration #0: 0.0000236476 sec/op
+Iteration #1: 0.0000235942 sec/op
+Iteration #2: 0.0000236827 sec/op
+Iteration #3: 0.0000237049 sec/op
+Iteration #4: 0.0000237673 sec/op
+Iteration #5: 0.0000234342 sec/op
+Iteration #6: 0.0000235845 sec/op
+Iteration #7: 0.0000236227 sec/op
+Iteration #8: 0.0000236811 sec/op
+Iteration #9: 0.0000236724 sec/op
+Iteration #10: 0.0000236434 sec/op
+Iteration #11: 0.0000235010 sec/op
+Iteration #12: 0.0000235339 sec/op
+Iteration #13: 0.0000234207 sec/op
+Iteration #14: 0.0000234490 sec/op
+  Success:   ~ 0.0000235960 sec/op ±0.23%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=4
+Warm-up #0: 0.0397340 sec/op
+Warm-up #1: 0.0417291 sec/op
+Warm-up #2: 0.0416999 sec/op
+Warm-up #3: 0.0415181 sec/op
+Warm-up #4: 0.0416787 sec/op
+Warm-up #5: 0.0415811 sec/op
+Warm-up #6: 0.0416198 sec/op
+Warm-up #7: 0.0418692 sec/op
+Iteration #0: 0.0395731 sec/op
+Iteration #1: 0.0366445 sec/op
+Iteration #2: 0.0366210 sec/op
+Iteration #3: 0.0368197 sec/op
+Iteration #4: 0.0367018 sec/op
+Iteration #5: 0.0366018 sec/op
+Iteration #6: 0.0367094 sec/op
+Iteration #7: 0.0365611 sec/op
+Iteration #8: 0.0365341 sec/op
+Iteration #9: 0.0364094 sec/op
+Iteration #10: 0.0365501 sec/op
+Iteration #11: 0.0365623 sec/op
+Iteration #12: 0.0366135 sec/op
+Iteration #13: 0.0365201 sec/op
+Iteration #14: 0.0364450 sec/op
+  Success:   ~ 0.0367911 sec/op ±1.1%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=4
+Warm-up #0: 0.0962131 sec/op
+Warm-up #1: 0.0958493 sec/op
+Warm-up #2: 0.0960384 sec/op
+Warm-up #3: 0.0973502 sec/op
+Warm-up #4: 0.0961344 sec/op
+Warm-up #5: 0.0961703 sec/op
+Warm-up #6: 0.0964508 sec/op
+Warm-up #7: 0.0958096 sec/op
+Iteration #0: 0.0941040 sec/op
+Iteration #1: 0.0944407 sec/op
+Iteration #2: 0.0947278 sec/op
+Iteration #3: 0.0945329 sec/op
+Iteration #4: 0.0950664 sec/op
+Iteration #5: 0.0944260 sec/op
+Iteration #6: 0.0944470 sec/op
+Iteration #7: 0.0946306 sec/op
+Iteration #8: 0.0944124 sec/op
+Iteration #9: 0.0942859 sec/op
+Iteration #10: 0.0943767 sec/op
+Iteration #11: 0.0947876 sec/op
+Iteration #12: 0.0940539 sec/op
+Iteration #13: 0.0942698 sec/op
+Iteration #14: 0.0943479 sec/op
+  Success:   ~ 0.0944606 sec/op ±0.14%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=4
+Warm-up #0: 0.423394 sec/op
+Warm-up #1: 0.421702 sec/op
+Warm-up #2: 0.419198 sec/op
+Warm-up #3: 0.421568 sec/op
+Warm-up #4: 0.420574 sec/op
+Warm-up #5: 0.418972 sec/op
+Warm-up #6: 0.420365 sec/op
+Warm-up #7: 0.424076 sec/op
+Iteration #0: 0.419582 sec/op
+Iteration #1: 0.420290 sec/op
+Iteration #2: 0.420184 sec/op
+Iteration #3: 0.419389 sec/op
+Iteration #4: 0.419259 sec/op
+Iteration #5: 0.418701 sec/op
+Iteration #6: 0.417736 sec/op
+Iteration #7: 0.418793 sec/op
+Iteration #8: 0.418173 sec/op
+Iteration #9: 0.419026 sec/op
+Iteration #10: 0.419920 sec/op
+Iteration #11: 0.418443 sec/op
+Iteration #12: 0.419776 sec/op
+Iteration #13: 0.418066 sec/op
+Iteration #14: 0.418232 sec/op
+  Success:   ~ 0.419038 sec/op ±0.098%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=4
+Warm-up #0: 0.00121982 sec/op
+Warm-up #1: 0.00122129 sec/op
+Warm-up #2: 0.00121315 sec/op
+Warm-up #3: 0.00122674 sec/op
+Warm-up #4: 0.00121952 sec/op
+Warm-up #5: 0.00122406 sec/op
+Warm-up #6: 0.00103773 sec/op
+Warm-up #7: 0.00118552 sec/op
+Iteration #0: 0.00123332 sec/op
+Iteration #1: 0.00117740 sec/op
+Iteration #2: 0.00106734 sec/op
+Iteration #3: 0.00107836 sec/op
+Iteration #4: 0.00106446 sec/op
+Iteration #5: 0.00106343 sec/op
+Iteration #6: 0.00106153 sec/op
+Iteration #7: 0.00121284 sec/op
+Iteration #8: 0.00124035 sec/op
+Iteration #9: 0.00123630 sec/op
+Iteration #10: 0.00120125 sec/op
+Iteration #11: 0.00124807 sec/op
+Iteration #12: 0.00125193 sec/op
+Iteration #13: 0.00127515 sec/op
+Iteration #14: 0.00124914 sec/op
+  Success:   ~ 0.00117739 sec/op ±3.6%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=5
+Warm-up #0: 0.00000139774 sec/op
+Warm-up #1: 0.00000170689 sec/op
+Warm-up #2: 0.00000176012 sec/op
+Warm-up #3: 0.00000179543 sec/op
+Warm-up #4: 0.00000178993 sec/op
+Warm-up #5: 0.00000177210 sec/op
+Warm-up #6: 0.00000181061 sec/op
+Warm-up #7: 0.00000180564 sec/op
+Iteration #0: 0.00000175028 sec/op
+Iteration #1: 0.00000174814 sec/op
+Iteration #2: 0.00000178362 sec/op
+Iteration #3: 0.00000178018 sec/op
+Iteration #4: 0.00000179482 sec/op
+Iteration #5: 0.00000178144 sec/op
+Iteration #6: 0.00000171576 sec/op
+Iteration #7: 0.00000169539 sec/op
+Iteration #8: 0.00000170737 sec/op
+Iteration #9: 0.00000167210 sec/op
+Iteration #10: 0.00000167951 sec/op
+Iteration #11: 0.00000171224 sec/op
+Iteration #12: 0.00000179344 sec/op
+Iteration #13: 0.00000169238 sec/op
+Iteration #14: 0.00000168546 sec/op
+  Success:   ~ 0.00000173281 sec/op ±1.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=5
+Warm-up #0: 0.00894183 sec/op
+Warm-up #1: 0.00898383 sec/op
+Warm-up #2: 0.00911124 sec/op
+Warm-up #3: 0.00901501 sec/op
+Warm-up #4: 0.00899139 sec/op
+Warm-up #5: 0.00888241 sec/op
+Warm-up #6: 0.00888284 sec/op
+Warm-up #7: 0.00859698 sec/op
+Iteration #0: 0.00765965 sec/op
+Iteration #1: 0.00758653 sec/op
+Iteration #2: 0.00760857 sec/op
+Iteration #3: 0.00760479 sec/op
+Iteration #4: 0.00764200 sec/op
+Iteration #5: 0.00759145 sec/op
+Iteration #6: 0.00757901 sec/op
+Iteration #7: 0.00764614 sec/op
+Iteration #8: 0.00763056 sec/op
+Iteration #9: 0.00762878 sec/op
+Iteration #10: 0.00764236 sec/op
+Iteration #11: 0.00761968 sec/op
+Iteration #12: 0.00762843 sec/op
+Iteration #13: 0.00768615 sec/op
+Iteration #14: 0.00764571 sec/op
+  Success:   ~ 0.00762665 sec/op ±0.19%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=5
+Warm-up #0: 0.0000206017 sec/op
+Warm-up #1: 0.0000205499 sec/op
+Warm-up #2: 0.0000239466 sec/op
+Warm-up #3: 0.0000241965 sec/op
+Warm-up #4: 0.0000245884 sec/op
+Warm-up #5: 0.0000245451 sec/op
+Warm-up #6: 0.0000237154 sec/op
+Warm-up #7: 0.0000207531 sec/op
+Iteration #0: 0.0000199455 sec/op
+Iteration #1: 0.0000199155 sec/op
+Iteration #2: 0.0000223739 sec/op
+Iteration #3: 0.0000218627 sec/op
+Iteration #4: 0.0000199038 sec/op
+Iteration #5: 0.0000202736 sec/op
+Iteration #6: 0.0000199160 sec/op
+Iteration #7: 0.0000202357 sec/op
+Iteration #8: 0.0000199799 sec/op
+Iteration #9: 0.0000200315 sec/op
+Iteration #10: 0.0000199751 sec/op
+Iteration #11: 0.0000199784 sec/op
+Iteration #12: 0.0000199711 sec/op
+Iteration #13: 0.0000200407 sec/op
+Iteration #14: 0.0000200597 sec/op
+  Success:   ~ 0.0000202975 sec/op ±1.9%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=5
+Warm-up #0: 0.0358306 sec/op
+Warm-up #1: 0.0358164 sec/op
+Warm-up #2: 0.0359310 sec/op
+Warm-up #3: 0.0358383 sec/op
+Warm-up #4: 0.0358085 sec/op
+Warm-up #5: 0.0357239 sec/op
+Warm-up #6: 0.0358792 sec/op
+Warm-up #7: 0.0360482 sec/op
+Iteration #0: 0.0387088 sec/op
+Iteration #1: 0.0406090 sec/op
+Iteration #2: 0.0383094 sec/op
+Iteration #3: 0.0381871 sec/op
+Iteration #4: 0.0385550 sec/op
+Iteration #5: 0.0386044 sec/op
+Iteration #6: 0.0383194 sec/op
+Iteration #7: 0.0384162 sec/op
+Iteration #8: 0.0383212 sec/op
+Iteration #9: 0.0384351 sec/op
+Iteration #10: 0.0391044 sec/op
+Iteration #11: 0.0385185 sec/op
+Iteration #12: 0.0383590 sec/op
+Iteration #13: 0.0383162 sec/op
+Iteration #14: 0.0383949 sec/op
+  Success:   ~ 0.0386106 sec/op ±0.78%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=5
+Warm-up #0: 0.0927360 sec/op
+Warm-up #1: 0.0930967 sec/op
+Warm-up #2: 0.0929054 sec/op
+Warm-up #3: 0.0927736 sec/op
+Warm-up #4: 0.0928600 sec/op
+Warm-up #5: 0.0928674 sec/op
+Warm-up #6: 0.0926195 sec/op
+Warm-up #7: 0.0926482 sec/op
+Iteration #0: 0.0931807 sec/op
+Iteration #1: 0.0929064 sec/op
+Iteration #2: 0.0930838 sec/op
+Iteration #3: 0.0932221 sec/op
+Iteration #4: 0.0929225 sec/op
+Iteration #5: 0.0931233 sec/op
+Iteration #6: 0.0928694 sec/op
+Iteration #7: 0.0930590 sec/op
+Iteration #8: 0.0929978 sec/op
+Iteration #9: 0.0930359 sec/op
+Iteration #10: 0.0928203 sec/op
+Iteration #11: 0.0928020 sec/op
+Iteration #12: 0.0934017 sec/op
+Iteration #13: 0.0926022 sec/op
+Iteration #14: 0.0923136 sec/op
+  Success:   ~ 0.0929560 sec/op ±0.14%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=0
+Warm-up #0: 0.0129517 sec/op
+Warm-up #1: 0.0128848 sec/op
+Warm-up #2: 0.0127590 sec/op
+Warm-up #3: 0.0131798 sec/op
+Warm-up #4: 0.0131248 sec/op
+Warm-up #5: 0.0126925 sec/op
+Warm-up #6: 0.0127238 sec/op
+Warm-up #7: 0.0127405 sec/op
+Iteration #0: 0.0126983 sec/op
+Iteration #1: 0.0127523 sec/op
+Iteration #2: 0.0127607 sec/op
+Iteration #3: 0.0128356 sec/op
+Iteration #4: 0.0127558 sec/op
+Iteration #5: 0.0127344 sec/op
+Iteration #6: 0.0126965 sec/op
+Iteration #7: 0.0126311 sec/op
+Iteration #8: 0.0127073 sec/op
+Iteration #9: 0.0127119 sec/op
+Iteration #10: 0.0130842 sec/op
+Iteration #11: 0.0130815 sec/op
+Iteration #12: 0.0130430 sec/op
+Iteration #13: 0.0130599 sec/op
+Iteration #14: 0.0131028 sec/op
+  Success:   ~ 0.0128437 sec/op ±0.69%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=5
+Warm-up #0: 0.418413 sec/op
+Warm-up #1: 0.415821 sec/op
+Warm-up #2: 0.412164 sec/op
+Warm-up #3: 0.411188 sec/op
+Warm-up #4: 0.411123 sec/op
+Warm-up #5: 0.412300 sec/op
+Warm-up #6: 0.410973 sec/op
+Warm-up #7: 0.410178 sec/op
+Iteration #0: 0.412286 sec/op
+Iteration #1: 0.413197 sec/op
+Iteration #2: 0.413626 sec/op
+Iteration #3: 0.412659 sec/op
+Iteration #4: 0.411258 sec/op
+Iteration #5: 0.412102 sec/op
+Iteration #6: 0.410203 sec/op
+Iteration #7: 0.411036 sec/op
+Iteration #8: 0.410754 sec/op
+Iteration #9: 0.411704 sec/op
+Iteration #10: 0.411551 sec/op
+Iteration #11: 0.409838 sec/op
+Iteration #12: 0.411360 sec/op
+Iteration #13: 0.411680 sec/op
+Iteration #14: 0.409946 sec/op
+  Success:   ~ 0.411547 sec/op ±0.14%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=5
+Warm-up #0: 0.00120671 sec/op
+Warm-up #1: 0.00120222 sec/op
+Warm-up #2: 0.00128935 sec/op
+Warm-up #3: 0.00125562 sec/op
+Warm-up #4: 0.00125207 sec/op
+Warm-up #5: 0.00125489 sec/op
+Warm-up #6: 0.00125475 sec/op
+Warm-up #7: 0.00124606 sec/op
+Iteration #0: 0.00124091 sec/op
+Iteration #1: 0.00123572 sec/op
+Iteration #2: 0.00125022 sec/op
+Iteration #3: 0.00124220 sec/op
+Iteration #4: 0.00124291 sec/op
+Iteration #5: 0.00124273 sec/op
+Iteration #6: 0.00124092 sec/op
+Iteration #7: 0.00123065 sec/op
+Iteration #8: 0.00123776 sec/op
+Iteration #9: 0.00122870 sec/op
+Iteration #10: 0.00123219 sec/op
+Iteration #11: 0.00123949 sec/op
+Iteration #12: 0.00123629 sec/op
+Iteration #13: 0.00122336 sec/op
+Iteration #14: 0.00122723 sec/op
+  Success:   ~ 0.00123675 sec/op ±0.29%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=6
+Warm-up #0: 0.00000138912 sec/op
+Warm-up #1: 0.00000178479 sec/op
+Warm-up #2: 0.00000169937 sec/op
+Warm-up #3: 0.00000181120 sec/op
+Warm-up #4: 0.00000183333 sec/op
+Warm-up #5: 0.00000177477 sec/op
+Warm-up #6: 0.00000176852 sec/op
+Warm-up #7: 0.00000170823 sec/op
+Iteration #0: 0.00000165636 sec/op
+Iteration #1: 0.00000172458 sec/op
+Iteration #2: 0.00000169790 sec/op
+Iteration #3: 0.00000168933 sec/op
+Iteration #4: 0.00000173292 sec/op
+Iteration #5: 0.00000167543 sec/op
+Iteration #6: 0.00000166963 sec/op
+Iteration #7: 0.00000168471 sec/op
+Iteration #8: 0.00000174519 sec/op
+Iteration #9: 0.00000168620 sec/op
+Iteration #10: 0.00000172342 sec/op
+Iteration #11: 0.00000172087 sec/op
+Iteration #12: 0.00000174497 sec/op
+Iteration #13: 0.00000173473 sec/op
+Iteration #14: 0.00000168895 sec/op
+  Success:   ~ 0.00000170501 sec/op ±0.86%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=6
+Warm-up #0: 0.00875483 sec/op
+Warm-up #1: 0.00898185 sec/op
+Warm-up #2: 0.00916906 sec/op
+Warm-up #3: 0.00914875 sec/op
+Warm-up #4: 0.00915912 sec/op
+Warm-up #5: 0.00914960 sec/op
+Warm-up #6: 0.00907296 sec/op
+Warm-up #7: 0.00885407 sec/op
+Iteration #0: 0.00875791 sec/op
+Iteration #1: 0.00877916 sec/op
+Iteration #2: 0.00875496 sec/op
+Iteration #3: 0.00875673 sec/op
+Iteration #4: 0.00878230 sec/op
+Iteration #5: 0.00874820 sec/op
+Iteration #6: 0.00883420 sec/op
+Iteration #7: 0.00922253 sec/op
+Iteration #8: 0.00921014 sec/op
+Iteration #9: 0.00918931 sec/op
+Iteration #10: 0.00918777 sec/op
+Iteration #11: 0.00916574 sec/op
+Iteration #12: 0.00881393 sec/op
+Iteration #13: 0.00877858 sec/op
+Iteration #14: 0.00884687 sec/op
+  Success:   ~ 0.00892189 sec/op ±1.1%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=6
+Warm-up #0: 0.0000197761 sec/op
+Warm-up #1: 0.0000199217 sec/op
+Warm-up #2: 0.0000198794 sec/op
+Warm-up #3: 0.0000202375 sec/op
+Warm-up #4: 0.0000202586 sec/op
+Warm-up #5: 0.0000202472 sec/op
+Warm-up #6: 0.0000202990 sec/op
+Warm-up #7: 0.0000202694 sec/op
+Iteration #0: 0.0000200896 sec/op
+Iteration #1: 0.0000201143 sec/op
+Iteration #2: 0.0000199874 sec/op
+Iteration #3: 0.0000202002 sec/op
+Iteration #4: 0.0000220564 sec/op
+Iteration #5: 0.0000233394 sec/op
+Iteration #6: 0.0000233901 sec/op
+Iteration #7: 0.0000213517 sec/op
+Iteration #8: 0.0000200902 sec/op
+Iteration #9: 0.0000227018 sec/op
+Iteration #10: 0.0000231115 sec/op
+Iteration #11: 0.0000232035 sec/op
+Iteration #12: 0.0000232947 sec/op
+Iteration #13: 0.0000221531 sec/op
+Iteration #14: 0.0000234022 sec/op
+  Success:   ~ 0.0000218991 sec/op ±3.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=6
+Warm-up #0: 0.0352792 sec/op
+Warm-up #1: 0.0352425 sec/op
+Warm-up #2: 0.0353280 sec/op
+Warm-up #3: 0.0380596 sec/op
+Warm-up #4: 0.0436040 sec/op
+Warm-up #5: 0.0411820 sec/op
+Warm-up #6: 0.0411183 sec/op
+Warm-up #7: 0.0409671 sec/op
+Iteration #0: 0.0409155 sec/op
+Iteration #1: 0.0409809 sec/op
+Iteration #2: 0.0409768 sec/op
+Iteration #3: 0.0409498 sec/op
+Iteration #4: 0.0409734 sec/op
+Iteration #5: 0.0410118 sec/op
+Iteration #6: 0.0409330 sec/op
+Iteration #7: 0.0363978 sec/op
+Iteration #8: 0.0351300 sec/op
+Iteration #9: 0.0351833 sec/op
+Iteration #10: 0.0353582 sec/op
+Iteration #11: 0.0352536 sec/op
+Iteration #12: 0.0354399 sec/op
+Iteration #13: 0.0353556 sec/op
+Iteration #14: 0.0352992 sec/op
+  Success:   ~ 0.0380106 sec/op ±3.8%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=6
+Warm-up #0: 0.0903648 sec/op
+Warm-up #1: 0.0902470 sec/op
+Warm-up #2: 0.0903115 sec/op
+Warm-up #3: 0.0903577 sec/op
+Warm-up #4: 0.0904643 sec/op
+Warm-up #5: 0.0903320 sec/op
+Warm-up #6: 0.0906357 sec/op
+Warm-up #7: 0.0905151 sec/op
+Iteration #0: 0.0889307 sec/op
+Iteration #1: 0.0888798 sec/op
+Iteration #2: 0.0937883 sec/op
+Iteration #3: 0.0905229 sec/op
+Iteration #4: 0.0896022 sec/op
+Iteration #5: 0.0898850 sec/op
+Iteration #6: 0.0889328 sec/op
+Iteration #7: 0.0893024 sec/op
+Iteration #8: 0.0889661 sec/op
+Iteration #9: 0.0890781 sec/op
+Iteration #10: 0.0889961 sec/op
+Iteration #11: 0.0888621 sec/op
+Iteration #12: 0.0892646 sec/op
+Iteration #13: 0.0889903 sec/op
+Iteration #14: 0.0894074 sec/op
+  Success:   ~ 0.0895606 sec/op ±0.71%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=6
+Warm-up #0: 0.359578 sec/op
+Warm-up #1: 0.358331 sec/op
+Warm-up #2: 0.355993 sec/op
+Warm-up #3: 0.354978 sec/op
+Warm-up #4: 0.355950 sec/op
+Warm-up #5: 0.355314 sec/op
+Warm-up #6: 0.355356 sec/op
+Warm-up #7: 0.355295 sec/op
+Iteration #0: 0.357888 sec/op
+Iteration #1: 0.358088 sec/op
+Iteration #2: 0.359868 sec/op
+Iteration #3: 0.360027 sec/op
+Iteration #4: 0.368855 sec/op
+Iteration #5: 0.360690 sec/op
+Iteration #6: 0.358298 sec/op
+Iteration #7: 0.363400 sec/op
+Iteration #8: 0.360325 sec/op
+Iteration #9: 0.357493 sec/op
+Iteration #10: 0.358254 sec/op
+Iteration #11: 0.358768 sec/op
+Iteration #12: 0.357691 sec/op
+Iteration #13: 0.357789 sec/op
+Iteration #14: 0.357177 sec/op
+  Success:   ~ 0.359641 sec/op ±0.43%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=6
+Warm-up #0: 0.00122565 sec/op
+Warm-up #1: 0.00124027 sec/op
+Warm-up #2: 0.00124070 sec/op
+Warm-up #3: 0.00123939 sec/op
+Warm-up #4: 0.00123907 sec/op
+Warm-up #5: 0.00123893 sec/op
+Warm-up #6: 0.00123848 sec/op
+Warm-up #7: 0.00123496 sec/op
+Iteration #0: 0.00125028 sec/op
+Iteration #1: 0.00124937 sec/op
+Iteration #2: 0.00123728 sec/op
+Iteration #3: 0.00124669 sec/op
+Iteration #4: 0.00123958 sec/op
+Iteration #5: 0.00124136 sec/op
+Iteration #6: 0.00123760 sec/op
+Iteration #7: 0.00123630 sec/op
+Iteration #8: 0.00123583 sec/op
+Iteration #9: 0.00125966 sec/op
+Iteration #10: 0.00123795 sec/op
+Iteration #11: 0.00124047 sec/op
+Iteration #12: 0.00123600 sec/op
+Iteration #13: 0.00123399 sec/op
+Iteration #14: 0.00126112 sec/op
+  Success:   ~ 0.00124290 sec/op ±0.35%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=7
+Warm-up #0: 0.00000146821 sec/op
+Warm-up #1: 0.00000182039 sec/op
+Warm-up #2: 0.00000186172 sec/op
+Warm-up #3: 0.00000187540 sec/op
+Warm-up #4: 0.00000188832 sec/op
+Warm-up #5: 0.00000189167 sec/op
+Warm-up #6: 0.00000189035 sec/op
+Warm-up #7: 0.00000186863 sec/op
+Iteration #0: 0.00000173526 sec/op
+Iteration #1: 0.00000183489 sec/op
+Iteration #2: 0.00000182445 sec/op
+Iteration #3: 0.00000166770 sec/op
+Iteration #4: 0.00000167918 sec/op
+Iteration #5: 0.00000168770 sec/op
+Iteration #6: 0.00000171182 sec/op
+Iteration #7: 0.00000167358 sec/op
+Iteration #8: 0.00000169513 sec/op
+Iteration #9: 0.00000171555 sec/op
+Iteration #10: 0.00000175805 sec/op
+Iteration #11: 0.00000178908 sec/op
+Iteration #12: 0.00000173647 sec/op
+Iteration #13: 0.00000171552 sec/op
+Iteration #14: 0.00000170368 sec/op
+  Success:   ~ 0.00000172854 sec/op ±1.5%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=0
+Warm-up #0: 0.0478704 sec/op
+Warm-up #1: 0.0476851 sec/op
+Warm-up #2: 0.0484747 sec/op
+Warm-up #3: 0.0471382 sec/op
+Warm-up #4: 0.0484475 sec/op
+Warm-up #5: 0.0472904 sec/op
+Warm-up #6: 0.0477729 sec/op
+Warm-up #7: 0.0473317 sec/op
+Iteration #0: 0.0493252 sec/op
+Iteration #1: 0.0487523 sec/op
+Iteration #2: 0.0479128 sec/op
+Iteration #3: 0.0478419 sec/op
+Iteration #4: 0.0485920 sec/op
+Iteration #5: 0.0475677 sec/op
+Iteration #6: 0.0476276 sec/op
+Iteration #7: 0.0471791 sec/op
+Iteration #8: 0.0473293 sec/op
+Iteration #9: 0.0470743 sec/op
+Iteration #10: 0.0475352 sec/op
+Iteration #11: 0.0473183 sec/op
+Iteration #12: 0.0474734 sec/op
+Iteration #13: 0.0476332 sec/op
+Iteration #14: 0.0474317 sec/op
+  Success:   ~ 0.0477729 sec/op ±0.67%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=7
+Warm-up #0: 0.00863927 sec/op
+Warm-up #1: 0.00873529 sec/op
+Warm-up #2: 0.00874724 sec/op
+Warm-up #3: 0.00883280 sec/op
+Warm-up #4: 0.00905867 sec/op
+Warm-up #5: 0.00863552 sec/op
+Warm-up #6: 0.00871936 sec/op
+Warm-up #7: 0.00870146 sec/op
+Iteration #0: 0.00873161 sec/op
+Iteration #1: 0.00899933 sec/op
+Iteration #2: 0.00851749 sec/op
+Iteration #3: 0.00803690 sec/op
+Iteration #4: 0.00788556 sec/op
+Iteration #5: 0.00791064 sec/op
+Iteration #6: 0.00780150 sec/op
+Iteration #7: 0.00786296 sec/op
+Iteration #8: 0.00796413 sec/op
+Iteration #9: 0.00822925 sec/op
+Iteration #10: 0.00844357 sec/op
+Iteration #11: 0.00779367 sec/op
+Iteration #12: 0.00778402 sec/op
+Iteration #13: 0.00777258 sec/op
+Iteration #14: 0.00778761 sec/op
+  Success:   ~ 0.00810139 sec/op ±2.5%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=7
+Warm-up #0: 0.0000199455 sec/op
+Warm-up #1: 0.0000228606 sec/op
+Warm-up #2: 0.0000231228 sec/op
+Warm-up #3: 0.0000230974 sec/op
+Warm-up #4: 0.0000231044 sec/op
+Warm-up #5: 0.0000232221 sec/op
+Warm-up #6: 0.0000233945 sec/op
+Warm-up #7: 0.0000235072 sec/op
+Iteration #0: 0.0000235998 sec/op
+Iteration #1: 0.0000236894 sec/op
+Iteration #2: 0.0000235287 sec/op
+Iteration #3: 0.0000234808 sec/op
+Iteration #4: 0.0000255379 sec/op
+Iteration #5: 0.0000236541 sec/op
+Iteration #6: 0.0000235161 sec/op
+Iteration #7: 0.0000235100 sec/op
+Iteration #8: 0.0000235280 sec/op
+Iteration #9: 0.0000234477 sec/op
+Iteration #10: 0.0000235471 sec/op
+Iteration #11: 0.0000235799 sec/op
+Iteration #12: 0.0000234523 sec/op
+Iteration #13: 0.0000228585 sec/op
+Iteration #14: 0.0000229932 sec/op
+  Success:   ~ 0.0000235949 sec/op ±1.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=7
+Warm-up #0: 0.0352640 sec/op
+Warm-up #1: 0.0367447 sec/op
+Warm-up #2: 0.0417255 sec/op
+Warm-up #3: 0.0412779 sec/op
+Warm-up #4: 0.0411912 sec/op
+Warm-up #5: 0.0411594 sec/op
+Warm-up #6: 0.0411722 sec/op
+Warm-up #7: 0.0411662 sec/op
+Iteration #0: 0.0440168 sec/op
+Iteration #1: 0.0439604 sec/op
+Iteration #2: 0.0440743 sec/op
+Iteration #3: 0.0438461 sec/op
+Iteration #4: 0.0439184 sec/op
+Iteration #5: 0.0438154 sec/op
+Iteration #6: 0.0440738 sec/op
+Iteration #7: 0.0438826 sec/op
+Iteration #8: 0.0439474 sec/op
+Iteration #9: 0.0437632 sec/op
+Iteration #10: 0.0437145 sec/op
+Iteration #11: 0.0459241 sec/op
+Iteration #12: 0.0440520 sec/op
+Iteration #13: 0.0439320 sec/op
+Iteration #14: 0.0437726 sec/op
+  Success:   ~ 0.0440462 sec/op ±0.61%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=7
+Warm-up #0: 0.103533 sec/op
+Warm-up #1: 0.103274 sec/op
+Warm-up #2: 0.103735 sec/op
+Warm-up #3: 0.103172 sec/op
+Warm-up #4: 0.102764 sec/op
+Warm-up #5: 0.103217 sec/op
+Warm-up #6: 0.103168 sec/op
+Warm-up #7: 0.104125 sec/op
+Iteration #0: 0.103813 sec/op
+Iteration #1: 0.103071 sec/op
+Iteration #2: 0.103059 sec/op
+Iteration #3: 0.103804 sec/op
+Iteration #4: 0.103441 sec/op
+Iteration #5: 0.103498 sec/op
+Iteration #6: 0.103298 sec/op
+Iteration #7: 0.103354 sec/op
+Iteration #8: 0.104152 sec/op
+Iteration #9: 0.103089 sec/op
+Iteration #10: 0.102757 sec/op
+Iteration #11: 0.103442 sec/op
+Iteration #12: 0.103002 sec/op
+Iteration #13: 0.103227 sec/op
+Iteration #14: 0.102767 sec/op
+  Success:   ~ 0.103318 sec/op ±0.19%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=7
+Warm-up #0: 0.409161 sec/op
+Warm-up #1: 0.406771 sec/op
+Warm-up #2: 0.407358 sec/op
+Warm-up #3: 0.406781 sec/op
+Warm-up #4: 0.404625 sec/op
+Warm-up #5: 0.406328 sec/op
+Warm-up #6: 0.405699 sec/op
+Warm-up #7: 0.404313 sec/op
+Iteration #0: 0.406891 sec/op
+Iteration #1: 0.407550 sec/op
+Iteration #2: 0.410403 sec/op
+Iteration #3: 0.409602 sec/op
+Iteration #4: 0.407465 sec/op
+Iteration #5: 0.406869 sec/op
+Iteration #6: 0.407016 sec/op
+Iteration #7: 0.406165 sec/op
+Iteration #8: 0.406140 sec/op
+Iteration #9: 0.406815 sec/op
+Iteration #10: 0.406662 sec/op
+Iteration #11: 0.407779 sec/op
+Iteration #12: 0.406779 sec/op
+Iteration #13: 0.405510 sec/op
+Iteration #14: 0.405299 sec/op
+  Success:   ~ 0.407130 sec/op ±0.17%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=7
+Warm-up #0: 0.00109049 sec/op
+Warm-up #1: 0.00109379 sec/op
+Warm-up #2: 0.00115885 sec/op
+Warm-up #3: 0.00125908 sec/op
+Warm-up #4: 0.00125982 sec/op
+Warm-up #5: 0.00126337 sec/op
+Warm-up #6: 0.00126019 sec/op
+Warm-up #7: 0.00126249 sec/op
+Iteration #0: 0.00122597 sec/op
+Iteration #1: 0.00121395 sec/op
+Iteration #2: 0.00121909 sec/op
+Iteration #3: 0.00121841 sec/op
+Iteration #4: 0.00121878 sec/op
+Iteration #5: 0.00121840 sec/op
+Iteration #6: 0.00121334 sec/op
+Iteration #7: 0.00121403 sec/op
+Iteration #8: 0.00123584 sec/op
+Iteration #9: 0.00121774 sec/op
+Iteration #10: 0.00121713 sec/op
+Iteration #11: 0.00121170 sec/op
+Iteration #12: 0.00121210 sec/op
+Iteration #13: 0.00121405 sec/op
+Iteration #14: 0.00121301 sec/op
+  Success:   ~ 0.00121757 sec/op ±0.26%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=8
+Warm-up #0: 0.00000131298 sec/op
+Warm-up #1: 0.00000170660 sec/op
+Warm-up #2: 0.00000171311 sec/op
+Warm-up #3: 0.00000176928 sec/op
+Warm-up #4: 0.00000173543 sec/op
+Warm-up #5: 0.00000171811 sec/op
+Warm-up #6: 0.00000170947 sec/op
+Warm-up #7: 0.00000171523 sec/op
+Iteration #0: 0.00000165080 sec/op
+Iteration #1: 0.00000164775 sec/op
+Iteration #2: 0.00000166427 sec/op
+Iteration #3: 0.00000173195 sec/op
+Iteration #4: 0.00000172575 sec/op
+Iteration #5: 0.00000167641 sec/op
+Iteration #6: 0.00000167854 sec/op
+Iteration #7: 0.00000165941 sec/op
+Iteration #8: 0.00000166375 sec/op
+Iteration #9: 0.00000166381 sec/op
+Iteration #10: 0.00000168208 sec/op
+Iteration #11: 0.00000178514 sec/op
+Iteration #12: 0.00000175158 sec/op
+Iteration #13: 0.00000173530 sec/op
+Iteration #14: 0.00000172663 sec/op
+  Success:   ~ 0.00000169621 sec/op ±1.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=8
+Warm-up #0: 0.00736668 sec/op
+Warm-up #1: 0.00743142 sec/op
+Warm-up #2: 0.00755145 sec/op
+Warm-up #3: 0.00737347 sec/op
+Warm-up #4: 0.00735786 sec/op
+Warm-up #5: 0.00742615 sec/op
+Warm-up #6: 0.00739160 sec/op
+Warm-up #7: 0.00738522 sec/op
+Iteration #0: 0.00738424 sec/op
+Iteration #1: 0.00737496 sec/op
+Iteration #2: 0.00737847 sec/op
+Iteration #3: 0.00736005 sec/op
+Iteration #4: 0.00738151 sec/op
+Iteration #5: 0.00737451 sec/op
+Iteration #6: 0.00737593 sec/op
+Iteration #7: 0.00738651 sec/op
+Iteration #8: 0.00738667 sec/op
+Iteration #9: 0.00738730 sec/op
+Iteration #10: 0.00747097 sec/op
+Iteration #11: 0.00756693 sec/op
+Iteration #12: 0.00742170 sec/op
+Iteration #13: 0.00741986 sec/op
+Iteration #14: 0.00742846 sec/op
+  Success:   ~ 0.00740654 sec/op ±0.36%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=8
+Warm-up #0: 0.0000233255 sec/op
+Warm-up #1: 0.0000238625 sec/op
+Warm-up #2: 0.0000238210 sec/op
+Warm-up #3: 0.0000238223 sec/op
+Warm-up #4: 0.0000240054 sec/op
+Warm-up #5: 0.0000238762 sec/op
+Warm-up #6: 0.0000238338 sec/op
+Warm-up #7: 0.0000237403 sec/op
+Iteration #0: 0.0000232447 sec/op
+Iteration #1: 0.0000232801 sec/op
+Iteration #2: 0.0000231982 sec/op
+Iteration #3: 0.0000232406 sec/op
+Iteration #4: 0.0000227407 sec/op
+Iteration #5: 0.0000228758 sec/op
+Iteration #6: 0.0000232800 sec/op
+Iteration #7: 0.0000231422 sec/op
+Iteration #8: 0.0000251571 sec/op
+Iteration #9: 0.0000228365 sec/op
+Iteration #10: 0.0000200437 sec/op
+Iteration #11: 0.0000214351 sec/op
+Iteration #12: 0.0000198715 sec/op
+Iteration #13: 0.0000211461 sec/op
+Iteration #14: 0.0000217641 sec/op
+  Success:   ~ 0.0000224838 sec/op ±3.1%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=8
+Warm-up #0: 0.0402305 sec/op
+Warm-up #1: 0.0409325 sec/op
+Warm-up #2: 0.0409393 sec/op
+Warm-up #3: 0.0410509 sec/op
+Warm-up #4: 0.0410467 sec/op
+Warm-up #5: 0.0409644 sec/op
+Warm-up #6: 0.0409854 sec/op
+Warm-up #7: 0.0408728 sec/op
+Iteration #0: 0.0408751 sec/op
+Iteration #1: 0.0408127 sec/op
+Iteration #2: 0.0408482 sec/op
+Iteration #3: 0.0407872 sec/op
+Iteration #4: 0.0407613 sec/op
+Iteration #5: 0.0407622 sec/op
+Iteration #6: 0.0408220 sec/op
+Iteration #7: 0.0407742 sec/op
+Iteration #8: 0.0407929 sec/op
+Iteration #9: 0.0408499 sec/op
+Iteration #10: 0.0406570 sec/op
+Iteration #11: 0.0415770 sec/op
+Iteration #12: 0.0405920 sec/op
+Iteration #13: 0.0405465 sec/op
+Iteration #14: 0.0406741 sec/op
+  Success:   ~ 0.0408088 sec/op ±0.29%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=0
+Warm-up #0: 0.0000920709 sec/op
+Warm-up #1: 0.0000904277 sec/op
+Warm-up #2: 0.0000894549 sec/op
+Warm-up #3: 0.0000891118 sec/op
+Warm-up #4: 0.0000899252 sec/op
+Warm-up #5: 0.0000903390 sec/op
+Warm-up #6: 0.0000906817 sec/op
+Warm-up #7: 0.0000904488 sec/op
+Iteration #0: 0.0000909873 sec/op
+Iteration #1: 0.0000907502 sec/op
+Iteration #2: 0.0000888296 sec/op
+Iteration #3: 0.0000900669 sec/op
+Iteration #4: 0.0000888794 sec/op
+Iteration #5: 0.0000899299 sec/op
+Iteration #6: 0.0000894135 sec/op
+Iteration #7: 0.0000871113 sec/op
+Iteration #8: 0.0000867093 sec/op
+Iteration #9: 0.0000892541 sec/op
+Iteration #10: 0.0000902387 sec/op
+Iteration #11: 0.0000865958 sec/op
+Iteration #12: 0.0000860546 sec/op
+Iteration #13: 0.0000926915 sec/op
+Iteration #14: 0.0000997053 sec/op
+  Success:   ~ 0.0000898145 sec/op ±1.9%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=8
+Warm-up #0: 0.0898943 sec/op
+Warm-up #1: 0.0894638 sec/op
+Warm-up #2: 0.0897175 sec/op
+Warm-up #3: 0.0897182 sec/op
+Warm-up #4: 0.0901192 sec/op
+Warm-up #5: 0.0893593 sec/op
+Warm-up #6: 0.0895469 sec/op
+Warm-up #7: 0.0895344 sec/op
+Iteration #0: 0.0898231 sec/op
+Iteration #1: 0.0916487 sec/op
+Iteration #2: 0.0913076 sec/op
+Iteration #3: 0.0915031 sec/op
+Iteration #4: 0.0913174 sec/op
+Iteration #5: 0.0912199 sec/op
+Iteration #6: 0.0911933 sec/op
+Iteration #7: 0.0908348 sec/op
+Iteration #8: 0.0895558 sec/op
+Iteration #9: 0.0906576 sec/op
+Iteration #10: 0.0913250 sec/op
+Iteration #11: 0.0913690 sec/op
+Iteration #12: 0.0898743 sec/op
+Iteration #13: 0.0896815 sec/op
+Iteration #14: 0.0896122 sec/op
+  Success:   ~ 0.0907282 sec/op ±0.44%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=8
+Warm-up #0: 0.357577 sec/op
+Warm-up #1: 0.354980 sec/op
+Warm-up #2: 0.355763 sec/op
+Warm-up #3: 0.355043 sec/op
+Warm-up #4: 0.358292 sec/op
+Warm-up #5: 0.355536 sec/op
+Warm-up #6: 0.355306 sec/op
+Warm-up #7: 0.354958 sec/op
+Iteration #0: 0.366146 sec/op
+Iteration #1: 0.365334 sec/op
+Iteration #2: 0.365475 sec/op
+Iteration #3: 0.365262 sec/op
+Iteration #4: 0.365339 sec/op
+Iteration #5: 0.365540 sec/op
+Iteration #6: 0.379530 sec/op
+Iteration #7: 0.422797 sec/op
+Iteration #8: 0.418752 sec/op
+Iteration #9: 0.417782 sec/op
+Iteration #10: 0.418762 sec/op
+Iteration #11: 0.419004 sec/op
+Iteration #12: 0.421643 sec/op
+Iteration #13: 0.419582 sec/op
+Iteration #14: 0.417369 sec/op
+  Success:   ~ 0.395221 sec/op ±3.5%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=8
+Warm-up #0: 0.00120946 sec/op
+Warm-up #1: 0.00122162 sec/op
+Warm-up #2: 0.00122440 sec/op
+Warm-up #3: 0.00122186 sec/op
+Warm-up #4: 0.00122947 sec/op
+Warm-up #5: 0.00122554 sec/op
+Warm-up #6: 0.00122920 sec/op
+Warm-up #7: 0.00122383 sec/op
+Iteration #0: 0.00122795 sec/op
+Iteration #1: 0.00122652 sec/op
+Iteration #2: 0.00123697 sec/op
+Iteration #3: 0.00122331 sec/op
+Iteration #4: 0.00122599 sec/op
+Iteration #5: 0.00122425 sec/op
+Iteration #6: 0.00122566 sec/op
+Iteration #7: 0.00123207 sec/op
+Iteration #8: 0.00122286 sec/op
+Iteration #9: 0.00122219 sec/op
+Iteration #10: 0.00122571 sec/op
+Iteration #11: 0.00122785 sec/op
+Iteration #12: 0.00122539 sec/op
+Iteration #13: 0.00122312 sec/op
+Iteration #14: 0.00122613 sec/op
+  Success:   ~ 0.00122640 sec/op ±0.16%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=9
+Warm-up #0: 0.00000138877 sec/op
+Warm-up #1: 0.00000173485 sec/op
+Warm-up #2: 0.00000171508 sec/op
+Warm-up #3: 0.00000178946 sec/op
+Warm-up #4: 0.00000172940 sec/op
+Warm-up #5: 0.00000173890 sec/op
+Warm-up #6: 0.00000176926 sec/op
+Warm-up #7: 0.00000174355 sec/op
+Iteration #0: 0.00000181242 sec/op
+Iteration #1: 0.00000181395 sec/op
+Iteration #2: 0.00000179731 sec/op
+Iteration #3: 0.00000181566 sec/op
+Iteration #4: 0.00000178784 sec/op
+Iteration #5: 0.00000180244 sec/op
+Iteration #6: 0.00000182589 sec/op
+Iteration #7: 0.00000185072 sec/op
+Iteration #8: 0.00000183388 sec/op
+Iteration #9: 0.00000182093 sec/op
+Iteration #10: 0.00000181627 sec/op
+Iteration #11: 0.00000184447 sec/op
+Iteration #12: 0.00000179608 sec/op
+Iteration #13: 0.00000178267 sec/op
+Iteration #14: 0.00000175658 sec/op
+  Success:   ~ 0.00000181047 sec/op ±0.68%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=9
+Warm-up #0: 0.00780987 sec/op
+Warm-up #1: 0.00867347 sec/op
+Warm-up #2: 0.00780844 sec/op
+Warm-up #3: 0.00741269 sec/op
+Warm-up #4: 0.00761103 sec/op
+Warm-up #5: 0.00786932 sec/op
+Warm-up #6: 0.00786381 sec/op
+Warm-up #7: 0.00786707 sec/op
+Iteration #0: 0.00778934 sec/op
+Iteration #1: 0.00747255 sec/op
+Iteration #2: 0.00745698 sec/op
+Iteration #3: 0.00756062 sec/op
+Iteration #4: 0.00745458 sec/op
+Iteration #5: 0.00748216 sec/op
+Iteration #6: 0.00746879 sec/op
+Iteration #7: 0.00744372 sec/op
+Iteration #8: 0.00739221 sec/op
+Iteration #9: 0.00740893 sec/op
+Iteration #10: 0.00739328 sec/op
+Iteration #11: 0.00736447 sec/op
+Iteration #12: 0.00742142 sec/op
+Iteration #13: 0.00739241 sec/op
+Iteration #14: 0.00746184 sec/op
+  Success:   ~ 0.00746422 sec/op ±0.69%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=9
+Warm-up #0: 0.0000206611 sec/op
+Warm-up #1: 0.0000232287 sec/op
+Warm-up #2: 0.0000215589 sec/op
+Warm-up #3: 0.0000204588 sec/op
+Warm-up #4: 0.0000207186 sec/op
+Warm-up #5: 0.0000207819 sec/op
+Warm-up #6: 0.0000205349 sec/op
+Warm-up #7: 0.0000206268 sec/op
+Iteration #0: 0.0000202292 sec/op
+Iteration #1: 0.0000202063 sec/op
+Iteration #2: 0.0000208586 sec/op
+Iteration #3: 0.0000233245 sec/op
+Iteration #4: 0.0000232286 sec/op
+Iteration #5: 0.0000241318 sec/op
+Iteration #6: 0.0000217495 sec/op
+Iteration #7: 0.0000202018 sec/op
+Iteration #8: 0.0000200759 sec/op
+Iteration #9: 0.0000201765 sec/op
+Iteration #10: 0.0000200361 sec/op
+Iteration #11: 0.0000228241 sec/op
+Iteration #12: 0.0000240795 sec/op
+Iteration #13: 0.0000224226 sec/op
+Iteration #14: 0.0000235061 sec/op
+  Success:   ~ 0.0000218034 sec/op ±3.7%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Rainier.bmp, level=9
+Warm-up #0: 0.0411276 sec/op
+Warm-up #1: 0.0410374 sec/op
+Warm-up #2: 0.0410618 sec/op
+Warm-up #3: 0.0411054 sec/op
+Warm-up #4: 0.0410980 sec/op
+Warm-up #5: 0.0411059 sec/op
+Warm-up #6: 0.0411581 sec/op
+Warm-up #7: 0.0409917 sec/op
+Iteration #0: 0.0409639 sec/op
+Iteration #1: 0.0410990 sec/op
+Iteration #2: 0.0411366 sec/op
+Iteration #3: 0.0410044 sec/op
+Iteration #4: 0.0408849 sec/op
+Iteration #5: 0.0409172 sec/op
+Iteration #6: 0.0409326 sec/op
+Iteration #7: 0.0408433 sec/op
+Iteration #8: 0.0408574 sec/op
+Iteration #9: 0.0408727 sec/op
+Iteration #10: 0.0409392 sec/op
+Iteration #11: 0.0409578 sec/op
+Iteration #12: 0.0408408 sec/op
+Iteration #13: 0.0409058 sec/op
+Iteration #14: 0.0408297 sec/op
+  Success:   ~ 0.0409323 sec/op ±0.11%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Maltese.bmp, level=9
+Warm-up #0: 0.0891702 sec/op
+Warm-up #1: 0.0888793 sec/op
+Warm-up #2: 0.0888928 sec/op
+Warm-up #3: 0.0886732 sec/op
+Warm-up #4: 0.0888093 sec/op
+Warm-up #5: 0.0890813 sec/op
+Warm-up #6: 0.0891715 sec/op
+Warm-up #7: 0.0886878 sec/op
+Iteration #0: 0.0888951 sec/op
+Iteration #1: 0.0891772 sec/op
+Iteration #2: 0.0889873 sec/op
+Iteration #3: 0.0888425 sec/op
+Iteration #4: 0.0890246 sec/op
+Iteration #5: 0.0888563 sec/op
+Iteration #6: 0.0892168 sec/op
+Iteration #7: 0.0890734 sec/op
+Iteration #8: 0.0892611 sec/op
+Iteration #9: 0.0890365 sec/op
+Iteration #10: 0.0893619 sec/op
+Iteration #11: 0.0893142 sec/op
+Iteration #12: 0.0890474 sec/op
+Iteration #13: 0.0893030 sec/op
+Iteration #14: 0.0892622 sec/op
+  Success:   ~ 0.0891106 sec/op ±0.098%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=Sunrise.bmp, level=9
+Warm-up #0: 0.354404 sec/op
+Warm-up #1: 0.352747 sec/op
+Warm-up #2: 0.353103 sec/op
+Warm-up #3: 0.352413 sec/op
+Warm-up #4: 0.351590 sec/op
+Warm-up #5: 0.351428 sec/op
+Warm-up #6: 0.352991 sec/op
+Warm-up #7: 0.351850 sec/op
+Iteration #0: 0.355188 sec/op
+Iteration #1: 0.354871 sec/op
+Iteration #2: 0.359085 sec/op
+Iteration #3: 0.355030 sec/op
+Iteration #4: 0.355201 sec/op
+Iteration #5: 0.355089 sec/op
+Iteration #6: 0.354990 sec/op
+Iteration #7: 0.355809 sec/op
+Iteration #8: 0.356720 sec/op
+Iteration #9: 0.354222 sec/op
+Iteration #10: 0.355140 sec/op
+Iteration #11: 0.353822 sec/op
+Iteration #12: 0.354888 sec/op
+Iteration #13: 0.356104 sec/op
+Iteration #14: 0.356734 sec/op
+  Success:   ~ 0.355526 sec/op ±0.18%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=compressed_MVT.pbf, level=9
+Warm-up #0: 0.00105970 sec/op
+Warm-up #1: 0.00105788 sec/op
+Warm-up #2: 0.00106017 sec/op
+Warm-up #3: 0.00107847 sec/op
+Warm-up #4: 0.00108210 sec/op
+Warm-up #5: 0.00108239 sec/op
+Warm-up #6: 0.00107959 sec/op
+Warm-up #7: 0.00107971 sec/op
+Iteration #0: 0.00107992 sec/op
+Iteration #1: 0.00108053 sec/op
+Iteration #2: 0.00108053 sec/op
+Iteration #3: 0.00107901 sec/op
+Iteration #4: 0.00107894 sec/op
+Iteration #5: 0.00107858 sec/op
+Iteration #6: 0.00107587 sec/op
+Iteration #7: 0.00107700 sec/op
+Iteration #8: 0.00107622 sec/op
+Iteration #9: 0.00107821 sec/op
+Iteration #10: 0.00107914 sec/op
+Iteration #11: 0.00107880 sec/op
+Iteration #12: 0.00107784 sec/op
+Iteration #13: 0.00107822 sec/op
+Iteration #14: 0.00107177 sec/op
+  Success:   ~ 0.00107804 sec/op ±0.10%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=simpleText, level=1
+Warm-up #0: 0.00000141802 sec/op
+Warm-up #1: 0.00000177374 sec/op
+Warm-up #2: 0.00000175916 sec/op
+Warm-up #3: 0.00000178173 sec/op
+Warm-up #4: 0.00000175286 sec/op
+Warm-up #5: 0.00000175361 sec/op
+Warm-up #6: 0.00000180339 sec/op
+Warm-up #7: 0.00000185660 sec/op
+Iteration #0: 0.00000176855 sec/op
+Iteration #1: 0.00000170332 sec/op
+Iteration #2: 0.00000170074 sec/op
+Iteration #3: 0.00000171708 sec/op
+Iteration #4: 0.00000175830 sec/op
+Iteration #5: 0.00000181582 sec/op
+Iteration #6: 0.00000178432 sec/op
+Iteration #7: 0.00000179620 sec/op
+Iteration #8: 0.00000176772 sec/op
+Iteration #9: 0.00000170244 sec/op
+Iteration #10: 0.00000168848 sec/op
+Iteration #11: 0.00000168158 sec/op
+Iteration #12: 0.00000170078 sec/op
+Iteration #13: 0.00000176346 sec/op
+Iteration #14: 0.00000175791 sec/op
+  Success:   ~ 0.00000174045 sec/op ±1.3%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=text, level=1
+Warm-up #0: 0.00805382 sec/op
+Warm-up #1: 0.00800010 sec/op
+Warm-up #2: 0.00797605 sec/op
+Warm-up #3: 0.00799563 sec/op
+Warm-up #4: 0.00799405 sec/op
+Warm-up #5: 0.00798286 sec/op
+Warm-up #6: 0.00799234 sec/op
+Warm-up #7: 0.00935744 sec/op
+Iteration #0: 0.00935887 sec/op
+Iteration #1: 0.00930433 sec/op
+Iteration #2: 0.00930813 sec/op
+Iteration #3: 0.00928252 sec/op
+Iteration #4: 0.00934045 sec/op
+Iteration #5: 0.00932213 sec/op
+Iteration #6: 0.00853810 sec/op
+Iteration #7: 0.00794347 sec/op
+Iteration #8: 0.00792207 sec/op
+Iteration #9: 0.00794029 sec/op
+Iteration #10: 0.00800763 sec/op
+Iteration #11: 0.00794426 sec/op
+Iteration #12: 0.00806490 sec/op
+Iteration #13: 0.00797904 sec/op
+Iteration #14: 0.00797922 sec/op
+  Success:   ~ 0.00854903 sec/op ±31.0%
+
+… com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateDecompressionFromKompress | corpus=model3D, level=1
+Warm-up #0: 0.0000228478 sec/op
+Warm-up #1: 0.0000236573 sec/op
+Warm-up #2: 0.0000236186 sec/op
+Warm-up #3: 0.0000235740 sec/op
+Warm-up #4: 0.0000233532 sec/op
+Warm-up #5: 0.0000232822 sec/op
+Warm-up #6: 0.0000223327 sec/op
+Warm-up #7: 0.0000220046 sec/op
+Iteration #0: 0.0000236740 sec/op
+Iteration #1: 0.0000237328 sec/op
+Iteration #2: 0.0000235837 sec/op
+Iteration #3: 0.0000236786 sec/op
+Iteration #4: 0.0000235367 sec/op
+Iteration #5: 0.0000228992 sec/op
+Iteration #6: 0.0000198975 sec/op
+Iteration #7: 0.0000199982 sec/op
+Iteration #8: 0.0000200190 sec/op
+Iteration #9: 0.0000199685 sec/op
+Iteration #10: 0.0000199661 sec/op
+Iteration #11: 0.0000199763 sec/op
+Iteration #12: 0.0000200285 sec/op
+Iteration #13: 0.0000200938 sec/op
+Iteration #14: 0.0000206229 sec/op
+  Success:   ~ 0.0000214451 sec/op ±4.2%
+
+linuxX64Benchmark summary:
+Benchmark                                                            (corpus)  (level)  Mode  Cnt   Score   Error   Units
+CompressionBenchmarks.rawDeflateCompression                        simpleText        0  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        0  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        1  avgt   15   0.073          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        1  avgt   15   0.226          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        1  avgt   15   0.789 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        1  avgt   15   0.002          sec/op
+CompressionBenchmarks.rawDeflateCompression                        simpleText        2  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        2  avgt   15   0.022 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        2  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        2  avgt   15   0.085          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        2  avgt   15   0.295          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        2  avgt   15   0.943 ± 0.002  sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        0  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        2  avgt   15   0.003          sec/op
+CompressionBenchmarks.rawDeflateCompression                        simpleText        3  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        3  avgt   15   0.026          sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        3  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        3  avgt   15   0.075          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        3  avgt   15   0.328 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        3  avgt   15   0.908 ± 0.002  sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        3  avgt   15   0.003          sec/op
+CompressionBenchmarks.rawDeflateCompression                        simpleText        4  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        4  avgt   15   0.036          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        0  avgt   15   0.007          sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        4  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        4  avgt   15   0.082 ± 0.003  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        4  avgt   15   0.323 ± 0.010  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        4  avgt   15   0.982 ± 0.004  sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        4  avgt   15   0.003          sec/op
+CompressionBenchmarks.rawDeflateCompression                        simpleText        5  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        5  avgt   15   0.048          sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        5  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        5  avgt   15   0.099 ± 0.002  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        5  avgt   15   0.443 ± 0.006  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        0  avgt   15   0.020          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        5  avgt   15   1.251 ± 0.044  sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        5  avgt   15   0.004          sec/op
+CompressionBenchmarks.rawDeflateCompression                        simpleText        6  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        6  avgt   15   0.060          sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        6  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        6  avgt   15   0.105          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        6  avgt   15   0.456 ± 0.003  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        6  avgt   15   1.300 ± 0.003  sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        6  avgt   15   0.004          sec/op
+CompressionBenchmarks.rawDeflateCompression                        simpleText        7  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        0  avgt   15   0.064          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        7  avgt   15   0.069          sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        7  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        7  avgt   15   0.107          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        7  avgt   15   0.439 ± 0.014  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        7  avgt   15   1.490 ± 0.002  sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        7  avgt   15   0.004          sec/op
+CompressionBenchmarks.rawDeflateCompression                        simpleText        8  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        8  avgt   15   0.065          sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        8  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        8  avgt   15   0.123          sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        0  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        8  avgt   15   0.461 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        8  avgt   15   1.881 ± 0.012  sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        8  avgt   15   0.004          sec/op
+CompressionBenchmarks.rawDeflateCompression                        simpleText        9  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        9  avgt   15   0.185 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        9  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                       Rainier.bmp        9  avgt   15   4.659 ± 0.021  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Maltese.bmp        9  avgt   15   1.583 ± 0.029  sec/op
+CompressionBenchmarks.rawDeflateCompression                       Sunrise.bmp        9  avgt   15  12.493 ± 0.021  sec/op
+CompressionBenchmarks.rawDeflateCompression                compressed_MVT.pbf        9  avgt   15   0.010          sec/op
+CompressionBenchmarks.rawDeflateCompression                        simpleText        1  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateCompression                              text        1  avgt   15   0.018          sec/op
+CompressionBenchmarks.rawDeflateCompression                           model3D        1  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        0  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        0  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        1  avgt   15   0.038          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        1  avgt   15   0.104 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        1  avgt   15   0.357 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        1  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        2  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        2  avgt   15   0.009          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        2  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        2  avgt   15   0.037          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        2  avgt   15   0.103 ± 0.004  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        2  avgt   15   0.346          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        0  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        2  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        3  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        3  avgt   15   0.008          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        3  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        3  avgt   15   0.036          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        3  avgt   15   0.086          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        3  avgt   15   0.340 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        3  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        4  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        4  avgt   15   0.009          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        0  avgt   15   0.006          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        4  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        4  avgt   15   0.037          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        4  avgt   15   0.094          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        4  avgt   15   0.419          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        4  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        5  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        5  avgt   15   0.008          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        5  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        5  avgt   15   0.039          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        5  avgt   15   0.093          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        0  avgt   15   0.013          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        5  avgt   15   0.412 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        5  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        6  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        6  avgt   15   0.009          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        6  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        6  avgt   15   0.038 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        6  avgt   15   0.090 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        6  avgt   15   0.360 ± 0.002  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        6  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        7  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        0  avgt   15   0.048          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        7  avgt   15   0.008          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        7  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        7  avgt   15   0.044          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        7  avgt   15   0.103          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        7  avgt   15   0.407 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        7  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        8  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        8  avgt   15   0.007          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        8  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        8  avgt   15   0.041          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        0  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        8  avgt   15   0.091          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        8  avgt   15   0.395 ± 0.014  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        8  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        9  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        9  avgt   15   0.007          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        9  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Rainier.bmp        9  avgt   15   0.041          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Maltese.bmp        9  avgt   15   0.089          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress         Sunrise.bmp        9  avgt   15   0.356 ± 0.001  sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress  compressed_MVT.pbf        9  avgt   15   0.001          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress          simpleText        1  avgt   15   0.000          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress                text        1  avgt   15   0.009          sec/op
+CompressionBenchmarks.rawDeflateDecompressionFromKompress             model3D        1  avgt   15   0.000          sec/op
+
+Analysing benchmark results is not always trivial,
+please refer to https://github.com/Kotlin/kotlinx-benchmark/tree/master?tab=readme-ov-file#analyzing-results for details.
+
+
+BUILD SUCCESSFUL in 1h 5m
+8 actionable tasks: 2 executed, 6 up-to-date
+Configuration cache entry stored.

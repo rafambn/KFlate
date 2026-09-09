@@ -14,7 +14,7 @@ object BenchmarkCorpus {
         }
     }
 
-    private val corpusDirectory: Path by lazy {
+    val corpusDirectory: Path by lazy {
         var directory: Path? = SystemFileSystem.resolve(Path("."))
         while (directory != null) {
             val repositoryPath = Path(directory, "kflate", "src", "jvmTest", "resources")

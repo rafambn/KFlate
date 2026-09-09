@@ -497,7 +497,7 @@ def main():
     if report_dir is None or not report_dir.exists():
         raise SystemExit(
             f"No benchmark run directory found under '{args.report_root}'. "
-            "Run benchmarks first with ./gradlew :kflate:benchmarkAll."
+            "Pass --run-dir with an archived level-6 report. For current benchmarks use scripts/benchmark_suite.py."
         )
 
     files = report_files(report_dir)
