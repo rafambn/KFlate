@@ -148,7 +148,7 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int
     nodes.sortBy { it.frequency }
 
     val combinedNodes = ArrayList(nodes)
-    combinedNodes.add(HuffmanNode(symbol = -1, frequency = 25001))
+    combinedNodes.add(HuffmanNode(symbol = -1, frequency = Int.MAX_VALUE))
 
     var lowFreqIndex = 0
     var highFreqIndex = 1

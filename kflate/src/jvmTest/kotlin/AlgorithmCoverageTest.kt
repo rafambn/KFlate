@@ -273,6 +273,22 @@ class AlgorithmCoverageTest {
     }
 
     @Test
+    fun costAwareParsingRepricesRareMatchesWithDynamicTrees() {
+        val data = ByteArray(2_048)
+        for (symbol in 1..255) {
+            data[symbol + 2] = symbol.toByte()
+        }
+        val matches = IntArray(data.size)
+        matches[0] = (3 shl MATCH_DISTANCE_BITS) or 1
+        val costs = IntArray(data.size + 1)
+        val choices = IntArray(data.size)
+
+        chooseCostAwarePath(data, 0, data.size, matches, costs, choices)
+
+        assertEquals(1, choices[0])
+    }
+
+    @Test
     fun costAwareLevelRoundTripsWindowsAndDictionaries() {
         val multipleWindows = ByteArray(COST_AWARE_WINDOW_SIZE * 2 + 3)
         val compressedWindows = KFlate.compress(multipleWindows, CompressionRaw(level = 9))
@@ -303,6 +319,10 @@ class AlgorithmCoverageTest {
         assertTrue(validateHuffmanCodeLengths(byteArrayOf(2, 2, 2, 2), 3))
         assertEquals(0, buildHuffmanTreeFromFrequencies(IntArray(4), 3).maxBits)
         assertEquals(1, buildHuffmanTreeFromFrequencies(intArrayOf(0, 7), 3).maxBits)
+
+        val highFrequencyTree = buildHuffmanTreeFromFrequencies(IntArray(4) { 30_000 }, 15)
+        assertEquals(2, highFrequencyTree.maxBits)
+        assertTrue(highFrequencyTree.tree.all { it.toInt() == 2 })
 
         val limited = buildHuffmanTreeFromFrequencies(
             intArrayOf(1, 1, 2, 3, 5, 8, 13, 21),
