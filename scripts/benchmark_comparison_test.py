@@ -11,6 +11,7 @@ from benchmark_comparison import (
     metric_from_entry,
     metric_summary,
     read_metadata,
+    resolve_commit,
     select_report_dir,
 )
 
@@ -91,6 +92,13 @@ class BenchmarkComparisonTest(unittest.TestCase):
                 result = subprocess.run(command, cwd=root, capture_output=True, text=True)
                 self.assertNotEqual(0, result.returncode)
                 self.assertIn("missing", result.stderr)
+
+    def test_archived_full_commit_does_not_require_local_history(self):
+        from unittest.mock import patch
+        commit = "a" * 40
+        with patch("benchmark_comparison.subprocess.check_output") as git:
+            self.assertEqual(commit, resolve_commit(commit))
+        git.assert_not_called()
 
     def test_invalid_scores_are_rejected(self):
         for score in (None, True, "0.1", 0, -1, float("nan"), float("inf"), -float("inf"), 1e308):

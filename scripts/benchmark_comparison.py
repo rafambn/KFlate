@@ -477,6 +477,10 @@ def publication_metadata(commit, run_id):
             raise ValueError("Expected a timestamp")
     except ValueError:
         raise SystemExit("Publishing requires a dated run directory or --run-id with the measured date/timestamp.")
+    return {"runId": run_id, "benchmarkCommit": resolve_commit(commit)}
+
+
+def resolve_commit(commit):
     if commit is None or not re.fullmatch(r"[0-9a-fA-F]{40}", commit):
         repository = Path(__file__).resolve().parent.parent
         try:
@@ -486,7 +490,7 @@ def publication_metadata(commit, run_id):
             ).strip()
         except subprocess.CalledProcessError:
             raise SystemExit("Cannot resolve --benchmark-commit to a measured commit.")
-    return {"runId": run_id, "benchmarkCommit": commit.lower()}
+    return commit.lower()
 
 
 def main():
@@ -533,13 +537,9 @@ def main():
         )
 
     summary["libraries"] = list(libraries)
-    repository = Path(__file__).resolve().parent.parent
     summary["reportHost"] = {"name": platform.node(), "os": platform.platform(),
                              "machine": platform.machine(), "cpu": platform.processor()}
-    summary["benchmarkCommit"] = subprocess.check_output(
-        ["git", "-C", str(repository), "rev-parse", "--verify", "--end-of-options",
-         f"{args.benchmark_commit or 'HEAD'}^{{commit}}"], text=True, stderr=subprocess.PIPE,
-    ).strip()
+    summary["benchmarkCommit"] = resolve_commit(args.benchmark_commit)
     if args.publish_latest:
         summary.update(publication_metadata(args.benchmark_commit, args.run_id or report_dir.name))
     write_report(summary, output)
