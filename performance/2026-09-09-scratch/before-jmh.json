@@ -1,0 +1,380 @@
+[
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/home/rafael/.jdks/jbr-17.0.14/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "17.0.14",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.14+1-b1367.22",
+        "warmupIterations" : 3,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "corpus" : "simpleText"
+        },
+        "primaryMetric" : {
+            "score" : 2.7861177968744074E-5,
+            "scoreError" : 2.911922900505013E-6,
+            "scoreConfidence" : [
+                2.494925506823906E-5,
+                3.077310086924909E-5
+            ],
+            "scorePercentiles" : {
+                "0.0" : 2.6910095086907388E-5,
+                "50.0" : 2.7661463602168382E-5,
+                "90.0" : 2.881266400668357E-5,
+                "95.0" : 2.881266400668357E-5,
+                "99.0" : 2.881266400668357E-5,
+                "99.9" : 2.881266400668357E-5,
+                "99.99" : 2.881266400668357E-5,
+                "99.999" : 2.881266400668357E-5,
+                "99.9999" : 2.881266400668357E-5,
+                "100.0" : 2.881266400668357E-5
+            },
+            "scoreUnit" : "s/op",
+            "rawData" : [
+                [
+                    2.7661463602168382E-5,
+                    2.881266400668357E-5,
+                    2.8417902909586862E-5,
+                    2.6910095086907388E-5,
+                    2.750376423837417E-5
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/home/rafael/.jdks/jbr-17.0.14/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "17.0.14",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.14+1-b1367.22",
+        "warmupIterations" : 3,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "corpus" : "text"
+        },
+        "primaryMetric" : {
+            "score" : 0.06041590843529412,
+            "scoreError" : 6.056857237638408E-4,
+            "scoreConfidence" : [
+                0.059810222711530275,
+                0.06102159415905796
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.06014622823529412,
+                "50.0" : 0.060454885588235294,
+                "90.0" : 0.060547520647058824,
+                "95.0" : 0.060547520647058824,
+                "99.0" : 0.060547520647058824,
+                "99.9" : 0.060547520647058824,
+                "99.99" : 0.060547520647058824,
+                "99.999" : 0.060547520647058824,
+                "99.9999" : 0.060547520647058824,
+                "100.0" : 0.060547520647058824
+            },
+            "scoreUnit" : "s/op",
+            "rawData" : [
+                [
+                    0.06014622823529412,
+                    0.060430179647058824,
+                    0.060454885588235294,
+                    0.060500728058823526,
+                    0.060547520647058824
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/home/rafael/.jdks/jbr-17.0.14/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "17.0.14",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.14+1-b1367.22",
+        "warmupIterations" : 3,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "corpus" : "model3D"
+        },
+        "primaryMetric" : {
+            "score" : 6.686024726012978E-5,
+            "scoreError" : 4.189482418431631E-6,
+            "scoreConfidence" : [
+                6.267076484169815E-5,
+                7.10497296785614E-5
+            ],
+            "scorePercentiles" : {
+                "0.0" : 6.499838984923317E-5,
+                "50.0" : 6.746798745277928E-5,
+                "90.0" : 6.757348270503986E-5,
+                "95.0" : 6.757348270503986E-5,
+                "99.0" : 6.757348270503986E-5,
+                "99.9" : 6.757348270503986E-5,
+                "99.99" : 6.757348270503986E-5,
+                "99.999" : 6.757348270503986E-5,
+                "99.9999" : 6.757348270503986E-5,
+                "100.0" : 6.757348270503986E-5
+            },
+            "scoreUnit" : "s/op",
+            "rawData" : [
+                [
+                    6.757348270503986E-5,
+                    6.748003926595602E-5,
+                    6.746798745277928E-5,
+                    6.678133702764053E-5,
+                    6.499838984923317E-5
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/home/rafael/.jdks/jbr-17.0.14/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "17.0.14",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.14+1-b1367.22",
+        "warmupIterations" : 3,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "corpus" : "Rainier.bmp"
+        },
+        "primaryMetric" : {
+            "score" : 0.10832889366000001,
+            "scoreError" : 0.0016506001920435149,
+            "scoreConfidence" : [
+                0.1066782934679565,
+                0.10997949385204352
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.1079189768,
+                "50.0" : 0.108242564,
+                "90.0" : 0.1090366517,
+                "95.0" : 0.1090366517,
+                "99.0" : 0.1090366517,
+                "99.9" : 0.1090366517,
+                "99.99" : 0.1090366517,
+                "99.999" : 0.1090366517,
+                "99.9999" : 0.1090366517,
+                "100.0" : 0.1090366517
+            },
+            "scoreUnit" : "s/op",
+            "rawData" : [
+                [
+                    0.1090366517,
+                    0.108242564,
+                    0.1079189768,
+                    0.1083576889,
+                    0.1080885869
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/home/rafael/.jdks/jbr-17.0.14/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "17.0.14",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.14+1-b1367.22",
+        "warmupIterations" : 3,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "corpus" : "Maltese.bmp"
+        },
+        "primaryMetric" : {
+            "score" : 0.4779739153333333,
+            "scoreError" : 0.007987030924469857,
+            "scoreConfidence" : [
+                0.46998688440886344,
+                0.4859609462578031
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.476138847,
+                "50.0" : 0.477748715,
+                "90.0" : 0.481469577,
+                "95.0" : 0.481469577,
+                "99.0" : 0.481469577,
+                "99.9" : 0.481469577,
+                "99.99" : 0.481469577,
+                "99.999" : 0.481469577,
+                "99.9999" : 0.481469577,
+                "100.0" : 0.481469577
+            },
+            "scoreUnit" : "s/op",
+            "rawData" : [
+                [
+                    0.476735972,
+                    0.481469577,
+                    0.47777646566666665,
+                    0.477748715,
+                    0.476138847
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/home/rafael/.jdks/jbr-17.0.14/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "17.0.14",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.14+1-b1367.22",
+        "warmupIterations" : 3,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "corpus" : "Sunrise.bmp"
+        },
+        "primaryMetric" : {
+            "score" : 1.6730243644000002,
+            "scoreError" : 0.07340701551445698,
+            "scoreConfidence" : [
+                1.5996173488855432,
+                1.7464313799144573
+            ],
+            "scorePercentiles" : {
+                "0.0" : 1.644701101,
+                "50.0" : 1.67681155,
+                "90.0" : 1.697225124,
+                "95.0" : 1.697225124,
+                "99.0" : 1.697225124,
+                "99.9" : 1.697225124,
+                "99.99" : 1.697225124,
+                "99.999" : 1.697225124,
+                "99.9999" : 1.697225124,
+                "100.0" : 1.697225124
+            },
+            "scoreUnit" : "s/op",
+            "rawData" : [
+                [
+                    1.697225124,
+                    1.678261324,
+                    1.668122723,
+                    1.67681155,
+                    1.644701101
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    },
+    {
+        "jmhVersion" : "1.37",
+        "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+        "mode" : "avgt",
+        "threads" : 1,
+        "forks" : 1,
+        "jvm" : "/home/rafael/.jdks/jbr-17.0.14/bin/java",
+        "jvmArgs" : [
+        ],
+        "jdkVersion" : "17.0.14",
+        "vmName" : "OpenJDK 64-Bit Server VM",
+        "vmVersion" : "17.0.14+1-b1367.22",
+        "warmupIterations" : 3,
+        "warmupTime" : "1 s",
+        "warmupBatchSize" : 1,
+        "measurementIterations" : 5,
+        "measurementTime" : "1 s",
+        "measurementBatchSize" : 1,
+        "params" : {
+            "corpus" : "compressed_MVT.pbf"
+        },
+        "primaryMetric" : {
+            "score" : 0.00450055958947036,
+            "scoreError" : 5.6866598483374845E-5,
+            "scoreConfidence" : [
+                0.004443692990986985,
+                0.004557426187953735
+            ],
+            "scorePercentiles" : {
+                "0.0" : 0.004483004799107143,
+                "50.0" : 0.004503572950672646,
+                "90.0" : 0.004517674288288288,
+                "95.0" : 0.004517674288288288,
+                "99.0" : 0.004517674288288288,
+                "99.9" : 0.004517674288288288,
+                "99.99" : 0.004517674288288288,
+                "99.999" : 0.004517674288288288,
+                "99.9999" : 0.004517674288288288,
+                "100.0" : 0.004517674288288288
+            },
+            "scoreUnit" : "s/op",
+            "rawData" : [
+                [
+                    0.004503572950672646,
+                    0.004487895139013453,
+                    0.004483004799107143,
+                    0.00451065077027027,
+                    0.004517674288288288
+                ]
+            ]
+        },
+        "secondaryMetrics" : {
+        }
+    }
+]
