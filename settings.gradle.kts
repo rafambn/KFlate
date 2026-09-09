@@ -20,7 +20,6 @@ plugins {
 rootProject.name = "KFlate"
 include(":kflate")
 include(":web-demo")
-include(":benchmark-plots")
 
 dependencyResolutionManagement {
     repositories {

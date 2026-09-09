@@ -1,87 +1,84 @@
 # Benchmarking
 
-The suite measures one-shot RAW DEFLATE compression at every level from 0 through 9, and decompression of the exact files saved by Kompress at those levels. Each platform covers all seven tracked corpus files in `kflate/src/jvmTest/resources`.
+KFlate keeps correctness tests separate from performance benchmarks.
 
-Kompress is pinned to 1.4.2. Its backends are `java.util.zip` on JVM, platform zlib on Linux x64 Native, and fflate 0.8.2 on Wasm/JS. Baselines and fixtures are separate for each platform. KFlate never generates a Kompress stream during its own benchmark runs.
+## What the suite measures
 
-## Capture once, compare repeatedly
+The suite measures the one-shot RAW DEFLATE APIs of KFlate and Kompress on JVM, Linux x64 Native, and Wasm/JS.
+Both compressors use compression level 6. KFlate sizes its hash table automatically from the compression level and input size. Kompress maps to a different backend on each platform:
 
-Run every measurement on the Linux x64 benchmark machine, including JVM and Wasm. From its checkout:
+| Platform | Kompress backend |
+| --- | --- |
+| JVM | `java.util.zip` |
+| Linux x64 Native | platform `zlib` |
+| Wasm/JS | npm `fflate` |
 
-```sh
-python3 scripts/benchmark_suite.py baseline
-python3 scripts/benchmark_suite.py run
-```
+These are end-to-end API comparisons. They include output allocation and any backend bridge cost.
 
-The first command captures each missing Kompress baseline and stores its compressed fixtures. A completed baseline is reused without measuring Kompress again. The second command measures only KFlate, then appends a new run to the history. Platforms run sequentially.
+Compare KFlate and Kompress only when the platform, corpus, operation, and decompression stream producer match.
+Do not rank JVM, Native, and Wasm absolute times against one another. Their runtimes, code generation, and Kompress backends differ.
 
-Equivalent Gradle entry points are `:kflate:benchmarkBaseline` and `:kflate:benchmarkAll`. The script is preferred for long runs because it writes a separate log for each platform.
+The active suite covers RAW DEFLATE only. KFlate also supports GZIP and ZLIB, but this suite makes no performance claim about them.
 
-Select platforms or assign a readable run identifier:
+## Corpus
 
-```sh
-python3 scripts/benchmark_suite.py baseline --platforms jvm linuxX64 wasmJs --run-id initial-baseline
-python3 scripts/benchmark_suite.py run --platforms jvm --run-id parser-change
-```
+Every target reads the same tracked files from `kflate/src/jvmTest/resources`:
 
-Do not change source files or corpus files while measurements are running. The capture checks their hashes before and after each platform. A run identifier cannot overwrite an existing platform result. Interrupted captures retain their logs; completed platform baselines are skipped when capture resumes.
+- `simpleText`
+- `text`
+- `model3D`
+- `Rainier.bmp`
+- `Maltese.bmp`
+- `Sunrise.bmp`
+- `compressed_MVT.pbf`
 
-## Saved files
+`BenchmarkCorpus` searches upward from the benchmark process working directory for the repository or `kflate` module.
+Running a benchmark artifact outside the checkout fails instead of silently substituting generated data.
+The report takes original sizes from benchmark metadata rather than a second hard-coded size table.
 
-```text
-performance/
-  kompress-baseline/<platform>/
-    baseline.json
-    fixtures/<level>/<corpus>.deflate
-    raw/benchmark.json
-    raw/metadata.jsonl
-    raw/benchmark.log
-    raw/result.json
-  runs/<run-id>/<platform>/
-    benchmark.json
-    metadata.jsonl
-    benchmark.log
-    result.json
-  history.json
-```
-
-Keep this directory when cleaning build outputs or moving the checkout. Back up the fixtures as well as the JSON. The corpus includes a 50 MiB image, so saving ten levels on three platforms takes substantial disk space. These are actual binary streams, not regenerated approximations.
-
-Each result retains averages, errors, confidence intervals, iteration percentiles, fork/sample counts, and every raw iteration average. It also records timestamps, host information, runner environment fields, dependency declarations, source hashes, corpus hashes, and fixture hashes. KFlate runs reference the baseline run identifier.
-
-Fixture and corpus hashes protect input identity. There are no drift benchmarks and no automatic baseline refresh. Do not replace a baseline that existing runs reference. A future dependency update would require a separately versioned baseline workflow.
+Do not rename corpus files, classes, or methods casually. Result history uses their names as stable identifiers.
 
 ## Measurement configuration
 
-Full runs use 8 warmup iterations and 15 one-second measurement iterations. JVM uses 3 fresh forks. Native and Wasm use their runner process models. Each library has 140 cases per platform: seven files, ten levels, and two operations. The baseline and first KFlate run take roughly nine hours at the minimum configured iteration durations, plus compilation, process startup, and slow operations.
+The main configuration uses average-time mode, JSON output, 8 warmup iterations, and 15 one-second measurement iterations.
+JVM benchmarks use 3 fresh JVM forks. Native and Wasm use their runner's process model and do not inherit the JVM fork setting.
+For release claims, repeat the full Native and Wasm commands in separate quiet system sessions and compare the retained raw samples.
 
-Setup performs compression, file loading, size recording, and round-trip validation outside the measured region. The measured APIs include allocation and backend bridge costs. Decompression always reads the platform-specific saved Kompress stream. Its plotted level is the stream compression level, not a decoder option.
+The generated JSON summary preserves:
 
-## Smoke checks
+- average time and error
+- confidence interval
+- p50 and p95 of iteration-level average times
+- fork and sample counts
+- all raw iteration averages
+- runtime and runner fields supplied by kotlinx-benchmark
 
-Run the baseline smoke before the KFlate smoke on the Linux machine:
+The Markdown report shows the averages, errors, confidence intervals, and percentiles.
+Use the raw JSON when investigating regressions or noisy results.
 
-```sh
-python3 scripts/benchmark_suite.py baseline --smoke
-python3 scripts/benchmark_suite.py run --smoke
-```
+## Run benchmarks
 
-These use `simpleText` at level 6 and validate all three platforms. They retain separate smoke results and never publish timing data to the benchmark page. A full run still measures every file and level. Both workflows validate exact matrix coverage, usable samples, output correctness, and fixture identity.
+Compile the configured benchmarks:
 
-## Benchmark page
+~~~bash
+./gradlew :kflate:assembleBenchmarks
+~~~
 
-Rebuild history from retained results and assemble the site:
+Run all configured targets and generate comparison reports:
 
-```sh
-python3 scripts/benchmark_suite.py report
-./gradlew :web-demo:assembleWebDemo
-```
+~~~bash
+./gradlew :kflate:benchmarkAll
+~~~
 
-Open `benchmarks.html` in the assembled site. Its two selectors choose platform and operation. Every retained KFlate run appears with a chart for each file, compared with its Kompress baseline. Expand a chart to inspect numerical measurements and uncertainty, or download the full history JSON.
+Run benchmarkAll on a Linux x64 host. Other hosts cannot execute the Linux x64 Native target, and the comparison script rejects an incomplete release report.
 
-Kandy generates the curves on the JVM during the site build. Its Lets-Plot browser renderer places compression time above compressed size in two stacked plots. Solid lines and points show milliseconds in the top plot; dashed lines show bytes in the bottom plot. Each plot has its own zero-based Y scale. Scales are fixed across runs for the same file, platform, and operation, and vary between files. Use the numerical table when comparing time and size values directly.
+Run one target:
 
-The site build generates charts from stored data and runs no measurements. With no saved history it shows an empty state. The browser renderer loads its pinned JavaScript from jsDelivr. Build output is under `web-demo/build/webDemo`; generated plots are under its `plots` directory.
+~~~bash
+./gradlew :kflate:jvmBenchmarkBenchmark
+./gradlew :kflate:linuxX64BenchmarkBenchmark
+./gradlew :kflate:wasmJsBenchmarkBenchmark
+~~~
 
 Wasm uses the Kotlin Wasm yarn lock. Update it if Gradle reports a changed lock:
 
@@ -164,4 +161,45 @@ throughputMiBPerSecond = originalSizeBytes / 1,048,576 / averageSeconds
 Record the Git commit, machine, operating system, JDK, Node version, and system load with any published result.
 The cleaned JSON retains environment fields present in the source reports, but it cannot detect thermal throttling or competing processes.
 
-The existing `performance/pr30-linux-e5992df` archive and `scripts/benchmark_comparison.py` describe the previous level-6 suite. They remain available for historical inspection and are not mixed into the new level matrix.
+## Choose which library to measure
+
+The default is `both`. Select one library while developing:
+
+```sh
+./gradlew :kflate:benchmarkAll -PbenchmarkLibrary=kflate
+./gradlew :kflate:benchmarkAll -PbenchmarkLibrary=kompress
+./gradlew :kflate:benchmarkAll -PbenchmarkLibrary=both
+```
+
+The same property applies to individual platform tasks and smoke tasks, for example
+`:kflate:jvmBenchmarkSmokeBenchmark -PbenchmarkLibrary=kompress`.
+Only the selected library is timed. Setup still creates both libraries' streams
+and validates the selected decoder against them, outside the timed operation.
+No saved binary fixtures are required.
+
+Single-library runs produce the usual timestamped Markdown and JSON reports,
+with the unmeasured library shown as unavailable. Reports record the selected
+libraries, runner environment, measured commit, and report host. When reporting
+an archived run, pass `--benchmark-commit`; the report host is the machine
+generating the report, which may differ from the benchmark machine.
+They validate every expected
+case for the selected library and never replace `performance/latest.json`.
+When generating a report manually, pass the matching `--library kflate` or
+`--library kompress` to `scripts/benchmark_comparison.py`.
+
+Retain the generated reports before starting another full run, which clears the
+raw build reports. For reproducibility, also copy the raw report directory and
+`kflate/performance/benchmark-metadata.jsonl` into an archive and record the
+measured commit, machine/CPU, OS, JDK, Node, and benchmark configuration.
+Use saved Kompress timings as a development reference. Rerun both libraries on
+the same machine for published comparisons after runtime or hardware changes.
+
+## Retained level benchmarks
+
+`performance/history.json` and `performance/runs/2026-09-08-kflate-levels/`
+are a static archive of the previous level 0–9 experiment. The history JSON
+includes the Kompress measurements and their host, dependency, source, and
+fixture hashes. The platform directories retain the KFlate raw reports and logs.
+These files remain available for inspection; the current runner does not update
+them or require the old fixture cache. Their level matrix differs from the
+restored level-6 suite, so the comparison script does not ingest them.

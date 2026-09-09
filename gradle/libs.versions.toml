@@ -8,13 +8,11 @@ io = "0.9.0"
 benchmark = "0.4.16"
 kompress = "1.4.2"
 kover = "0.9.9"
-kandy = "0.8.3"
 
 [libraries]
 kotlinx-io = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "io" }
 kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "benchmark" }
 kompress-core = { module = "dev.karmakrafts.kompress:kompress-core", version.ref = "kompress" }
-kandy = { module = "org.jetbrains.kotlinx:kandy-lets-plot", version.ref = "kandy" }
 
 [plugins]
 

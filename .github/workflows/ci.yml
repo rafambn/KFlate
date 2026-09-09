@@ -20,15 +20,13 @@ jobs:
         run: |
           python3 scripts/benchmark_comparison_test.py
           python3 scripts/validate_benchmark_smoke_test.py
-          python3 scripts/benchmark_suite_test.py
-      - name: Validate stored-baseline workflow
-        run: |
-          python3 scripts/benchmark_suite.py baseline --smoke
-          python3 scripts/benchmark_suite.py run --smoke
       - name: Build JVM, Android, web, Linux, and Android Native
         run: >-
           ./gradlew
           :kflate:koverVerifyJvm
+          :kflate:jvmBenchmarkSmokeBenchmark
+          :kflate:linuxX64BenchmarkSmokeBenchmark
+          :kflate:wasmJsBenchmarkSmokeBenchmark
           :kflate:compileAndroidMain
           :kflate:compileKotlinJs
           :kflate:compileKotlinWasmJs
@@ -39,6 +37,9 @@ jobs:
           :kflate:compileKotlinAndroidNativeArm64
           :kflate:compileKotlinAndroidNativeX64
           :kflate:compileKotlinAndroidNativeX86
+
+      - name: Validate benchmark smoke reports
+        run: python3 scripts/validate_benchmark_smoke.py
 
   apple:
     runs-on: macos-latest

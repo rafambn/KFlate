@@ -4,10 +4,9 @@ import json
 import math
 from pathlib import Path
 
-from benchmark_comparison import PLATFORMS, library_name, select_report_dir
-from benchmark_suite import OPERATIONS
+from benchmark_comparison import OPERATIONS, PLATFORMS, library_name, select_report_dir
 
-LIBRARIES = ("KFlate",)
+LIBRARIES = ("KFlate", "Kompress")
 SMOKE_CORPUS = "simpleText"
 
 
@@ -63,7 +62,7 @@ def validate_report(report):
         library = library_name(benchmark)
         corpus = entry.get("params", {}).get("corpus")
         key = (operation, library)
-        if corpus != SMOKE_CORPUS or str(entry.get("params", {}).get("level")) != "6" or key not in expected_rows():
+        if corpus != SMOKE_CORPUS or key not in expected_rows():
             continue
         if key in found:
             failures.append(f"duplicate row: {operation} / {library}")

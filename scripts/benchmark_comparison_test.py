@@ -59,6 +59,39 @@ class BenchmarkComparisonTest(unittest.TestCase):
                     self.assertNotEqual(0, result.returncode)
                     self.assertEqual(published, latest.read_bytes())
 
+    def test_single_library_report_requires_complete_selected_matrix(self):
+        script = Path(__file__).with_name("benchmark_comparison.py").resolve()
+        archive = script.parent.parent / "performance/pr30-linux-e5992df"
+        for library, benchmark_class in (("kflate", "CompressionBenchmarks"), ("kompress", "KompressBaselineBenchmarks")):
+            with self.subTest(library=library), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                reports = root / "raw"
+                reports.mkdir()
+                for source in (archive / "raw").glob("*Benchmark.json"):
+                    entries = [entry for entry in json.loads(source.read_text())
+                               if f".{benchmark_class}." in entry["benchmark"]]
+                    (reports / source.name).write_text(json.dumps(entries))
+                metadata = root / "metadata.jsonl"
+                metadata.write_text("\n".join(line for line in (archive / "benchmark-metadata.jsonl").read_text().splitlines()
+                                               if json.loads(line)["library"].lower() == library))
+                command = [sys.executable, str(script), "--run-dir", str(reports),
+                           "--metadata", str(metadata), "--library", library,
+                           "--output", str(root / "comparison.md")]
+                result = subprocess.run(command, cwd=root, capture_output=True, text=True)
+                self.assertEqual(0, result.returncode, result.stderr)
+                data = json.loads((root / "comparison.json").read_text())
+                other = "kompress" if library == "kflate" else "kflate"
+                self.assertTrue(all(row[library] is not None and row[other] is None for row in data["compression"]))
+                self.assertFalse((root / "performance/latest.json").exists())
+                result = subprocess.run(command + ["--publish-latest"], cwd=root, capture_output=True, text=True)
+                self.assertNotEqual(0, result.returncode)
+                report = reports / "jvmBenchmark.json"
+                entries = json.loads(report.read_text())
+                report.write_text(json.dumps(entries[1:]))
+                result = subprocess.run(command, cwd=root, capture_output=True, text=True)
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn("missing", result.stderr)
+
     def test_invalid_scores_are_rejected(self):
         for score in (None, True, "0.1", 0, -1, float("nan"), float("inf"), -float("inf"), 1e308):
             with self.subTest(score=score), self.assertRaisesRegex(SystemExit, "Invalid benchmark score"):

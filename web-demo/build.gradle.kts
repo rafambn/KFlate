@@ -36,16 +36,10 @@ val optimizedOutputDir = layout.buildDirectory.dir(
     "compileSync/wasmJs/main/productionExecutable/optimized"
 )
 
-tasks.named<Copy>("wasmJsProcessResources") {
-    dependsOn(":benchmark-plots:run")
-    from(project(":benchmark-plots").layout.buildDirectory.dir("site")) { into("plots") }
-}
-
 tasks.register<Copy>("assembleWebDemo") {
-    dependsOn("compileProductionExecutableKotlinWasmJsOptimize", ":benchmark-plots:run")
+    dependsOn("compileProductionExecutableKotlinWasmJsOptimize")
     from(prepareBenchmarkResults)
     from(optimizedOutputDir)
     from("src/wasmJsMain/resources")
-    from(project(":benchmark-plots").layout.buildDirectory.dir("site")) { into("plots") }
     into(layout.buildDirectory.dir("webDemo"))
 }

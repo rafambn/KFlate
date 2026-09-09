@@ -2,6 +2,7 @@
 import argparse
 import json
 import math
+import platform
 import re
 import subprocess
 from datetime import datetime
@@ -78,6 +79,8 @@ def parse_args():
         default=None,
         help="JSON output path.",
     )
+    parser.add_argument("--library", choices=("kflate", "kompress", "both"), default="both",
+                        help="Libraries required in the report; single-library runs cannot publish latest.")
     parser.add_argument("--publish-latest", action="store_true", help="Publish a complete run to performance/latest.json for the demo.")
     parser.add_argument("--benchmark-commit", help="Measured commit when publishing an archived run; otherwise use HEAD.")
     parser.add_argument("--run-id", help="Measured timestamp when the archived directory is not named after its run.")
@@ -352,24 +355,23 @@ def metric_summary(metrics, metadata, environments, report_dir):
     }
 
 
-def missing_result_rows(metrics, platforms):
+def missing_result_rows(metrics, platforms, libraries=("KFlate", "Kompress")):
     missing = []
     for platform in platforms:
         for corpus in CORPORA:
             for operation in OPERATIONS:
-                for library in ("KFlate", "Kompress"):
+                for library in libraries:
                     if (platform, corpus, operation, library) not in metrics:
                         missing.append(f"{platform} / {corpus} / {operation} / {library}")
     return missing
 
 
-def missing_size_rows(summary):
+def missing_size_rows(summary, libraries=("KFlate", "Kompress")):
     return [
         f"{row['platform']} / {row['corpus']}"
         for row in summary["compression"]
         if row["originalSizeBytes"] is None
-        or row["kflateCompressedSizeBytes"] is None
-        or row["kompressCompressedSizeBytes"] is None
+        or any(row[f"{library.lower()}CompressedSizeBytes"] is None for library in libraries)
     ]
 
 
@@ -489,7 +491,8 @@ def publication_metadata(commit, run_id):
 
 def main():
     args = parse_args()
-    if args.publish_latest and (args.allow_partial or args.allow_missing_sizes):
+    libraries = {"kflate": ("KFlate",), "kompress": ("Kompress",), "both": ("KFlate", "Kompress")}[args.library]
+    if args.publish_latest and (args.allow_partial or args.allow_missing_sizes or args.library != "both"):
         raise SystemExit("Publishing latest requires a complete run with size metadata.")
     output = args.output or default_output_path()
     json_output = args.json_output or output.with_suffix(".json")
@@ -497,7 +500,7 @@ def main():
     if report_dir is None or not report_dir.exists():
         raise SystemExit(
             f"No benchmark run directory found under '{args.report_root}'. "
-            "Pass --run-dir with an archived level-6 report. For current benchmarks use scripts/benchmark_suite.py."
+            "Run benchmarks first with ./gradlew :kflate:benchmarkAll."
         )
 
     files = report_files(report_dir)
@@ -511,7 +514,8 @@ def main():
         )
 
     metrics, environments = read_results(report_dir)
-    missing_results = missing_result_rows(metrics, available_platforms)
+    metrics = {key: value for key, value in metrics.items() if key[3] in libraries}
+    missing_results = missing_result_rows(metrics, available_platforms, libraries)
     if missing_results and not args.allow_partial:
         raise SystemExit(
             "Benchmark result rows are missing:\n  - "
@@ -520,7 +524,7 @@ def main():
         )
 
     summary = metric_summary(metrics, read_metadata(args.metadata), environments, report_dir)
-    missing_sizes = missing_size_rows(summary)
+    missing_sizes = missing_size_rows(summary, libraries)
     if missing_sizes and not args.allow_missing_sizes:
         raise SystemExit(
             "Corpus or compressed-size metadata is missing for:\n  - "
@@ -528,6 +532,14 @@ def main():
             + "\nRun the matching benchmarks again or pass --allow-missing-sizes for local investigation."
         )
 
+    summary["libraries"] = list(libraries)
+    repository = Path(__file__).resolve().parent.parent
+    summary["reportHost"] = {"name": platform.node(), "os": platform.platform(),
+                             "machine": platform.machine(), "cpu": platform.processor()}
+    summary["benchmarkCommit"] = subprocess.check_output(
+        ["git", "-C", str(repository), "rev-parse", "--verify", "--end-of-options",
+         f"{args.benchmark_commit or 'HEAD'}^{{commit}}"], text=True, stderr=subprocess.PIPE,
+    ).strip()
     if args.publish_latest:
         summary.update(publication_metadata(args.benchmark_commit, args.run_id or report_dir.name))
     write_report(summary, output)
