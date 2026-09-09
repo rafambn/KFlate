@@ -115,6 +115,16 @@ kotlin {
     }
 }
 
+val benchmarkLibrary = providers.gradleProperty("benchmarkLibrary").getOrElse("both")
+require(benchmarkLibrary in setOf("kflate", "kompress", "both")) {
+    "benchmarkLibrary must be kflate, kompress, or both"
+}
+val benchmarkInclude = when (benchmarkLibrary) {
+    "kflate" -> ".*\\.CompressionBenchmarks\\..*"
+    "kompress" -> ".*\\.KompressBaselineBenchmarks\\..*"
+    else -> ".*"
+}
+
 benchmark {
     targets {
         register("jvmBenchmark")
@@ -124,6 +134,7 @@ benchmark {
 
     configurations {
         named("main") {
+            include(benchmarkInclude)
             warmups = 8
             iterations = 15
             iterationTime = 1
@@ -132,6 +143,7 @@ benchmark {
             advanced("jvmForks", 3)
         }
         register("smoke") {
+            include(benchmarkInclude)
             warmups = 1
             iterations = 1
             iterationTime = 1
@@ -244,8 +256,10 @@ tasks.register<Exec>("benchmarkComparison") {
         "scripts/benchmark_comparison.py",
         "--metadata",
         "kflate/performance/benchmark-metadata.jsonl",
-        "--publish-latest",
+        "--library",
+        benchmarkLibrary,
     )
+    if (benchmarkLibrary == "both") args("--publish-latest")
 }
 
 mavenPublishing {

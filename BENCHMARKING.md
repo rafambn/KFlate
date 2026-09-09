@@ -160,3 +160,46 @@ throughputMiBPerSecond = originalSizeBytes / 1,048,576 / averageSeconds
 
 Record the Git commit, machine, operating system, JDK, Node version, and system load with any published result.
 The cleaned JSON retains environment fields present in the source reports, but it cannot detect thermal throttling or competing processes.
+
+## Choose which library to measure
+
+The default is `both`. Select one library while developing:
+
+```sh
+./gradlew :kflate:benchmarkAll -PbenchmarkLibrary=kflate
+./gradlew :kflate:benchmarkAll -PbenchmarkLibrary=kompress
+./gradlew :kflate:benchmarkAll -PbenchmarkLibrary=both
+```
+
+The same property applies to individual platform tasks and smoke tasks, for example
+`:kflate:jvmBenchmarkSmokeBenchmark -PbenchmarkLibrary=kompress`.
+Only the selected library is timed. Setup still creates both libraries' streams
+and validates the selected decoder against them, outside the timed operation.
+No saved binary fixtures are required.
+
+Single-library runs produce the usual timestamped Markdown and JSON reports,
+with the unmeasured library shown as unavailable. Reports record the selected
+libraries, runner environment, measured commit, and report host. When reporting
+an archived run, pass `--benchmark-commit`; the report host is the machine
+generating the report, which may differ from the benchmark machine.
+They validate every expected
+case for the selected library and never replace `performance/latest.json`.
+When generating a report manually, pass the matching `--library kflate` or
+`--library kompress` to `scripts/benchmark_comparison.py`.
+
+Retain the generated reports before starting another full run, which clears the
+raw build reports. For reproducibility, also copy the raw report directory and
+`kflate/performance/benchmark-metadata.jsonl` into an archive and record the
+measured commit, machine/CPU, OS, JDK, Node, and benchmark configuration.
+Use saved Kompress timings as a development reference. Rerun both libraries on
+the same machine for published comparisons after runtime or hardware changes.
+
+## Retained level benchmarks
+
+`performance/history.json` and `performance/runs/2026-09-08-kflate-levels/`
+are a static archive of the previous level 0–9 experiment. The history JSON
+includes the Kompress measurements and their host, dependency, source, and
+fixture hashes. The platform directories retain the KFlate raw reports and logs.
+These files remain available for inspection; the current runner does not update
+them or require the old fixture cache. Their level matrix differs from the
+restored level-6 suite, so the comparison script does not ingest them.
