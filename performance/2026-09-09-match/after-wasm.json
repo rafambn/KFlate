@@ -1,0 +1,317 @@
+[
+  {
+    "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+    "mode" : "avgt",
+    "warmupIterations" : 3,
+    "warmupTime" : "1 sec",
+    "measurementIterations" : 5,
+    "measurementTime" : "1 sec",
+    "params" : {
+          "corpus" : "simpleText"
+    },
+    "advanced" : {
+          
+    },
+    "primaryMetric" : {
+       "score": 0.0000932848713957935,
+       "scoreError": 1.674009584135088e-7,
+       "scoreConfidence" : [
+          0.00009311747043737999,
+          0.00009345227235420702
+       ],
+       "scorePercentiles" : {
+          "0.00" : 0.00009313276529636712,
+          "25.00" : 0.0000931464277246654,
+          "50.00" : 0.00009322689063097514,
+          "75.00" : 0.00009345230544933079,
+          "90.00" : 0.00009360683059273422,
+          "99.00" : 0.00009360683059273422,
+          "99.90" : 0.00009360683059273422,
+          "99.99" : 0.00009360683059273422,
+          "100.00" : 0.00009360683059273422
+       },
+       "scoreUnit" : "sec/op",
+       "rawData" : [
+           [
+             0.00009313276529636712,
+             0.00009316009015296368,
+             0.00009360683059273422,
+             0.00009329778030592735,
+             0.00009322689063097514
+           ]
+       ]
+    },
+    "secondaryMetrics" : {
+    }
+  },
+  {
+    "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+    "mode" : "avgt",
+    "warmupIterations" : 3,
+    "warmupTime" : "1 sec",
+    "measurementIterations" : 5,
+    "measurementTime" : "1 sec",
+    "params" : {
+          "corpus" : "text"
+    },
+    "advanced" : {
+          
+    },
+    "primaryMetric" : {
+       "score": 0.08461562824999999,
+       "scoreError": 0.0001902616489717368,
+       "scoreConfidence" : [
+          0.08442536660102826,
+          0.08480588989897173
+       ],
+       "scorePercentiles" : {
+          "0.00" : 0.08443135508333333,
+          "25.00" : 0.08444463270833333,
+          "50.00" : 0.08453740283333333,
+          "75.00" : 0.0848257365,
+          "90.00" : 0.08495843691666667,
+          "99.00" : 0.08495843691666667,
+          "99.90" : 0.08495843691666667,
+          "99.99" : 0.08495843691666667,
+          "100.00" : 0.08495843691666667
+       },
+       "scoreUnit" : "sec/op",
+       "rawData" : [
+           [
+             0.08469303608333333,
+             0.08445791033333333,
+             0.08453740283333333,
+             0.08495843691666667,
+             0.08443135508333333
+           ]
+       ]
+    },
+    "secondaryMetrics" : {
+    }
+  },
+  {
+    "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+    "mode" : "avgt",
+    "warmupIterations" : 3,
+    "warmupTime" : "1 sec",
+    "measurementIterations" : 5,
+    "measurementTime" : "1 sec",
+    "params" : {
+          "corpus" : "model3D"
+    },
+    "advanced" : {
+          
+    },
+    "primaryMetric" : {
+       "score": 0.00019301180558789287,
+       "scoreError": 2.900269063217334e-7,
+       "scoreConfidence" : [
+          0.00019272177868157113,
+          0.00019330183249421462
+       ],
+       "scorePercentiles" : {
+          "0.00" : 0.00019262427706635623,
+          "25.00" : 0.00019269585661622042,
+          "50.00" : 0.00019297087446643383,
+          "75.00" : 0.0001933482201202949,
+          "90.00" : 0.00019334837640667442,
+          "99.00" : 0.00019334837640667442,
+          "99.90" : 0.00019334837640667442,
+          "99.99" : 0.00019334837640667442,
+          "100.00" : 0.00019334837640667442
+       },
+       "scoreUnit" : "sec/op",
+       "rawData" : [
+           [
+             0.00019297087446643383,
+             0.00019334837640667442,
+             0.0001933480638339154,
+             0.00019262427706635623,
+             0.0001927674361660846
+           ]
+       ]
+    },
+    "secondaryMetrics" : {
+    }
+  },
+  {
+    "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+    "mode" : "avgt",
+    "warmupIterations" : 3,
+    "warmupTime" : "1 sec",
+    "measurementIterations" : 5,
+    "measurementTime" : "1 sec",
+    "params" : {
+          "corpus" : "Rainier.bmp"
+    },
+    "advanced" : {
+          
+    },
+    "primaryMetric" : {
+       "score": 0.21190632792000003,
+       "scoreError": 0.0010271851115137684,
+       "scoreConfidence" : [
+          0.21087914280848627,
+          0.21293351303151378
+       ],
+       "scorePercentiles" : {
+          "0.00" : 0.211178955,
+          "25.00" : 0.21122193820000001,
+          "50.00" : 0.2113059132,
+          "75.00" : 0.212890925,
+          "90.00" : 0.213952348,
+          "99.00" : 0.213952348,
+          "99.90" : 0.213952348,
+          "99.99" : 0.213952348,
+          "100.00" : 0.213952348
+       },
+       "scoreUnit" : "sec/op",
+       "rawData" : [
+           [
+             0.2113059132,
+             0.211178955,
+             0.211829502,
+             0.213952348,
+             0.2112649214
+           ]
+       ]
+    },
+    "secondaryMetrics" : {
+    }
+  },
+  {
+    "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+    "mode" : "avgt",
+    "warmupIterations" : 3,
+    "warmupTime" : "1 sec",
+    "measurementIterations" : 5,
+    "measurementTime" : "1 sec",
+    "params" : {
+          "corpus" : "Maltese.bmp"
+    },
+    "advanced" : {
+          
+    },
+    "primaryMetric" : {
+       "score": 0.6657266874000001,
+       "scoreError": 0.007149954352952755,
+       "scoreConfidence" : [
+          0.6585767330470473,
+          0.6728766417529528
+       ],
+       "scorePercentiles" : {
+          "0.00" : 0.660820431,
+          "25.00" : 0.66092495775,
+          "50.00" : 0.661476217,
+          "75.00" : 0.67265365225,
+          "90.00" : 0.679933126,
+          "99.00" : 0.679933126,
+          "99.90" : 0.679933126,
+          "99.99" : 0.679933126,
+          "100.00" : 0.679933126
+       },
+       "scoreUnit" : "sec/op",
+       "rawData" : [
+           [
+             0.6610294845,
+             0.679933126,
+             0.660820431,
+             0.661476217,
+             0.6653741785
+           ]
+       ]
+    },
+    "secondaryMetrics" : {
+    }
+  },
+  {
+    "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+    "mode" : "avgt",
+    "warmupIterations" : 3,
+    "warmupTime" : "1 sec",
+    "measurementIterations" : 5,
+    "measurementTime" : "1 sec",
+    "params" : {
+          "corpus" : "Sunrise.bmp"
+    },
+    "advanced" : {
+          
+    },
+    "primaryMetric" : {
+       "score": 2.3572362626,
+       "scoreError": 0.019005770923501624,
+       "scoreConfidence" : [
+          2.3382304916764984,
+          2.3762420335235013
+       ],
+       "scorePercentiles" : {
+          "0.00" : 2.338974378,
+          "25.00" : 2.3406992755,
+          "50.00" : 2.352333579,
+          "75.00" : 2.3762245914999998,
+          "90.00" : 2.393290978,
+          "99.00" : 2.393290978,
+          "99.90" : 2.393290978,
+          "99.99" : 2.393290978,
+          "100.00" : 2.393290978
+       },
+       "scoreUnit" : "sec/op",
+       "rawData" : [
+           [
+             2.338974378,
+             2.359158205,
+             2.352333579,
+             2.342424173,
+             2.393290978
+           ]
+       ]
+    },
+    "secondaryMetrics" : {
+    }
+  },
+  {
+    "benchmark" : "com.rafambn.kflate.benchmark.CompressionBenchmarks.rawDeflateCompression",
+    "mode" : "avgt",
+    "warmupIterations" : 3,
+    "warmupTime" : "1 sec",
+    "measurementIterations" : 5,
+    "measurementTime" : "1 sec",
+    "params" : {
+          "corpus" : "compressed_MVT.pbf"
+    },
+    "advanced" : {
+          
+    },
+    "primaryMetric" : {
+       "score": 0.00641548699102564,
+       "scoreError": 0.00001333702615633631,
+       "scoreConfidence" : [
+          0.006402149964869304,
+          0.006428824017181976
+       ],
+       "scorePercentiles" : {
+          "0.00" : 0.006396334346153846,
+          "25.00" : 0.006400830548076923,
+          "50.00" : 0.006414908314102564,
+          "75.00" : 0.006430432772435897,
+          "90.00" : 0.00643254358974359,
+          "99.00" : 0.00643254358974359,
+          "99.90" : 0.00643254358974359,
+          "99.99" : 0.00643254358974359,
+          "100.00" : 0.00643254358974359
+       },
+       "scoreUnit" : "sec/op",
+       "rawData" : [
+           [
+             0.00640532675,
+             0.00643254358974359,
+             0.006414908314102564,
+             0.006428321955128205,
+             0.006396334346153846
+           ]
+       ]
+    },
+    "secondaryMetrics" : {
+    }
+  }
+]

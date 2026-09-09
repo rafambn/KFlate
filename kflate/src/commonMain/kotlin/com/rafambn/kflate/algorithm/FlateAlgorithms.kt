@@ -779,7 +779,7 @@ private fun deflateHash(data: ByteArray, index: Int, shift1: Int, shift2: Int, m
             ((data[index + 2].toInt() and 0xFF) shl shift2)) and mask
 }
 
-private fun findLongestMatch(
+internal fun findLongestMatch(
     data: ByteArray,
     dataSize: Int,
     index: Int,
@@ -791,7 +791,6 @@ private fun findLongestMatch(
     var currentIndex = index and MATCH_DISTANCE_MASK
     var candidateIndex = previousIndex
     var distance = (currentIndex - candidateIndex) and MATCH_DISTANCE_MASK
-    if (!hasThreeByteMatch(data, index, distance, remaining)) return 0
 
     val niceLength = minOf(level.niceLength, remaining)
     val maxDistance = minOf(MATCH_DISTANCE_MASK, index)
