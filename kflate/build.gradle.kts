@@ -136,11 +136,11 @@ benchmark {
         named("main") {
             include(benchmarkInclude)
             warmups = 8
-            iterations = 15
+            iterations = 10
             iterationTime = 1
             iterationTimeUnit = "s"
             reportFormat = "json"
-            advanced("jvmForks", 3)
+            advanced("jvmForks", 1)
         }
         register("smoke") {
             include(benchmarkInclude)
