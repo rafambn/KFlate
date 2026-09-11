@@ -23,6 +23,7 @@ AGENTS.md
 DESIGN.md
 design.md
 performance/.benchmark.lock
+kflate/performance/benchmark-metadata.jsonl
 performance/kompress-baseline/
 performance/smoke-runs/
 performance/kompress-baseline/*/smoke.json
