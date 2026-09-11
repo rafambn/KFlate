@@ -1,5 +1,6 @@
 package com.rafambn.kflate
 
+import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.compression.Gzip as CompressionGzip
 import com.rafambn.kflate.decompression.Gzip as DecompressionGzip
 import com.rafambn.kflate.error.FlateError
@@ -29,9 +30,11 @@ import com.rafambn.kflate.util.readFourBytesBE
 import com.rafambn.kflate.util.readTwoBytes
 import com.rafambn.kflate.util.shiftToNextByte
 import com.rafambn.kflate.util.shouldUseStoredBlock
+import com.rafambn.kflate.util.storedBlockBitLength
 import com.rafambn.kflate.util.toIsoStringBytes
 import com.rafambn.kflate.util.writeBits
 import com.rafambn.kflate.util.writeBits16
+import com.rafambn.kflate.util.writeBlock
 import com.rafambn.kflate.util.writeBytes
 import com.rafambn.kflate.util.writeBytesBE
 import kotlin.test.Test
@@ -84,6 +87,91 @@ class InternalHelpersCoverageTest {
         assertTrue(!shouldUseStoredBlock(-1, 1, 1, 1))
         assertTrue(!shouldUseStoredBlock(0, 2, 1, 2))
         assertTrue(!shouldUseStoredBlock(0, 2, 2, 1))
+        assertEquals(117, storedBlockBitLength(10, 0))
+        assertEquals(112, storedBlockBitLength(10, 5))
+        assertEquals(119, storedBlockBitLength(10, 6))
+        assertTrue(shouldUseStoredBlock(0, storedBlockBitLength(10, 6), 119, 119))
+    }
+
+    @Test
+    fun blockWriterAccountsForStoredBlockAlignment() {
+        val data = ByteArray(26) { (230 + it).toByte() }
+        val symbols = IntArray(data.size) { 230 + it }
+        val literalFrequencies = IntArray(288)
+        for (symbol in symbols) {
+            literalFrequencies[symbol]++
+        }
+
+        val output = ByteArray(256)
+        writeBlock(
+            data = data,
+            output = output,
+            isFinal = true,
+            symbols = symbols,
+            literalFrequencies = literalFrequencies,
+            distanceFrequencies = IntArray(32),
+            extraBits = 0,
+            symbolCount = symbols.size,
+            blockStart = 0,
+            blockLength = data.size,
+            bitPosition = 5,
+        )
+
+        val blockType = (output[0].toInt() ushr 5) and 7
+        assertEquals(1, blockType, "block type=$blockType")
+    }
+
+    @Test
+    fun blockWriterPreservesWholeStreamStoredBlockSavings() {
+        val prefix = byteArrayOf(253.toByte(), 254.toByte(), 255.toByte())
+        val payload = ByteArray(26) { (230 + it).toByte() }
+        val data = prefix + payload
+        val prefixSymbols = intArrayOf(253, 254, 255)
+        val payloadSymbols = IntArray(payload.size) { 230 + it }
+
+        val prefixLiteralFrequencies = IntArray(288)
+        for (symbol in prefixSymbols) {
+            prefixLiteralFrequencies[symbol]++
+        }
+        val payloadLiteralFrequencies = IntArray(288)
+        for (symbol in payloadSymbols) {
+            payloadLiteralFrequencies[symbol]++
+        }
+
+        val output = ByteArray(128)
+        val prefixEndBitPosition = writeBlock(
+            data = data,
+            output = output,
+            isFinal = false,
+            symbols = prefixSymbols,
+            literalFrequencies = prefixLiteralFrequencies,
+            distanceFrequencies = IntArray(32),
+            extraBits = 0,
+            symbolCount = prefixSymbols.size,
+            blockStart = 0,
+            blockLength = prefix.size,
+            bitPosition = 0,
+        )
+        assertEquals(37L, prefixEndBitPosition)
+
+        val finalEndBitPosition = writeBlock(
+            data = data,
+            output = output,
+            isFinal = true,
+            symbols = payloadSymbols,
+            literalFrequencies = payloadLiteralFrequencies,
+            distanceFrequencies = IntArray(32),
+            extraBits = 0,
+            symbolCount = payloadSymbols.size,
+            blockStart = prefix.size,
+            blockLength = payload.size,
+            bitPosition = prefixEndBitPosition,
+        )
+        assertEquals(280L, finalEndBitPosition)
+
+        val compressed = output.copyOf(shiftToNextByte(finalEndBitPosition))
+        assertEquals(35, compressed.size)
+        assertContentEquals(data, inflate(compressed, InflateState(validationMode = 2)))
     }
 
     @Test

@@ -134,7 +134,7 @@ internal fun writeBlock(
     val (codeLengthTree, maxCodeLengthBits) = buildHuffmanTreeFromFrequencies(codeLengthFrequencies, 7)
     val numCodeLengthCodes = countCodeLengthCodes(codeLengthTree)
 
-    val fixedBlockLength = (blockLength + 5) shl 3
+    val storedBlockLength = storedBlockBitLength(blockLength, bitPosition)
     val fixedTypedLength = calculateCodeLength(literalFrequencies, FIXED_LENGTH_TREE) +
             calculateCodeLength(distanceFrequencies, FIXED_DISTANCE_TREE) + extraBits
     val dynamicTypedLength = calculateCodeLength(literalFrequencies, dynamicLiteralTree) +
@@ -142,7 +142,7 @@ internal fun writeBlock(
             calculateCodeLength(codeLengthFrequencies, codeLengthTree) + 2 * codeLengthFrequencies[16] +
             3 * codeLengthFrequencies[17] + 7 * codeLengthFrequencies[18]
 
-    if (shouldUseStoredBlock(blockStart, fixedBlockLength, fixedTypedLength, dynamicTypedLength)) {
+    if (shouldUseStoredBlock(blockStart, storedBlockLength, fixedTypedLength, dynamicTypedLength)) {
         return writeFixedBlock(output, currentBitPosition, data.sliceArray(blockStart until blockStart + blockLength))
     }
 
@@ -267,4 +267,18 @@ internal fun shouldUseStoredBlock(
     dynamicLength: Int,
 ): Boolean {
     return blockStart >= 0 && storedLength <= fixedLength && storedLength <= dynamicLength
+}
+
+/**
+ * Returns the stored block cost after the three bit block header.
+ *
+ * The header itself is present in every block type, while a stored block adds
+ * padding before its four byte length header. Keeping the common header out of
+ * this value lets it be compared directly with the fixed and dynamic token
+ * costs.
+ */
+internal fun storedBlockBitLength(blockLength: Int, bitPosition: Long): Int {
+    val headerEnd = bitPosition + 3L
+    val padding = ((8L - (headerEnd and 7L)) and 7L).toInt()
+    return (blockLength shl 3) + 32 + padding
 }
