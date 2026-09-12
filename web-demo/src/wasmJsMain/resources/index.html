@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Try KFlate, an experimental Kotlin compression library, in your browser. Compress and decompress DEFLATE, GZIP and ZLIB locally."><title>KFlate · Compression demo</title><link rel="stylesheet" href="benchmarks.css"><link rel="stylesheet" href="report.css"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Try KFlate, an experimental Kotlin compression library, in your browser. Compress and decompress DEFLATE, GZIP and ZLIB locally."><title>KFlate · Compression demo</title><link rel="stylesheet" href="report.css"></head>
 <body>
 <section class="opening" aria-label="Compression demo">
  <div class="demo-scroll"><div class="demo-shell">
@@ -15,30 +15,8 @@
  </section>
  <section id="result" tabindex="-1" class="result-panel panel" aria-labelledby="result-title" aria-busy="false"><h2 id="result-title">Result</h2><div class="result-summary" id="result-summary"><svg class="icon result-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2H5a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h6M13 2v6h6l-6-6z"/><circle cx="15" cy="15" r="4"/><path d="m18 18 4 4"/></svg><p id="result-status" role="status">Run compression to inspect the result</p><p id="output-name" hidden></p></div><dl class="result-stats"><div><dt>Input size</dt><dd id="result-in">—</dd></div><div><dt>Output size</dt><dd id="result-out">—</dd></div><div><dt>Ratio</dt><dd id="result-ratio">—</dd></div><div><dt>Time</dt><dd id="result-time">—</dd></div></dl><a id="download-result" class="download disabled" aria-disabled="true" tabindex="-1"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v14m-5-5 5 5 5-5M4 18v3h16v-3"/></svg><span>Download</span></a></section>
  </main></div></div>
- <div class="opening-footer"><p class="privacy"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4M12 14v3"/></svg>Files stay on your device.</p><a class="benchmark-cue" href="#benchmarks">Compression benchmarks <svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18m-7-7 7 7 7-7"/></svg></a></div>
+ <div class="opening-footer"><p class="privacy"><svg class="icon " viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4M12 14v3"/></svg>Files stay on your device.</p></div>
 </section>
-<section id="benchmarks" tabindex="-1" class="card benchmarks" aria-labelledby="benchmark-title">
-    <h2 id="benchmark-title">Latest benchmark run</h2>
-    <p id="benchmark-status" role="status">Loading benchmark results…</p>
-    <div id="benchmark-content" hidden>
-      <p id="benchmark-run"></p>
-      <p>RAW DEFLATE at level 6, measured on Linux. Times include allocation and backend bridge costs. These results describe the recorded commit, which may differ from this demo.</p>
-      <div class="benchmark-controls">
-        <label>Platform <select id="benchmark-platform"><option>Wasm/JS</option><option>JVM</option><option>Linux x64 Native</option></select></label>
-        <label>Operation <select id="benchmark-operation"><option value="compression">Compression</option><option value="decompression">Decompression</option></select></label>
-      </div>
-      <p id="benchmark-baseline"></p>
-      <div class="benchmark-table" tabindex="0" role="region" aria-label="Benchmark comparison, scroll horizontally for more columns">
-        <table><caption>Mean time ± reported error [ms]. Lower times and output sizes are better.</caption><thead id="benchmark-head"></thead><tbody id="benchmark-rows"></tbody></table>
-      </div>
-      <p>Compare libraries within the same platform. Native and Wasm each represent one runner session; repeat measurements before drawing release-wide conclusions.</p>
-      <a href="benchmark-results.json" download>Download results and raw samples</a>
-    </div>
-  </section>
-
-  <script type="module" src="benchmarks.js"></script>
-
-
 <footer class="site-footer"><a href="https://github.com/rafambn/KFlate">KFlate on GitHub</a><a href="#">Back to demo</a></footer>
 <script type="module" src="report.js"></script>
 </body></html>

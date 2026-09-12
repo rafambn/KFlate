@@ -28,9 +28,6 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Validate published benchmark snapshot
-        run: python3 -m json.tool performance/latest.json > /dev/null
-
       - name: Build WASM + assemble demo
         run: |
           chmod +x gradlew
@@ -40,7 +37,6 @@ jobs:
         run: |
           mkdir -p deploy
           cp -R web-demo/build/webDemo/. deploy/
-          cmp performance/latest.json deploy/benchmark-results.json
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4

@@ -115,16 +115,6 @@ kotlin {
     }
 }
 
-val benchmarkLibrary = providers.gradleProperty("benchmarkLibrary").getOrElse("both")
-require(benchmarkLibrary in setOf("kflate", "kompress", "both")) {
-    "benchmarkLibrary must be kflate, kompress, or both"
-}
-val benchmarkInclude = when (benchmarkLibrary) {
-    "kflate" -> ".*\\.CompressionBenchmarks\\..*"
-    "kompress" -> ".*\\.KompressBaselineBenchmarks\\..*"
-    else -> ".*"
-}
-
 benchmark {
     targets {
         register("jvmBenchmark")
@@ -134,21 +124,22 @@ benchmark {
 
     configurations {
         named("main") {
-            include(benchmarkInclude)
+            include(".*\\.KompressBenchmarks\\..*")
             warmups = 8
-            iterations = 10
+            iterations = 15
             iterationTime = 1
             iterationTimeUnit = "s"
             reportFormat = "json"
-            advanced("jvmForks", 1)
+            advanced("jvmForks", 3)
         }
         register("smoke") {
-            include(benchmarkInclude)
+            include(".*\\.KompressBenchmarks\\..*")
             warmups = 1
             iterations = 1
             iterationTime = 1
             iterationTimeUnit = "ms"
             param("corpus", "simpleText")
+            param("level", "6")
             reportFormat = "json"
             advanced("jvmForks", 1)
         }
@@ -172,94 +163,30 @@ kover {
     }
 }
 
-val benchmarkTaskNames = setOf("jvmBenchmarkBenchmark", "linuxX64BenchmarkBenchmark", "wasmJsBenchmarkBenchmark")
+val benchmarkTaskNames = listOf(
+    "jvmBenchmarkBenchmark",
+    "linuxX64BenchmarkBenchmark",
+    "wasmJsBenchmarkBenchmark",
+)
 val benchmarkTasks = tasks.matching { it.name in benchmarkTaskNames }
+
+tasks.configureEach {
+    val currentIndex = benchmarkTaskNames.indexOf(name)
+    if (currentIndex > 0) {
+        mustRunAfter(benchmarkTaskNames[currentIndex - 1])
+    }
+}
 
 tasks.register("benchmarkAll") {
     group = "benchmark"
-    description = "Run all performance benchmarks (JVM + Native Release + WASM/JS) and generate comparison tables"
-    dependsOn("prepareBenchmarkAll", benchmarkTasks)
-    doFirst {
-        println("\n" + "=".repeat(60))
-        println("Running KFlate Performance Benchmarks (All Platforms)")
-        println("=".repeat(60) + "\n")
-    }
-    doLast {
-        println("\n" + "=".repeat(60))
-        println("Benchmark Results")
-        println("Check kflate/build/reports/benchmarks for detailed results")
-        println("=".repeat(60) + "\n")
-    }
-    finalizedBy("benchmarkComparison")
-}
-
-val prepareBenchmarkAll by tasks.registering(Delete::class) {
-    group = "benchmark"
-    description = "Delete previous benchmark reports and metadata before benchmarkAll."
-    delete(layout.buildDirectory.dir("reports/benchmarks/main"))
-    delete(projectDir.resolve("performance/benchmark-metadata.jsonl"))
-    delete(rootProject.projectDir.resolve("performance/benchmark-metadata.jsonl"))
-    delete(
-        rootProject.fileTree(rootProject.projectDir.resolve("build/wasm/packages")) {
-            include("**/performance/benchmark-metadata.jsonl")
-        }
-    )
-}
-
-benchmarkTasks.configureEach {
-    mustRunAfter(prepareBenchmarkAll)
+    description = "Run the Kompress benchmark on every platform"
+    dependsOn(benchmarkTasks)
 }
 
 tasks.withType<AbstractArchiveTask>().configureEach {
     from(rootProject.file("LICENSE")) {
         into("META-INF")
     }
-}
-
-val collectBenchmarkMetadata by tasks.registering(Exec::class) {
-    group = "benchmark"
-    description = "Consolidate platform metadata into kflate/performance/benchmark-metadata.jsonl."
-    mustRunAfter(benchmarkTasks)
-    workingDir = rootProject.projectDir
-    commandLine(
-        "bash",
-        "-lc",
-        """
-        set -euo pipefail
-        dest="kflate/performance/benchmark-metadata.jsonl"
-        tmp="${'$'}{dest}.tmp"
-        mkdir -p "$(dirname "${'$'}dest")"
-        : > "${'$'}tmp"
-        if [ -f "${'$'}dest" ]; then cat "${'$'}dest" >> "${'$'}tmp"; fi
-        if [ -f "performance/benchmark-metadata.jsonl" ]; then cat "performance/benchmark-metadata.jsonl" >> "${'$'}tmp"; fi
-        for dir in build/wasm/packages kflate/build/wasm/packages; do
-            if [ -d "${'$'}dir" ]; then
-                find "${'$'}dir" -type f -name benchmark-metadata.jsonl -print \
-                    | while IFS= read -r file; do cat "${'$'}file" >> "${'$'}tmp"; done
-            fi
-        done
-        awk 'NF && !seen[${'$'}0]++' "${'$'}tmp" > "${'$'}dest"
-        rm -f "${'$'}tmp"
-        echo "Merged benchmark metadata rows: $(wc -l < "${'$'}dest") -> ${'$'}dest"
-        """.trimIndent()
-    )
-}
-
-tasks.register<Exec>("benchmarkComparison") {
-    group = "benchmark"
-    description = "Generate benchmark markdown/json comparison tables."
-    mustRunAfter(benchmarkTasks)
-    dependsOn(collectBenchmarkMetadata)
-    workingDir = rootProject.projectDir
-    commandLine(
-        "python3",
-        "scripts/benchmark_comparison.py",
-        "--metadata",
-        "kflate/performance/benchmark-metadata.jsonl",
-        "--library",
-        benchmarkLibrary,
-    )
-    if (benchmarkLibrary == "both") args("--publish-latest")
 }
 
 mavenPublishing {

@@ -270,12 +270,6 @@ function formatSize(bytes) {
   return `${(bytes / 1024 ** 2).toFixed(2)} MiB`;
 }
 
-document.querySelector('.benchmark-cue').addEventListener('click', event => {
-  event.preventDefault();
-  const section = byId('benchmarks');
-  section.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
-  section.focus({preventScroll: true});
-});
 window.addEventListener('pagehide', () => {
   if (resultUrl) URL.revokeObjectURL(resultUrl);
 });
