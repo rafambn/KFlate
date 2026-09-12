@@ -25,7 +25,9 @@ import com.rafambn.kflate.huffman.generateLengthCodes
 import com.rafambn.kflate.huffman.validateHuffmanCodeLengths
 import com.rafambn.kflate.streaming.DeflateState
 import com.rafambn.kflate.streaming.InflateState
+import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
+import java.util.zip.Inflater
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -238,6 +240,8 @@ class AlgorithmCoverageTest {
         })
         assertEquals(0, DEFLATE_LEVELS[3].maxLazyLength)
         assertTrue(DEFLATE_LEVELS[4].maxLazyLength > 0)
+        assertEquals(8, DEFLATE_LEVELS[6].goodMatchLength)
+        assertEquals(32, DEFLATE_LEVELS[8].goodMatchLength)
         assertTrue(!DEFLATE_LEVELS[8].usesCostAwareParsing)
         assertTrue(DEFLATE_LEVELS[9].usesCostAwareParsing)
 
@@ -246,6 +250,21 @@ class AlgorithmCoverageTest {
         assertTrue(!shouldSearchLazyMatch(length = 4, maxLazyLength = 4, remaining = 5))
         assertTrue(!shouldSearchLazyMatch(length = 3, maxLazyLength = 0, remaining = 5))
         assertTrue(!shouldSearchLazyMatch(length = 3, maxLazyLength = 4, remaining = 4))
+    }
+
+    @Test
+    fun lazyLevelsRoundTripThresholdAndWindowInputs() {
+        val inputs = listOf(
+            ("abcdefgh".repeat(256) + "abcdefgX" + "abcdefgh".repeat(256)).encodeToByteArray(),
+            ("0123456789abcdef".repeat(2_100) + "01234567").encodeToByteArray(),
+        )
+
+        for (level in 4..8) {
+            for (input in inputs) {
+                val compressed = KFlate.compress(input, CompressionRaw(level = level))
+                assertContentEquals(input, inflateWithJava(compressed))
+            }
+        }
     }
 
     @Test
@@ -378,6 +397,28 @@ class AlgorithmCoverageTest {
             output.copyOf(deflater.deflate(output))
         } finally {
             deflater.end()
+        }
+    }
+
+    private fun inflateWithJava(input: ByteArray): ByteArray {
+        val inflater = Inflater(true)
+        return try {
+            inflater.setInput(input)
+            val output = ByteArrayOutputStream()
+            val buffer = ByteArray(8_192)
+            while (!inflater.finished()) {
+                val count = inflater.inflate(buffer)
+                if (count == 0) {
+                    check(!inflater.needsInput() && !inflater.needsDictionary()) {
+                        "Java Inflater stopped before finishing"
+                    }
+                } else {
+                    output.write(buffer, 0, count)
+                }
+            }
+            output.toByteArray()
+        } finally {
+            inflater.end()
         }
     }
 }

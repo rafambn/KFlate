@@ -26,7 +26,6 @@ import com.rafambn.kflate.util.readTwoBytes
 import com.rafambn.kflate.util.shiftToNextByte
 import com.rafambn.kflate.util.writeBlock
 import com.rafambn.kflate.util.writeFixedBlock
-import kotlin.math.ceil
 
 internal fun inflate(
     inputData: ByteArray,
@@ -322,7 +321,12 @@ internal fun inflate(
 
             when {
                 symbol < 256 -> {
-                    ensureCapacity(1, bytesWrittenToOutput)
+                    // The normal unbounded path has spare capacity almost all the time.
+                    // Keep output-limit validation on the bounded path, but avoid doing
+                    // long arithmetic and a function call for every literal otherwise.
+                    if (maxOutputSize != null || bytesWrittenToOutput >= workingBuffer.size) {
+                        ensureCapacity(1, bytesWrittenToOutput)
+                    }
                     workingBuffer[bytesWrittenToOutput++] = symbol.toByte()
                     lastBitPosition = currentBitPosition
                 }
@@ -380,7 +384,9 @@ internal fun inflate(
                         currentBitPosition += extraBits
                     }
 
-                    ensureCapacity(matchLength, bytesWrittenToOutput)
+                    if (maxOutputSize != null || matchLength > workingBuffer.size - bytesWrittenToOutput) {
+                        ensureCapacity(matchLength, bytesWrittenToOutput)
+                    }
 
                     val copyEndIndex = bytesWrittenToOutput + matchLength
                     val buffer = workingBuffer
@@ -497,8 +503,7 @@ internal fun deflate(
         val prevSize = if (isLastBlock) minOf(MATCH_DISTANCE_MASK + 1, dataSize) else MATCH_DISTANCE_MASK + 1
         val prev = state.prev ?: ShortArray(prevSize)
         val head = state.head ?: ShortArray(mask + 1)
-        val baseShift1 = ceil(hashBits / 3.0).toInt()
-        val baseShift2 = 2 * baseShift1
+        val hashShift = (hashBits + 2) / 3
 
         val symbols = IntArray(minOf(65536, dataSize))
         val literalFrequencies = IntArray(288)
@@ -513,7 +518,7 @@ internal fun deflate(
 
         if (levelOptions.usesCostAwareParsing) {
             while (i < waitIndex && i + 2 < dataSize) {
-                val hashValue = deflateHash(data, i, baseShift1, baseShift2, mask)
+                val hashValue = deflateHash(data, i, hashShift, mask)
                 val iMod = i and MATCH_DISTANCE_MASK
                 prev[iMod] = head[hashValue]
                 head[hashValue] = iMod.toShort()
@@ -531,7 +536,7 @@ internal fun deflate(
             while (i < dataSize) {
                 val hashEnd = minOf(i, dataSize - 2)
                 while (hashedUntil < hashEnd) {
-                    val hashValue = deflateHash(data, hashedUntil, baseShift1, baseShift2, mask)
+                    val hashValue = deflateHash(data, hashedUntil, hashShift, mask)
                     val hashIndex = hashedUntil and MATCH_DISTANCE_MASK
                     prev[hashIndex] = head[hashValue]
                     head[hashValue] = hashIndex.toShort()
@@ -546,7 +551,7 @@ internal fun deflate(
                 var scanIndex = windowStart
                 while (scanIndex < windowEnd) {
                     if (scanIndex + 2 >= dataSize) break
-                    val hashValue = deflateHash(data, scanIndex, baseShift1, baseShift2, mask)
+                    val hashValue = deflateHash(data, scanIndex, hashShift, mask)
                     val scanIndexMod = scanIndex and MATCH_DISTANCE_MASK
                     val previousIndex = head[hashValue].toInt() and 0xFFFF
                     prev[scanIndexMod] = previousIndex.toShort()
@@ -599,8 +604,9 @@ internal fun deflate(
             }
             waitIndex = i
         } else {
+            var hashWindow = if (i + 2 < dataSize) deflateHashWindow(data, i) else 0
             while (i + 2 < dataSize) {
-                val hashValue = deflateHash(data, i, baseShift1, baseShift2, mask)
+                val hashValue = deflateHash(hashWindow, hashShift, mask)
                 val iMod = i and MATCH_DISTANCE_MASK
                 val pIMod = head[hashValue].toInt() and 0xFFFF
                 prev[iMod] = pIMod.toShort()
@@ -631,8 +637,17 @@ internal fun deflate(
 
                     val nextMatch = if (shouldSearchLazyMatch(length, levelOptions.maxLazyLength, remaining)) {
                         val nextIndex = i + 1
-                        val nextHash = deflateHash(data, nextIndex, baseShift1, baseShift2, mask)
-                        findLongestMatch(data, dataSize, nextIndex, head[nextHash].toInt() and 0xFFFF, prev, levelOptions)
+                        val nextHashWindow = updateDeflateHashWindow(hashWindow, data[i + 3])
+                        val nextHash = deflateHash(nextHashWindow, hashShift, mask)
+                        findLongestMatch(
+                            data,
+                            dataSize,
+                            nextIndex,
+                            head[nextHash].toInt() and 0xFFFF,
+                            prev,
+                            levelOptions,
+                            minimumLength = length,
+                        )
                     } else {
                         0
                     }
@@ -659,6 +674,9 @@ internal fun deflate(
                         symbols[symbolIndex++] = data[i].toInt() and 0xFF
                         ++literalFrequencies[data[i].toInt() and 0xFF]
                     }
+                }
+                if (i + 3 < dataSize) {
+                    hashWindow = updateDeflateHashWindow(hashWindow, data[i + 3])
                 }
                 i++
             }
@@ -816,10 +834,26 @@ internal fun shouldSearchLazyMatch(length: Int, maxLazyLength: Int, remaining: I
     return maxLazyLength > 0 && length in 3 until maxLazyLength && remaining > length + 1
 }
 
-private fun deflateHash(data: ByteArray, index: Int, shift1: Int, shift2: Int, mask: Int): Int {
+private fun deflateHash(data: ByteArray, index: Int, hashShift: Int, mask: Int): Int {
     return ((data[index].toInt() and 0xFF) xor
-            ((data[index + 1].toInt() and 0xFF) shl shift1) xor
-            ((data[index + 2].toInt() and 0xFF) shl shift2)) and mask
+            ((data[index + 1].toInt() and 0xFF) shl hashShift) xor
+            ((data[index + 2].toInt() and 0xFF) shl (2 * hashShift))) and mask
+}
+
+private fun deflateHashWindow(data: ByteArray, index: Int): Int {
+    return (data[index].toInt() and 0xFF) or
+            ((data[index + 1].toInt() and 0xFF) shl 8) or
+            ((data[index + 2].toInt() and 0xFF) shl 16)
+}
+
+private fun updateDeflateHashWindow(window: Int, nextByte: Byte): Int {
+    return (window ushr 8) or ((nextByte.toInt() and 0xFF) shl 16)
+}
+
+private fun deflateHash(window: Int, hashShift: Int, mask: Int): Int {
+    return ((window and 0xFF) xor
+            (((window ushr 8) and 0xFF) shl hashShift) xor
+            ((window ushr 16) shl (2 * hashShift))) and mask
 }
 
 private fun findLongestMatch(
@@ -829,6 +863,7 @@ private fun findLongestMatch(
     previousIndex: Int,
     previous: ShortArray,
     level: DeflateLevel,
+    minimumLength: Int = 2,
 ): Int {
     val remaining = dataSize - index
     var currentIndex = index and MATCH_DISTANCE_MASK
@@ -840,7 +875,10 @@ private fun findLongestMatch(
     val maxDistance = minOf(MATCH_DISTANCE_MASK, index)
     val maxLength = minOf(MAX_MATCH_LENGTH, remaining)
     var remainingChain = level.chainLength
-    var bestLength = 2
+    if (level.goodMatchLength > 0 && minimumLength >= level.goodMatchLength) {
+        remainingChain = maxOf(1, remainingChain shr 2)
+    }
+    var bestLength = minimumLength
     var bestDistance = 0
 
     while (distance <= maxDistance && --remainingChain != 0 && currentIndex != candidateIndex) {
