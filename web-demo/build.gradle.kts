@@ -23,10 +23,9 @@ val optimizedOutputDir = layout.buildDirectory.dir(
     "compileSync/wasmJs/main/productionExecutable/optimized"
 )
 
-tasks.register<Copy>("assembleWebDemo") {
+tasks.register<Sync>("assembleWebDemo") {
     dependsOn("compileProductionExecutableKotlinWasmJsOptimize")
     from(optimizedOutputDir)
     from("src/wasmJsMain/resources")
     into(layout.buildDirectory.dir("webDemo"))
 }
-

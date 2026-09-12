@@ -1,10 +1,9 @@
 package com.rafambn.kflate.decompression
 
-import com.rafambn.kflate.Zlib
 import com.rafambn.kflate.algorithm.inflate
 import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.format.writeZlibStart
 import com.rafambn.kflate.streaming.STREAM_CHUNK_SIZE
 import com.rafambn.kflate.streaming.InflateState
@@ -14,14 +13,11 @@ import com.rafambn.kflate.streaming.updateHistory
 import com.rafambn.kflate.util.readFourBytesBE
 import kotlinx.io.RawSink
 import kotlinx.io.RawSource
-import kotlinx.io.Sink
-import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.write
 
 internal fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
     if (data.size < 6) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
 
     val start = writeZlibStart(data, type.dictionary != null, type.dictionary)
@@ -32,8 +28,8 @@ internal fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
     val decompressedData = inflate(
         inputData,
         InflateState(validationMode = 2),
-        null,
-        type.dictionary
+        type.dictionary,
+        type.maxOutputSize,
     )
 
     val computedAdler32 = Adler32Checksum().apply {
@@ -41,7 +37,7 @@ internal fun decompressZlib(data: ByteArray, type: Zlib): ByteArray {
     }.getChecksum()
 
     if (computedAdler32 != storedAdler32) {
-        createFlateError(FlateErrorCode.CHECKSUM_MISMATCH)
+        throw FlateError(FlateErrorCode.CHECKSUM_MISMATCH)
     }
 
     return decompressedData
@@ -56,26 +52,20 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
     val adler = Adler32Checksum()
     val readBuffer = ByteArray(STREAM_CHUNK_SIZE)
     var inputBuffer = ByteArray(0)
-    var sourceExhausted = false
     var headerParsed = false
     var awaitingTrailer = false
+    var remainingOutputSize = type.maxOutputSize
 
     while (true) {
+        val read = bufferedSource.readAtMostTo(readBuffer)
+        val sourceExhausted = read == -1
         if (!sourceExhausted) {
-            val read = bufferedSource.readAtMostTo(readBuffer)
-            if (read == -1) {
-                sourceExhausted = true
-            } else if (read > 0) {
-                inputBuffer = appendBytes(inputBuffer, readBuffer, read)
-            }
+            inputBuffer = appendBytes(inputBuffer, readBuffer, read)
         }
 
         if (!headerParsed) {
             if (inputBuffer.isEmpty()) {
-                if (sourceExhausted) {
-                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                }
-                continue
+                throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
             try {
                 val headerSize = writeZlibStart(inputBuffer, type.dictionary != null, type.dictionary)
@@ -92,17 +82,24 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
         if (!awaitingTrailer) {
             if (inputBuffer.isEmpty()) {
                 if (sourceExhausted) {
-                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 }
                 continue
             }
 
             state.outputOffset = 0
-            val output = inflateStreamChunk(inputBuffer, state, history, sourceExhausted) ?: continue
+            val output = inflateStreamChunk(
+                inputBuffer,
+                state,
+                history,
+                sourceExhausted,
+                remainingOutputSize,
+            ) ?: continue
             if (output.isNotEmpty()) {
                 bufferedSink.write(output)
                 adler.update(output)
                 history = updateHistory(history, output)
+                remainingOutputSize = remainingOutputSize?.minus(output.size)
             }
 
             if (state.isFinalBlock && state.literalMap == null) {
@@ -114,7 +111,7 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
                     inputBuffer = inputBuffer.copyOfRange(consumedBytes, inputBuffer.size)
                     state.inputBitPosition = bitRemainder
                 } else if (sourceExhausted) {
-                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 }
             }
         }
@@ -123,13 +120,13 @@ internal fun decompressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) 
             val alignedBytes = (state.inputBitPosition + 7) / 8
             if (inputBuffer.size < alignedBytes + 4) {
                 if (sourceExhausted) {
-                    createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 }
                 continue
             }
             val storedAdler = readFourBytesBE(inputBuffer, alignedBytes)
             if (adler.getChecksum() != storedAdler) {
-                createFlateError(FlateErrorCode.CHECKSUM_MISMATCH)
+                throw FlateError(FlateErrorCode.CHECKSUM_MISMATCH)
             }
             break
         }

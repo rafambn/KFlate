@@ -3,24 +3,28 @@
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.SourcesJar
+import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.multiplatform)
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.kover)
 }
 
 group = "com.rafambn"
-version = "1.0.0"
+version = "1.1.0"
 
 kotlin {
     jvmToolchain(libs.versions.java.get().toInt())
 
-    androidLibrary {
+    android {
         namespace = "com.rafambn"
         compileSdk = 36
         minSdk = 24
+        withHostTest {}
     }
     jvm()
     js(IR) {
@@ -32,13 +36,7 @@ kotlin {
                 }
             }
         }
-        nodejs {
-            testTask {
-                useKarma {
-                    useChromiumHeadless()
-                }
-            }
-        }
+        nodejs()
     }
     wasmJs {
         useEsModules()
@@ -49,37 +47,28 @@ kotlin {
                 }
             }
         }
-        nodejs {
-            testTask {
-                useKarma {
-                    useChromiumHeadless()
-                }
-            }
-        }
+        nodejs()
     }
     iosX64()
     iosArm64()
     iosSimulatorArm64()
     mingwX64()
-    linuxX64{
+    linuxX64 {
         binaries.test("release") {
             optimized = true
             debuggable = false
         }
     }
     linuxArm64()
-    macosX64()
     macosArm64()
     androidNativeArm32()
     androidNativeArm64()
     androidNativeX64()
     androidNativeX86()
     tvosArm64()
-    tvosX64()
     tvosSimulatorArm64()
     watchosArm32()
     watchosArm64()
-    watchosX64()
     watchosSimulatorArm64()
 
     sourceSets {
@@ -89,58 +78,24 @@ kotlin {
 
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation(libs.kompress.core)
-            implementation(libs.file)
-            implementation(libs.kotlinx.datetime)
         }
     }
 }
 
-// Performance benchmark tasks
-tasks.register<Exec>("benchmarkNativeRelease") {
-    group = "benchmark"
-    description = "Run native release performance benchmark"
-    dependsOn("linkReleaseReleaseTestLinuxX64")
-    workingDir = project.rootDir
-    val binaryPath = project.layout.buildDirectory.file("bin/linuxX64/releaseReleaseTest/release.kexe").get().asFile.absolutePath
-    commandLine = listOf(binaryPath)
-    doFirst {
-        println("\n=== Running KFlate Native Release Benchmark ===\n")
+kover {
+    reports {
+        verify {
+            rule {
+                minBound(100, CoverageUnit.INSTRUCTION)
+                minBound(100, CoverageUnit.BRANCH)
+            }
+        }
     }
 }
 
-tasks.register("benchmarkJvmRelease") {
-    group = "benchmark"
-    description = "Run JVM release performance benchmark"
-    dependsOn("jvmTest")
-    doFirst {
-        println("\n=== Running KFlate JVM Benchmark ===\n")
-    }
-}
-
-tasks.register("benchmarkWasmJs") {
-    group = "benchmark"
-    description = "Run WASM/JS (Node.js) performance benchmark"
-    dependsOn("cleanWasmJsNodeTest", "wasmJsNodeTest")
-    doFirst {
-        println("\n=== Running KFlate WASM/JS (Node.js) Benchmark ===\n")
-    }
-}
-
-tasks.register("benchmarkAll") {
-    group = "benchmark"
-    description = "Run all performance benchmarks (JVM + Native Release + WASM/JS)"
-    dependsOn("benchmarkJvmRelease", "benchmarkNativeRelease", "benchmarkWasmJs")
-    doFirst {
-        println("\n" + "=".repeat(60))
-        println("Running KFlate Performance Benchmarks (All Platforms)")
-        println("=".repeat(60) + "\n")
-    }
-    doLast {
-        println("\n" + "=".repeat(60))
-        println("Benchmark Results")
-        println("Check performance/ directory for detailed results")
-        println("=".repeat(60) + "\n")
+tasks.withType<AbstractArchiveTask>().configureEach {
+    from(rootProject.file("LICENSE")) {
+        into("META-INF")
     }
 }
 
@@ -148,7 +103,7 @@ mavenPublishing {
     coordinates(
         groupId = "com.rafambn",
         artifactId = "KFlate",
-        version = "1.0.0"
+        version = project.version.toString(),
     )
 
 // Configure POM metadata for the published artifact

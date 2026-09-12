@@ -1,28 +1,5 @@
 package com.rafambn.kflate.huffman
 
-internal data class HuffmanTable(
-    val baseLengths: ShortArray,
-    val reverseLookup: IntArray
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as HuffmanTable
-
-        if (!baseLengths.contentEquals(other.baseLengths)) return false
-        if (!reverseLookup.contentEquals(other.reverseLookup)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = baseLengths.contentHashCode()
-        result = 31 * result + reverseLookup.contentHashCode()
-        return result
-    }
-}
-
 internal fun generateHuffmanTable(extraBits: ByteArray, startValue: Int): HuffmanTable {
     val baseLengths = ShortArray(31)
     var currentStart = startValue
@@ -128,7 +105,8 @@ internal fun validateHuffmanCodeLengths(codeLengths: ByteArray, maxBits: Int): B
     // Validate using code space tracking (units = 2^maxBits)
     var codeSpace = 1 shl maxBits
 
-    for (bitLength in 1..maxBits) {
+    var bitLength = 1
+    while (bitLength <= maxBits) {
         val count = lengthCounts[bitLength]
         if (count > 0) {
             // Each code at this length uses 2^(maxBits - bitLength) units
@@ -137,37 +115,11 @@ internal fun validateHuffmanCodeLengths(codeLengths: ByteArray, maxBits: Int): B
 
             if (codeSpace < 0) return false  // Oversubscribed
         }
+        bitLength++
     }
 
     // Valid only if all space used (complete tree)
     return codeSpace == 0
-}
-
-internal data class HuffmanNode(
-    val symbol: Int,
-    val frequency: Int,
-    var leftChild: HuffmanNode? = null,
-    var rightChild: HuffmanNode? = null
-)
-
-internal data class HuffmanTreeResult(val tree: ByteArray, val maxBits: Int) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
-
-        other as HuffmanTreeResult
-
-        if (maxBits != other.maxBits) return false
-        if (!tree.contentEquals(other.tree)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = maxBits
-        result = 31 * result + tree.contentHashCode()
-        return result
-    }
 }
 
 internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int): HuffmanTreeResult {
@@ -190,7 +142,7 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int
         return HuffmanTreeResult(codeLengths, 1)
     }
 
-    val maxSymbol = originalNodes.maxOf { it.symbol }
+    val maxSymbol = originalNodes.last().symbol
     val codeLengths = IntArray(maxSymbol + 1)
 
     nodes.sortBy { it.frequency }
@@ -235,15 +187,11 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int
             .thenBy { it.frequency })
 
         var i = 0
-        for (nodeIndex in 0 until nodeCount) {
-            val symbol = originalNodes[nodeIndex].symbol
-            if (codeLengths[symbol] > maxBits) {
-                debt += cost - (1 shl (currentMaxBits - codeLengths[symbol]))
-                codeLengths[symbol] = maxBits
-            } else {
-                i = nodeIndex
-                break
-            }
+        while (codeLengths[originalNodes[i].symbol] > maxBits) {
+            val symbol = originalNodes[i].symbol
+            debt += cost - (1 shl (currentMaxBits - codeLengths[symbol]))
+            codeLengths[symbol] = maxBits
+            i++
         }
 
         debt = debt shr costShift
@@ -259,7 +207,7 @@ internal fun buildHuffmanTreeFromFrequencies(frequencies: IntArray, maxBits: Int
         }
 
         i = nodeCount - 1
-        while (i >= 0 && debt != 0) {
+        while (debt != 0) {
             val symbol = originalNodes[i].symbol
             if (codeLengths[symbol] == maxBits) {
                 codeLengths[symbol]--

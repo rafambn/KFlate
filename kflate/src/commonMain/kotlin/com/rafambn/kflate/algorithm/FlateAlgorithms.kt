@@ -1,13 +1,11 @@
-@file:OptIn(ExperimentalTime::class)
-
 package com.rafambn.kflate.algorithm
 
-import com.rafambn.kflate.CompressionType
-import com.rafambn.kflate.RAW
-import com.rafambn.kflate.GZIP
-import com.rafambn.kflate.ZLIB
+import com.rafambn.kflate.compression.CompressionType
+import com.rafambn.kflate.compression.Raw
+import com.rafambn.kflate.compression.Gzip
+import com.rafambn.kflate.compression.Zlib
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_BASE
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_EXTRA_BITS
 import com.rafambn.kflate.huffman.FIXED_DISTANCE_REVERSE_MAP
@@ -16,7 +14,6 @@ import com.rafambn.kflate.huffman.FIXED_LENGTH_BASE
 import com.rafambn.kflate.huffman.FIXED_LENGTH_EXTRA_BITS
 import com.rafambn.kflate.huffman.FIXED_LENGTH_REVERSE_LOOKUP
 import com.rafambn.kflate.huffman.FIXED_LENGTH_REVERSE_MAP
-import com.rafambn.kflate.huffman.DEFLATE_OPTIONS
 import com.rafambn.kflate.huffman.CODE_LENGTH_INDEX_MAP
 import com.rafambn.kflate.huffman.createHuffmanTree
 import com.rafambn.kflate.huffman.validateHuffmanCodeLengths
@@ -29,38 +26,52 @@ import com.rafambn.kflate.util.readTwoBytes
 import com.rafambn.kflate.util.shiftToNextByte
 import com.rafambn.kflate.util.writeBlock
 import com.rafambn.kflate.util.writeFixedBlock
-import kotlin.math.ceil
-import kotlin.math.ln
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.time.ExperimentalTime
 
 internal fun inflate(
     inputData: ByteArray,
     inflateState: InflateState,
-    outputBuffer: ByteArray? = null,
-    dictionary: ByteArray? = null
+    dictionary: ByteArray? = null,
+    maxOutputSize: Int? = null,
 ): ByteArray {
     val sourceLength = inputData.size
     val dictionaryLength = dictionary?.size ?: 0
 
-    if (sourceLength == 0 || (inflateState.isFinalBlock && inflateState.literalMap == null)) {
-        return outputBuffer ?: ByteArray(0)
+    if (inflateState.isFinalBlock && inflateState.literalMap == null) {
+        return ByteArray(0)
     }
+    if (sourceLength == 0) {
+        if (inflateState.validationMode != 0) {
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+        }
+        return ByteArray(0)
+    }
+    validateInflateInputSize(sourceLength)
 
-    var workingBuffer = outputBuffer
-    val isBufferProvided = workingBuffer != null
-
-    val needsResize = !isBufferProvided || inflateState.validationMode != 2
     val hasNoStoredState = inflateState.validationMode != 0
+    val suggestedCapacity = minOf(
+        maxOf(sourceLength.toLong() * 3L, 32_768L),
+        1_048_576L,
+    ).toInt()
+    val initialCapacity = maxOutputSize?.let { minOf(it, suggestedCapacity) } ?: suggestedCapacity
+    var workingBuffer = ByteArray(initialCapacity)
 
-    if (!isBufferProvided)
-        workingBuffer = ByteArray(maxOf(sourceLength * 3, 32768))
-
-    fun ensureCapacity(requiredSize: Int) {
-        val currentBuffer = workingBuffer!!
+    fun ensureCapacity(additionalBytes: Int, bytesWritten: Int) {
+        val requiredSizeLong = bytesWritten.toLong() + additionalBytes.toLong()
+        if (maxOutputSize != null && requiredSizeLong > maxOutputSize.toLong()) {
+            throw FlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
+        }
+        if (requiredSizeLong > Int.MAX_VALUE.toLong()) {
+            throw FlateError(FlateErrorCode.OUTPUT_LIMIT_EXCEEDED)
+        }
+        val requiredSize = requiredSizeLong.toInt()
+        val currentBuffer = workingBuffer
         if (requiredSize > currentBuffer.size) {
-            val newSize = maxOf(currentBuffer.size * 2, requiredSize)
+            val doubledSize = minOf(
+                maxOf(currentBuffer.size.toLong() * 2L, 1L),
+                Int.MAX_VALUE.toLong(),
+            ).toInt()
+            val grownSize = maxOf(doubledSize, requiredSize)
+            val newSize = maxOutputSize?.let { minOf(grownSize, it) } ?: grownSize
             val newBuffer = ByteArray(newSize)
             currentBuffer.copyInto(newBuffer)
             workingBuffer = newBuffer
@@ -81,7 +92,7 @@ internal fun inflate(
         if (literalLengthMap == null) {
             // Need at least 3 bits for block header (1 BFINAL + 2 BTYPE)
             if (currentBitPosition + 3 > totalAvailableBits) {
-                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
             isFinalBlock = readBits(inputData, currentBitPosition, 1) != 0
@@ -94,7 +105,7 @@ internal fun inflate(
 
                     // Check if at least 4 bytes remain for LEN and NLEN
                     if (blockStartByte + 4 > sourceLength) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
@@ -103,18 +114,18 @@ internal fun inflate(
 
                     // Validate that NLEN is the one's complement of LEN
                     if ((blockLength xor 0xFFFF) != blockNlen) {
-                        createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                        throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                     }
 
                     val dataStartByte = blockStartByte + 4
                     val blockEndByte = dataStartByte + blockLength
 
                     if (blockEndByte > sourceLength) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
-                    if (needsResize) ensureCapacity(bytesWrittenToOutput + blockLength)
+                    ensureCapacity(blockLength, bytesWrittenToOutput)
 
                     inputData.copyInto(
                         workingBuffer,
@@ -142,7 +153,7 @@ internal fun inflate(
                 2 -> {
                     // Check if we have at least 14 bits for the block header
                     if (currentBitPosition + 14 > totalAvailableBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
@@ -152,8 +163,8 @@ internal fun inflate(
 
                     // RFC 1951: HLIT max is 29 (286 codes), HDIST max is 31 (32 codes)
                     // Distance codes 30-31 are never used in valid data but may appear in the tree
-                    if (numLiteralCodes > 286 || numDistanceCodes > 32) {
-                        createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                    if (numLiteralCodes > 286) {
+                        throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                     }
 
                     val totalCodes = numLiteralCodes + numDistanceCodes
@@ -162,7 +173,7 @@ internal fun inflate(
                     // Check if we have enough bits for the code length tree
                     val codeLengthTreeBits = numCodeLengthCodes * 3
                     if (currentBitPosition + codeLengthTreeBits > totalAvailableBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         break
                     }
 
@@ -175,11 +186,7 @@ internal fun inflate(
                     val codeLengthMaxBits = findMaxValue(codeLengthTree)
 
                     // Validate code-length tree
-                    if (codeLengthMaxBits > 0) {
-                        if (!validateHuffmanCodeLengths(codeLengthTree, codeLengthMaxBits)) {
-                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
-                        }
-                    }
+                    validateCodeLengthTree(codeLengthTree, codeLengthMaxBits)
 
                     val codeLengthBitMask = (1 shl codeLengthMaxBits) - 1
                     val codeLengthHuffmanMap = createHuffmanTree(codeLengthTree, codeLengthMaxBits, true)
@@ -188,13 +195,15 @@ internal fun inflate(
                     var codeIndex = 0
 
                     while (codeIndex < totalCodes) {
-                        if (currentBitPosition > totalAvailableBits) {
-                            if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                            break
+                        val availableBits = totalAvailableBits - currentBitPosition
+                        if (availableBits <= 0) {
+                            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                         }
 
                         val huffmanCode = codeLengthHuffmanMap[readBits(inputData, currentBitPosition, codeLengthBitMask)]
-                        currentBitPosition += (huffmanCode.toInt() and 15)
+                        val huffmanCodeLength = huffmanCode.toInt() and 15
+                        validateCodeLengthEntry(huffmanCodeLength, availableBits, codeLengthMaxBits)
+                        currentBitPosition += huffmanCodeLength
                         val symbol = huffmanCode.toInt() shr 4
 
                         when {
@@ -204,66 +213,63 @@ internal fun inflate(
 
                             symbol == 16 -> {
                                 if (codeIndex == 0) {
-                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                    throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                }
+                                if (currentBitPosition + 2 > totalAvailableBits) {
+                                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                                 }
                                 val repeatCount = 3 + readBits(inputData, currentBitPosition, 3)
                                 currentBitPosition += 2
                                 val remainingSlots = totalCodes - codeIndex
                                 if (repeatCount > remainingSlots) {
-                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                    throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                                 }
                                 val valueToRepeat = allCodeLengths[codeIndex - 1]
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = valueToRepeat }
                             }
 
                             symbol == 17 -> {
+                                if (currentBitPosition + 3 > totalAvailableBits) {
+                                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+                                }
                                 val repeatCount = 3 + readBits(inputData, currentBitPosition, 7)
                                 currentBitPosition += 3
                                 val remainingSlots = totalCodes - codeIndex
                                 if (repeatCount > remainingSlots) {
-                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                    throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                                 }
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = 0 }
                             }
 
-                            symbol == 18 -> {
+                            else -> {
+                                if (currentBitPosition + 7 > totalAvailableBits) {
+                                    throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+                                }
                                 val repeatCount = 11 + readBits(inputData, currentBitPosition, 127)
                                 currentBitPosition += 7
                                 val remainingSlots = totalCodes - codeIndex
                                 if (repeatCount > remainingSlots) {
-                                    createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                                    throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
                                 }
                                 repeat(repeatCount) { allCodeLengths[codeIndex++] = 0 }
                             }
                         }
-                    }
-
-                    if (currentBitPosition > totalAvailableBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                        break
-                    }
-
-                    if (codeIndex < totalCodes) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                        break
                     }
 
                     val literalLengthCodeLengths = allCodeLengths.copyOfRange(0, numLiteralCodes)
                     val distanceCodeLengths = allCodeLengths.copyOfRange(numLiteralCodes, totalCodes)
 
                     // Validate that end-of-block symbol (256) has a non-zero code length
-                    if (numLiteralCodes > 256 && literalLengthCodeLengths[256].toInt() == 0) {
-                        createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                    if (literalLengthCodeLengths[256].toInt() == 0) {
+                        throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
                     }
 
                     literalMaxBits = findMaxValue(literalLengthCodeLengths)
                     distanceMaxBits = findMaxValue(distanceCodeLengths)
 
                     // Validate literal/length tree
-                    if (literalMaxBits > 0) {
-                        if (!validateHuffmanCodeLengths(literalLengthCodeLengths, literalMaxBits)) {
-                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
-                        }
+                    if (!validateHuffmanCodeLengths(literalLengthCodeLengths, literalMaxBits)) {
+                        throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
                     }
 
                     literalLengthMap = createHuffmanTree(literalLengthCodeLengths, literalMaxBits, true)
@@ -271,44 +277,56 @@ internal fun inflate(
                     // Validate distance tree
                     if (distanceMaxBits > 0) {
                         if (!validateHuffmanCodeLengths(distanceCodeLengths, distanceMaxBits)) {
-                            createFlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+                            throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
                         }
                     }
 
                     distanceMap = createHuffmanTree(distanceCodeLengths, distanceMaxBits, true)
                 }
 
-                else -> createFlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
+                else -> throw FlateError(FlateErrorCode.INVALID_BLOCK_TYPE)
             }
 
-            if (currentBitPosition > totalAvailableBits) {
-                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                break
-            }
         }
-
-        if (needsResize) ensureCapacity(bytesWrittenToOutput + 131072)
 
         val literalBitMask = (1 shl literalMaxBits) - 1
         val distanceBitMask = (1 shl distanceMaxBits) - 1
         var lastBitPosition = currentBitPosition
-        val currentLitMap = literalLengthMap!!
+        val currentLitMap = literalLengthMap
         val currentDistMap = distanceMap!!
 
         while (true) {
-            val literalCode = (currentLitMap[readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
-            val symbol = literalCode shr 4
-            currentBitPosition += (literalCode and 15)
-
-            if (currentBitPosition > totalAvailableBits) {
-                if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            val availableLiteralBits = totalAvailableBits - currentBitPosition
+            if (availableLiteralBits <= 0) {
+                if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
                 break
             }
+            val literalCode = (currentLitMap[readBits16(inputData, currentBitPosition) and literalBitMask].toInt() and 0xFFFF)
+            val literalCodeLength = literalCode and 15
+            if (literalCode == 0 && availableLiteralBits < literalMaxBits) {
+                if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+                break
+            }
+            if (literalCodeLength > availableLiteralBits) {
+                if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+                break
+            }
+            val symbol = literalCode shr 4
+            currentBitPosition += literalCodeLength
 
-            if (literalCode == 0) createFlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
+            // Symbols 0..285 are valid. Fixed Huffman symbols 286 and 287 are reserved by RFC 1951.
+            if (literalCode == 0 || symbol > 285) {
+                throw FlateError(FlateErrorCode.INVALID_LENGTH_LITERAL)
+            }
 
             when {
                 symbol < 256 -> {
+                    // The normal unbounded path has spare capacity almost all the time.
+                    // Keep output-limit validation on the bounded path, but avoid doing
+                    // long arithmetic and a function call for every literal otherwise.
+                    if (maxOutputSize != null || bytesWrittenToOutput >= workingBuffer.size) {
+                        ensureCapacity(1, bytesWrittenToOutput)
+                    }
                     workingBuffer[bytesWrittenToOutput++] = symbol.toByte()
                     lastBitPosition = currentBitPosition
                 }
@@ -325,40 +343,59 @@ internal fun inflate(
                     if (symbol > 264) {
                         val lengthIndex = symbol - 257
                         val extraBits = FIXED_LENGTH_EXTRA_BITS[lengthIndex].toInt() and 0xFF
+                        if (currentBitPosition + extraBits > totalAvailableBits) {
+                            if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+                            break
+                        }
                         matchLength =
                             readBits(inputData, currentBitPosition, (1 shl extraBits) - 1) + (FIXED_LENGTH_BASE[lengthIndex].toInt() and 0xFFFF)
                         currentBitPosition += extraBits
                     }
 
+                    val availableDistanceBits = totalAvailableBits - currentBitPosition
+                    if (availableDistanceBits <= 0) {
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
                     val distanceCode = (currentDistMap[readBits16(inputData, currentBitPosition) and distanceBitMask].toInt() and 0xFFFF)
+                    val distanceCodeLength = distanceCode and 15
+                    if (distanceCode == 0 && availableDistanceBits < distanceMaxBits) {
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
+                    if (distanceCodeLength > availableDistanceBits) {
+                        if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+                        break
+                    }
                     val distanceSymbol = distanceCode shr 4
-                    if (distanceCode == 0) createFlateError(FlateErrorCode.INVALID_DISTANCE)
+                    if (distanceCode == 0) throw FlateError(FlateErrorCode.INVALID_DISTANCE)
                     // RFC 1951: Distance codes 30-31 will never occur in valid compressed data
-                    if (distanceSymbol >= 30) createFlateError(FlateErrorCode.INVALID_DISTANCE)
-                    currentBitPosition += (distanceCode and 15)
+                    if (distanceSymbol >= 30) throw FlateError(FlateErrorCode.INVALID_DISTANCE)
+                    currentBitPosition += distanceCodeLength
 
                     var matchDistance = FIXED_DISTANCE_BASE[distanceSymbol].toInt() and 0xFFFF
                     if (distanceSymbol > 3) {
                         val extraBits = FIXED_DISTANCE_EXTRA_BITS[distanceSymbol].toInt() and 0xFF
+                        if (currentBitPosition + extraBits > totalAvailableBits) {
+                            if (hasNoStoredState) throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+                            break
+                        }
                         matchDistance += readBits16(inputData, currentBitPosition) and ((1 shl extraBits) - 1)
                         currentBitPosition += extraBits
                     }
 
-                    if (currentBitPosition > totalAvailableBits) {
-                        if (hasNoStoredState) createFlateError(FlateErrorCode.UNEXPECTED_EOF)
-                        break
+                    if (maxOutputSize != null || matchLength > workingBuffer.size - bytesWrittenToOutput) {
+                        ensureCapacity(matchLength, bytesWrittenToOutput)
                     }
 
-                    if (needsResize) ensureCapacity(bytesWrittenToOutput + matchLength)
-
                     val copyEndIndex = bytesWrittenToOutput + matchLength
-                    val buffer = workingBuffer!!
+                    val buffer = workingBuffer
 
                     if (bytesWrittenToOutput < matchDistance) {
                         val dictionaryOffset = dictionaryLength - matchDistance
                         val dictionaryEndIndex = minOf(matchDistance, copyEndIndex)
                         if (dictionaryOffset + bytesWrittenToOutput < 0) {
-                            createFlateError(FlateErrorCode.INVALID_DISTANCE)
+                            throw FlateError(FlateErrorCode.INVALID_DISTANCE)
                         }
 
                         dictionary!!.copyInto(
@@ -370,9 +407,10 @@ internal fun inflate(
                         bytesWrittenToOutput = dictionaryEndIndex
                     }
 
-                    while (bytesWrittenToOutput < copyEndIndex) {
-                        buffer[bytesWrittenToOutput] = buffer[bytesWrittenToOutput - matchDistance]
-                        bytesWrittenToOutput++
+                    val remainingMatchLength = copyEndIndex - bytesWrittenToOutput
+                    if (remainingMatchLength > 0) {
+                        copyMatch(buffer, bytesWrittenToOutput, matchDistance, remainingMatchLength)
+                        bytesWrittenToOutput = copyEndIndex
                     }
                     lastBitPosition = currentBitPosition
                 }
@@ -393,22 +431,66 @@ internal fun inflate(
 
     } while (!isFinalBlock)
 
-    return workingBuffer!!.copyOfRange(0, bytesWrittenToOutput)
+    return workingBuffer.copyOfRange(0, bytesWrittenToOutput)
+}
+
+internal fun copyMatch(
+    buffer: ByteArray,
+    destinationOffset: Int,
+    distance: Int,
+    length: Int,
+) {
+    if (distance == 1) {
+        buffer.fill(buffer[destinationOffset - 1], destinationOffset, destinationOffset + length)
+        return
+    }
+
+    if (distance >= length) {
+        buffer.copyInto(
+            destination = buffer,
+            destinationOffset = destinationOffset,
+            startIndex = destinationOffset - distance,
+            endIndex = destinationOffset - distance + length,
+        )
+        return
+    }
+
+    buffer.copyInto(
+        destination = buffer,
+        destinationOffset = destinationOffset,
+        startIndex = destinationOffset - distance,
+        endIndex = destinationOffset,
+    )
+
+    var copied = distance
+    while (copied < length) {
+        val copyLength = minOf(copied, length - copied)
+        buffer.copyInto(
+            destination = buffer,
+            destinationOffset = destinationOffset + copied,
+            startIndex = destinationOffset,
+            endIndex = destinationOffset + copyLength,
+        )
+        copied += copyLength
+    }
 }
 
 internal fun deflate(
     data: ByteArray,
     level: Int,
-    compressionLevel: Int,
+    hashBits: Int,
     prefixSize: Int,
     postfixSize: Int,
     state: DeflateState
 ): ByteArray {
     val dataSize = state.inputEndIndex.takeIf { it != 0 } ?: data.size
     // Heuristic: dataSize + 1/8th of dataSize (for expansion) + 256 (for tree/header overhead) + 5 per block
-    val bufferMargin = (dataSize shr 3) + 256 + 5 * (1 + (dataSize / 7000))
-    val output = ByteArray(prefixSize + dataSize + bufferMargin + postfixSize)
-    val writeBuffer = ByteArray(output.size - prefixSize - postfixSize)
+    val bufferMargin = (dataSize.toLong() shr 3) + 256L + 5L * (1L + dataSize / 7_000L)
+    val writeBufferSize = dataSize.toLong() + bufferMargin
+    if (writeBufferSize > Int.MAX_VALUE.toLong()) {
+        throw FlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+    val writeBuffer = ByteArray(writeBufferSize.toInt())
     val isLastBlock = state.isLastChunk
     var bitPosition: Long = (state.bitBuffer and 7).toLong()
 
@@ -416,114 +498,192 @@ internal fun deflate(
         if (bitPosition != 0L) {
             writeBuffer[0] = (state.bitBuffer shr 3).toByte()
         }
-        val option = DEFLATE_OPTIONS[level - 1]
-        val niceLength = option shr 13
-        val chainLength = option and 8191
-        val mask = (1 shl compressionLevel) - 1
-        val prev = state.prev ?: ShortArray(32768)
+        val levelOptions = DEFLATE_LEVELS[level]
+        val mask = (1 shl hashBits) - 1
+        val prevSize = if (isLastBlock) minOf(MATCH_DISTANCE_MASK + 1, dataSize) else MATCH_DISTANCE_MASK + 1
+        val prev = state.prev ?: ShortArray(prevSize)
         val head = state.head ?: ShortArray(mask + 1)
-        val baseShift1 = ceil(compressionLevel / 3.0).toInt()
-        val baseShift2 = 2 * baseShift1
+        val hashShift = (hashBits + 2) / 3
 
-        val symbols = IntArray(65536)
+        val symbols = IntArray(minOf(65536, dataSize))
         val literalFrequencies = IntArray(288)
         val distanceFrequencies = IntArray(32)
-        var literalCount = 0
+        var matchCount = 0
         var extraBits = 0
         var i = state.inputOffset
         var symbolIndex = 0
         var waitIndex = state.waitIndex
         var blockStart = maxOf(state.inputOffset, waitIndex)
+        var pendingMatch = 0
 
-        while (i + 2 < dataSize) {
-            val hashValue =
-                ((data[i].toInt() and 0xFF) xor ((data[i + 1].toInt() and 0xFF) shl baseShift1) xor ((data[i + 2].toInt() and 0xFF) shl baseShift2)) and mask
-            var iMod = i and 32767
-            var pIMod = head[hashValue].toInt() and 0xFFFF
-            prev[iMod] = pIMod.toShort()
-            head[hashValue] = iMod.toShort()
+        if (levelOptions.usesCostAwareParsing) {
+            while (i < waitIndex && i + 2 < dataSize) {
+                val hashValue = deflateHash(data, i, hashShift, mask)
+                val iMod = i and MATCH_DISTANCE_MASK
+                prev[iMod] = head[hashValue]
+                head[hashValue] = iMod.toShort()
+                i++
+            }
+            i = maxOf(i, waitIndex)
+            blockStart = i
 
-            if (waitIndex <= i) {
-                val remaining = dataSize - i
-                if ((literalCount > 7000 || symbolIndex > 24576) && (remaining > 423 || !isLastBlock)) {
-                    bitPosition = writeBlock(
-                        data, writeBuffer, false, symbols, literalFrequencies, distanceFrequencies,
-                        extraBits, symbolIndex, blockStart, i - blockStart, bitPosition
-                    )
-                    symbolIndex = 0
-                    literalCount = 0
-                    extraBits = 0
-                    blockStart = i
-                    literalFrequencies.fill(0, 0, 286)
-                    distanceFrequencies.fill(0, 0, 30)
+            val costWindowSize = minOf(COST_AWARE_WINDOW_SIZE, maxOf(1, dataSize - i))
+            val matches = IntArray(costWindowSize)
+            val costs = IntArray(costWindowSize + 1)
+            val choices = IntArray(costWindowSize)
+            var hashedUntil = i
+
+            while (i < dataSize) {
+                val hashEnd = minOf(i, dataSize - 2)
+                while (hashedUntil < hashEnd) {
+                    val hashValue = deflateHash(data, hashedUntil, hashShift, mask)
+                    val hashIndex = hashedUntil and MATCH_DISTANCE_MASK
+                    prev[hashIndex] = head[hashValue]
+                    head[hashValue] = hashIndex.toShort()
+                    hashedUntil++
                 }
 
-                var length = 2
-                var distance = 0
-                var currentChain = chainLength
-                var diff = (iMod - pIMod) and 32767
+                val windowStart = i
+                val windowEnd = minOf(dataSize, windowStart + costWindowSize)
+                val windowSize = windowEnd - windowStart
+                matches.fill(0, 0, windowSize)
 
-                if (remaining > 2 && data[i] == data[i - diff] && data[i + 1] == data[i - diff + 1] && data[i + 2] == data[i - diff + 2]) {
-                    val maxN = minOf(niceLength, remaining) - 1
-                    val maxD = minOf(32767, i)
-                    val maxLength = minOf(258, remaining)
+                var scanIndex = windowStart
+                while (scanIndex < windowEnd) {
+                    if (scanIndex + 2 >= dataSize) break
+                    val hashValue = deflateHash(data, scanIndex, hashShift, mask)
+                    val scanIndexMod = scanIndex and MATCH_DISTANCE_MASK
+                    val previousIndex = head[hashValue].toInt() and 0xFFFF
+                    prev[scanIndexMod] = previousIndex.toShort()
+                    head[hashValue] = scanIndexMod.toShort()
+                    matches[scanIndex - windowStart] =
+                        findLongestMatch(data, dataSize, scanIndex, previousIndex, prev, levelOptions)
+                    scanIndex++
+                }
+                hashedUntil = maxOf(hashedUntil, scanIndex)
 
-                    while (diff <= maxD && --currentChain != 0 && iMod != pIMod) {
-                        if (data[i + length] == data[i + length - diff] &&
-                            data[i] == data[i - diff] &&
-                            data[i + 1] == data[i + 1 - diff]
-                        ) {
-                            var newLength = 2
-                            while (newLength < maxLength && data[i + newLength] == data[i + newLength - diff]) {
-                                newLength++
-                            }
-                            if (newLength > length) {
-                                length = newLength
-                                distance = diff
-                                if (newLength > maxN) break
+                chooseCostAwarePath(data, windowStart, windowEnd, matches, costs, choices)
 
-                                // Optimized minMatchDiff loop: stop early if no improvement possible
-                                val minMatchDiff = minOf(diff, newLength - 2)
-                                if (minMatchDiff > 0) {
-                                    var maxDiff = 0
-                                    for (j in 0 until minMatchDiff) {
-                                        val tI = (i - diff + j) and 32767
-                                        val pTI = prev[tI].toInt() and 0xFFFF
-                                        val cD = (tI - pTI) and 32767
-                                        if (cD > maxDiff) {
-                                            maxDiff = cD
-                                            pIMod = tI
-                                            // Early exit if we found the maximum possible distance
-                                            if (maxDiff >= maxD) break
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        iMod = pIMod
-                        pIMod = prev[iMod].toInt() and 0xFFFF
-                        diff += (iMod - pIMod) and 32767
+                while (i < windowEnd) {
+                    val remaining = dataSize - i
+                    if (shouldFlushBlock(matchCount, symbolIndex, remaining, isLastBlock)) {
+                        bitPosition = writeBlock(
+                            data, writeBuffer, false, symbols, literalFrequencies, distanceFrequencies,
+                            extraBits, symbolIndex, blockStart, i - blockStart, bitPosition
+                        )
+                        symbolIndex = 0
+                        matchCount = 0
+                        extraBits = 0
+                        blockStart = i
+                        literalFrequencies.fill(0, 0, 286)
+                        distanceFrequencies.fill(0, 0, 30)
                     }
-                }
 
-                if (distance != 0) {
-                    symbols[symbolIndex++] = 268435456 or (FIXED_LENGTH_REVERSE_LOOKUP[length] shl 18) or FIXED_DISTANCE_REVERSE_LOOKUP[distance]
-                    val lenIndex = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
-                    val distIndex = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
-                    extraBits += (FIXED_LENGTH_EXTRA_BITS[lenIndex].toInt() and 0xFF) + (FIXED_DISTANCE_EXTRA_BITS[distIndex].toInt() and 0xFF)
-                    ++literalFrequencies[257 + lenIndex]
-                    ++distanceFrequencies[distIndex]
-                    waitIndex = i + length
-                    ++literalCount
-                } else {
-                    symbols[symbolIndex++] = data[i].toInt() and 0xFF
-                    ++literalFrequencies[data[i].toInt() and 0xFF]
+                    val match = matches[i - windowStart]
+                    val length = choices[i - windowStart]
+                    if (length == 1) {
+                        symbols[symbolIndex++] = data[i].toInt() and 0xFF
+                        ++literalFrequencies[data[i].toInt() and 0xFF]
+                    } else {
+                        val distance = match and MATCH_DISTANCE_MASK
+                        symbols[symbolIndex++] =
+                            268435456 or
+                                (FIXED_LENGTH_REVERSE_LOOKUP[length] shl 18) or
+                                FIXED_DISTANCE_REVERSE_LOOKUP[distance]
+                        val lenIndex = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
+                        val distIndex = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
+                        extraBits +=
+                            (FIXED_LENGTH_EXTRA_BITS[lenIndex].toInt() and 0xFF) +
+                                (FIXED_DISTANCE_EXTRA_BITS[distIndex].toInt() and 0xFF)
+                        ++literalFrequencies[257 + lenIndex]
+                        ++distanceFrequencies[distIndex]
+                        ++matchCount
+                    }
+                    i += length
                 }
             }
-            i++
+            waitIndex = i
+        } else {
+            var hashWindow = if (i + 2 < dataSize) deflateHashWindow(data, i) else 0
+            while (i + 2 < dataSize) {
+                val hashValue = deflateHash(hashWindow, hashShift, mask)
+                val iMod = i and MATCH_DISTANCE_MASK
+                val pIMod = head[hashValue].toInt() and 0xFFFF
+                prev[iMod] = pIMod.toShort()
+                head[hashValue] = iMod.toShort()
+
+                if (waitIndex <= i) {
+                    val remaining = dataSize - i
+                    if (shouldFlushBlock(matchCount, symbolIndex, remaining, isLastBlock)) {
+                        bitPosition = writeBlock(
+                            data, writeBuffer, false, symbols, literalFrequencies, distanceFrequencies,
+                            extraBits, symbolIndex, blockStart, i - blockStart, bitPosition
+                        )
+                        symbolIndex = 0
+                        matchCount = 0
+                        extraBits = 0
+                        blockStart = i
+                        literalFrequencies.fill(0, 0, 286)
+                        distanceFrequencies.fill(0, 0, 30)
+                    }
+
+                    val match = if (pendingMatch != 0) {
+                        pendingMatch.also { pendingMatch = 0 }
+                    } else {
+                        findLongestMatch(data, dataSize, i, pIMod, prev, levelOptions)
+                    }
+                    val length = match ushr MATCH_DISTANCE_BITS
+                    val distance = match and MATCH_DISTANCE_MASK
+
+                    val nextMatch = if (shouldSearchLazyMatch(length, levelOptions.maxLazyLength, remaining)) {
+                        val nextIndex = i + 1
+                        val nextHashWindow = updateDeflateHashWindow(hashWindow, data[i + 3])
+                        val nextHash = deflateHash(nextHashWindow, hashShift, mask)
+                        findLongestMatch(
+                            data,
+                            dataSize,
+                            nextIndex,
+                            head[nextHash].toInt() and 0xFFFF,
+                            prev,
+                            levelOptions,
+                            minimumLength = length,
+                        )
+                    } else {
+                        0
+                    }
+
+                    if ((nextMatch ushr MATCH_DISTANCE_BITS) > length) {
+                        pendingMatch = nextMatch
+                        symbols[symbolIndex++] = data[i].toInt() and 0xFF
+                        ++literalFrequencies[data[i].toInt() and 0xFF]
+                    } else if (distance != 0) {
+                        symbols[symbolIndex++] =
+                            268435456 or
+                                (FIXED_LENGTH_REVERSE_LOOKUP[length] shl 18) or
+                                FIXED_DISTANCE_REVERSE_LOOKUP[distance]
+                        val lenIndex = FIXED_LENGTH_REVERSE_LOOKUP[length] and 31
+                        val distIndex = FIXED_DISTANCE_REVERSE_LOOKUP[distance] and 31
+                        extraBits +=
+                            (FIXED_LENGTH_EXTRA_BITS[lenIndex].toInt() and 0xFF) +
+                                (FIXED_DISTANCE_EXTRA_BITS[distIndex].toInt() and 0xFF)
+                        ++literalFrequencies[257 + lenIndex]
+                        ++distanceFrequencies[distIndex]
+                        waitIndex = i + length
+                        ++matchCount
+                    } else {
+                        symbols[symbolIndex++] = data[i].toInt() and 0xFF
+                        ++literalFrequencies[data[i].toInt() and 0xFF]
+                    }
+                }
+                if (i + 3 < dataSize) {
+                    hashWindow = updateDeflateHashWindow(hashWindow, data[i + 3])
+                }
+                i++
+            }
+
+            i = maxOf(i, waitIndex)
         }
 
-        i = maxOf(i, waitIndex)
         while (i < dataSize) {
             symbols[symbolIndex++] = data[i].toInt() and 0xFF
             literalFrequencies[data[i].toInt() and 0xFF]++
@@ -557,13 +717,24 @@ internal fun deflate(
         }
         state.inputOffset = dataSize
     }
-    writeBuffer.copyInto(output, destinationOffset = prefixSize)
-    return output.sliceArray(0 until prefixSize + shiftToNextByte(bitPosition) + postfixSize)
+    val compressedSize = shiftToNextByte(bitPosition)
+    val outputSize = prefixSize.toLong() + compressedSize.toLong() + postfixSize.toLong()
+    if (outputSize > Int.MAX_VALUE.toLong()) {
+        throw FlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+    val output = ByteArray(outputSize.toInt())
+    writeBuffer.copyInto(
+        output,
+        destinationOffset = prefixSize,
+        startIndex = 0,
+        endIndex = compressedSize,
+    )
+    return output
 }
 
 internal fun deflateWithOptions(
     inputData: ByteArray,
-    type: CompressionType = RAW(),
+    type: CompressionType = Raw(),
     prefixSize: Int,
     suffixSize: Int,
     deflateState: DeflateState? = null
@@ -571,27 +742,18 @@ internal fun deflateWithOptions(
     var workingState = deflateState
     var workingData = inputData
 
-    val level = when (type) {
-        is RAW -> type.level
-        is GZIP -> type.level
-        is ZLIB -> type.level
-    }
-    val mem = when (type) {
-        is RAW -> type.mem
-        is GZIP -> type.mem
-        is ZLIB -> type.mem
-    }
+    val level = type.level
     val dictionary = when (type) {
-        is RAW -> type.dictionary
-        is GZIP -> type.dictionary
-        is ZLIB -> type.dictionary
+        is Raw -> type.dictionary
+        is Gzip -> null
+        is Zlib -> type.dictionary
     }
 
     if (workingState == null) {
         workingState = DeflateState(isLastChunk = true)
 
         if (dictionary != null) {
-            val combinedData = ByteArray(dictionary.size + inputData.size)
+            val combinedData = ByteArray(checkedDeflateInputSize(dictionary.size, inputData.size))
 
             dictionary.copyInto(combinedData, destinationOffset = 0)
 
@@ -602,28 +764,165 @@ internal fun deflateWithOptions(
         }
     }
 
-    // Cap hash table size per compression level for better CPU cache utilization.
-    // Lower levels search few chain links and don't need large tables.
-    val maxHashBitsForLevel = when (level) {
-        0, 1 -> 12  // 4K entries = 8KB (L1 cache)
-        2, 3 -> 13  // 8K entries = 16KB (L1 cache)
-        4, 5 -> 14  // 16K entries = 32KB (L1 cache)
-        6, 7 -> 15  // 32K entries = 64KB (L2 cache)
-        8 -> 16  // 64K entries = 128KB (L2 cache)
-        else -> 20  // 1M entries (level 9: max quality, current default)
-    }
-    val memoryUsage = if (workingState.isLastChunk && mem == 8) {
-        minOf(maxHashBitsForLevel, ceil(max(8.0, min(13.0, ln(workingData.size.toDouble()))) * 1.5).toInt())
+    val maxHashBitsForLevel = DEFLATE_LEVELS[level].maxHashBits
+    val hashBits = if (deflateState == null) {
+        val inputHashBits = 32 - (workingData.size.coerceAtLeast(1) - 1).countLeadingZeroBits()
+        minOf(maxHashBitsForLevel, maxOf(12, inputHashBits))
     } else {
-        mem + 12
+        maxHashBitsForLevel
     }
 
     return deflate(
         workingData,
         level,
-        memoryUsage,
+        hashBits,
         prefixSize,
         suffixSize,
         workingState
     )
 }
+
+internal fun validateInflateInputSize(sourceLength: Int) {
+    if (sourceLength > (Int.MAX_VALUE - 64) / 8) {
+        throw FlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+}
+
+internal fun checkedDeflateInputSize(dictionarySize: Int, inputSize: Int): Int {
+    val combinedSize = dictionarySize.toLong() + inputSize.toLong()
+    if (combinedSize > Int.MAX_VALUE.toLong()) {
+        throw FlateError(FlateErrorCode.INPUT_TOO_LARGE)
+    }
+    return combinedSize.toInt()
+}
+
+internal fun validateCodeLengthEntry(codeLength: Int, availableBits: Int, maxBits: Int) {
+    if (codeLength == 0) {
+        if (availableBits < maxBits) {
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+        }
+        throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+    }
+    if (codeLength > availableBits) {
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
+    }
+}
+
+internal fun validateCodeLengthTree(codeLengths: ByteArray, maxBits: Int) {
+    if (maxBits == 0 || !validateHuffmanCodeLengths(codeLengths, maxBits)) {
+        throw FlateError(FlateErrorCode.INVALID_HUFFMAN_TREE)
+    }
+}
+
+internal fun shouldFlushBlock(
+    matchCount: Int,
+    symbolCount: Int,
+    remaining: Int,
+    isLastBlock: Boolean,
+): Boolean {
+    return (matchCount > 7_000 || symbolCount > 24_576) && (remaining > 423 || !isLastBlock)
+}
+
+internal fun hasThreeByteMatch(data: ByteArray, index: Int, distance: Int, remaining: Int): Boolean {
+    return remaining > 2 &&
+            data[index] == data[index - distance] &&
+            data[index + 1] == data[index - distance + 1] &&
+            data[index + 2] == data[index - distance + 2]
+}
+
+internal fun shouldSearchLazyMatch(length: Int, maxLazyLength: Int, remaining: Int): Boolean {
+    return maxLazyLength > 0 && length in 3 until maxLazyLength && remaining > length + 1
+}
+
+private fun deflateHash(data: ByteArray, index: Int, hashShift: Int, mask: Int): Int {
+    return ((data[index].toInt() and 0xFF) xor
+            ((data[index + 1].toInt() and 0xFF) shl hashShift) xor
+            ((data[index + 2].toInt() and 0xFF) shl (2 * hashShift))) and mask
+}
+
+private fun deflateHashWindow(data: ByteArray, index: Int): Int {
+    return (data[index].toInt() and 0xFF) or
+            ((data[index + 1].toInt() and 0xFF) shl 8) or
+            ((data[index + 2].toInt() and 0xFF) shl 16)
+}
+
+private fun updateDeflateHashWindow(window: Int, nextByte: Byte): Int {
+    return (window ushr 8) or ((nextByte.toInt() and 0xFF) shl 16)
+}
+
+private fun deflateHash(window: Int, hashShift: Int, mask: Int): Int {
+    return ((window and 0xFF) xor
+            (((window ushr 8) and 0xFF) shl hashShift) xor
+            ((window ushr 16) shl (2 * hashShift))) and mask
+}
+
+private fun findLongestMatch(
+    data: ByteArray,
+    dataSize: Int,
+    index: Int,
+    previousIndex: Int,
+    previous: ShortArray,
+    level: DeflateLevel,
+    minimumLength: Int = 2,
+): Int {
+    val remaining = dataSize - index
+    var currentIndex = index and MATCH_DISTANCE_MASK
+    var candidateIndex = previousIndex
+    var distance = (currentIndex - candidateIndex) and MATCH_DISTANCE_MASK
+    if (!hasThreeByteMatch(data, index, distance, remaining)) return 0
+
+    val niceLength = minOf(level.niceLength, remaining)
+    val maxDistance = minOf(MATCH_DISTANCE_MASK, index)
+    val maxLength = minOf(MAX_MATCH_LENGTH, remaining)
+    var remainingChain = level.chainLength
+    if (level.goodMatchLength > 0 && minimumLength >= level.goodMatchLength) {
+        remainingChain = maxOf(1, remainingChain shr 2)
+    }
+    var bestLength = minimumLength
+    var bestDistance = 0
+
+    while (distance <= maxDistance && --remainingChain != 0 && currentIndex != candidateIndex) {
+        if (data[index + bestLength] == data[index + bestLength - distance] &&
+            data[index] == data[index - distance] &&
+            data[index + 1] == data[index + 1 - distance]
+        ) {
+            var candidateLength = 2
+            while (
+                candidateLength < maxLength &&
+                data[index + candidateLength] == data[index + candidateLength - distance]
+            ) {
+                candidateLength++
+            }
+            if (candidateLength > bestLength) {
+                bestLength = candidateLength
+                bestDistance = distance
+                if (candidateLength >= niceLength) break
+
+                val matchSpan = minOf(distance, candidateLength - 2)
+                var largestPreviousDistance = 0
+                for (offset in 0 until matchSpan) {
+                    val matchIndex = (index - distance + offset) and MATCH_DISTANCE_MASK
+                    val previousMatchIndex = previous[matchIndex].toInt() and 0xFFFF
+                    val previousDistance = (matchIndex - previousMatchIndex) and MATCH_DISTANCE_MASK
+                    if (previousDistance > largestPreviousDistance) {
+                        largestPreviousDistance = previousDistance
+                        candidateIndex = matchIndex
+                        if (largestPreviousDistance >= maxDistance) break
+                    }
+                }
+            }
+        }
+        currentIndex = candidateIndex
+        candidateIndex = previous[currentIndex].toInt() and 0xFFFF
+        distance += (currentIndex - candidateIndex) and MATCH_DISTANCE_MASK
+    }
+
+    // The extra distance bits make a far three-byte match costlier than three literals in most blocks.
+    if (bestLength == 3 && bestDistance > MAX_DISTANCE_FOR_THREE_BYTE_MATCH) return 0
+    return (bestLength shl MATCH_DISTANCE_BITS) or bestDistance
+}
+
+internal const val MATCH_DISTANCE_BITS = 15
+internal const val MATCH_DISTANCE_MASK = 32767
+private const val MAX_MATCH_LENGTH = 258
+private const val MAX_DISTANCE_FOR_THREE_BYTE_MATCH = 4096

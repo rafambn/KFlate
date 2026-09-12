@@ -1,7 +1,3 @@
-rootProject.name = "KFlate"
-include(":kflate")
-include(":web-demo")
-
 pluginManagement {
     repositories {
         google {
@@ -17,6 +13,14 @@ pluginManagement {
     }
 }
 
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+rootProject.name = "KFlate"
+include(":kflate")
+include(":web-demo")
+
 dependencyResolutionManagement {
     repositories {
         google {
@@ -30,4 +34,3 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-

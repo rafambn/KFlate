@@ -1,5 +1,7 @@
 package com.rafambn.kflate
 
+import com.rafambn.kflate.compression.Gzip as CompressionGzip
+import com.rafambn.kflate.decompression.Gzip as DecompressionGzip
 import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.error.FlateErrorCode
 import kotlin.test.Test
@@ -12,7 +14,7 @@ class GzipTrailerValidationTest {
     @Test
     fun `Gzip decompress should fail when CRC32 is invalid`() {
         val originalData = "Hello KFlate World!".encodeToByteArray()
-        val compressed = KFlate.compress(originalData, GZIP())
+        val compressed = KFlate.compress(originalData, CompressionGzip())
 
         // Corrupt CRC32 (located at index size-8 to size-5)
         // Gzip trailer: CRC32 (4 bytes) + ISIZE (4 bytes)
@@ -21,7 +23,7 @@ class GzipTrailerValidationTest {
         corrupted[crcOffset] = (corrupted[crcOffset] + 1).toByte()
 
         try {
-            KFlate.decompress(corrupted, Gzip())
+            KFlate.decompress(corrupted, DecompressionGzip())
             // If we reach here, validation failed to catch the error
              fail("Should have thrown FlateError for invalid CRC32")
         } catch (e: FlateError) {
@@ -37,7 +39,7 @@ class GzipTrailerValidationTest {
     @Test
     fun `Gzip decompress should fail when ISIZE is invalid`() {
         val originalData = "Hello KFlate World!".encodeToByteArray()
-        val compressed = KFlate.compress(originalData, GZIP())
+        val compressed = KFlate.compress(originalData, CompressionGzip())
 
         // Corrupt ISIZE (located at index size-4 to size-1)
         val corrupted = compressed.copyOf()
@@ -46,7 +48,7 @@ class GzipTrailerValidationTest {
         corrupted[isizeOffset] = (corrupted[isizeOffset] + 1).toByte()
 
         try {
-            KFlate.decompress(corrupted, Gzip())
+            KFlate.decompress(corrupted, DecompressionGzip())
              fail("Should have thrown FlateError for invalid ISIZE")
         } catch (e: FlateError) {
              // Expected
@@ -63,13 +65,13 @@ class GzipTrailerValidationTest {
     @Test
     fun `Gzip decompress should fail when trailer is truncated`() {
         val originalData = "Hello KFlate World!".encodeToByteArray()
-        val compressed = KFlate.compress(originalData, GZIP())
+        val compressed = KFlate.compress(originalData, CompressionGzip())
 
         // Truncate the last byte
         val truncated = compressed.copyOfRange(0, compressed.size - 1)
 
         try {
-            KFlate.decompress(truncated, Gzip())
+            KFlate.decompress(truncated, DecompressionGzip())
             fail("Should have thrown FlateError for truncated data")
         } catch (e: FlateError) {
             // Expected

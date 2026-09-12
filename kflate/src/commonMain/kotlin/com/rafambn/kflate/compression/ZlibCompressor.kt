@@ -1,6 +1,5 @@
 package com.rafambn.kflate.compression
 
-import com.rafambn.kflate.ZLIB
 import com.rafambn.kflate.algorithm.deflateWithOptions
 import com.rafambn.kflate.checksum.Adler32Checksum
 import com.rafambn.kflate.format.writeZlibHeader
@@ -14,9 +13,8 @@ import kotlinx.io.RawSource
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.write
 
-internal fun compressZlib(data: ByteArray, type: ZLIB): ByteArray {
+internal fun compressZlib(data: ByteArray, type: Zlib): ByteArray {
     val adler = Adler32Checksum()
     adler.update(data)
     val deflatedData = deflateWithOptions(data, type, if (type.dictionary != null) 6 else 2, 4)
@@ -26,7 +24,7 @@ internal fun compressZlib(data: ByteArray, type: ZLIB): ByteArray {
     return deflatedData
 }
 
-internal fun compressStreamZlib(type: ZLIB, source: RawSource, sink: RawSink) {
+internal fun compressStreamZlib(type: Zlib, source: RawSource, sink: RawSink) {
     val bufferedSource = source.buffered()
     val bufferedSink = sink.buffered()
 
@@ -48,10 +46,10 @@ internal fun compressStreamZlib(type: ZLIB, source: RawSource, sink: RawSink) {
 }
 
 private fun deflateStream(
-    type: ZLIB,
+    type: Zlib,
     source: Source,
     sink: Sink,
-    onInput: ((ByteArray) -> Unit)?
+    onInput: (ByteArray) -> Unit,
 ) {
     val dictionary = type.dictionary
 
@@ -67,23 +65,16 @@ private fun deflateStream(
         if (read == -1) {
             break
         }
-        if (read == 0) {
-            continue
-        }
         val chunk = readBuffer.copyOfRange(0, read)
-        onInput?.invoke(chunk)
+        onInput(chunk)
         inputBuffer = appendBytes(inputBuffer, chunk, chunk.size)
         state.isLastChunk = false
         val compressed = deflateWithOptions(inputBuffer, type, 0, 0, state)
-        if (compressed.isNotEmpty()) {
-            sink.write(compressed)
-        }
+        sink.write(compressed)
         inputBuffer = trimDeflateInput(inputBuffer, state)
     }
 
     state.isLastChunk = true
     val finalOutput = deflateWithOptions(inputBuffer, type, 0, 0, state)
-    if (finalOutput.isNotEmpty()) {
-        sink.write(finalOutput)
-    }
+    sink.write(finalOutput)
 }

@@ -36,7 +36,7 @@ jobs:
       - name: Assemble deploy directory
         run: |
           mkdir -p deploy
-          cp web-demo/build/webDemo/* deploy/
+          cp -R web-demo/build/webDemo/. deploy/
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4

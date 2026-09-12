@@ -1,11 +1,11 @@
 
 package com.rafambn.kflate
 
+import com.rafambn.kflate.decompression.Raw
 import java.io.ByteArrayOutputStream
 import java.util.zip.Deflater
 import java.util.zip.DeflaterOutputStream
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
 
 class DynamicHuffmanRepeatCodeValidationTest {
 

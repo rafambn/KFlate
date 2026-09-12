@@ -1,6 +1,5 @@
 package com.rafambn.kflate.compression
 
-import com.rafambn.kflate.GZIP
 import com.rafambn.kflate.algorithm.deflateWithOptions
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.format.getGzipHeaderSize
@@ -15,9 +14,8 @@ import kotlinx.io.RawSource
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.write
 
-internal fun compressGzip(data: ByteArray, type: GZIP): ByteArray {
+internal fun compressGzip(data: ByteArray, type: Gzip): ByteArray {
     val crc = Crc32Checksum()
     val dataLength = data.size
     crc.update(data)
@@ -29,7 +27,7 @@ internal fun compressGzip(data: ByteArray, type: GZIP): ByteArray {
     return deflatedData
 }
 
-internal fun compressStreamGzip(type: GZIP, source: RawSource, sink: RawSink) {
+internal fun compressStreamGzip(type: Gzip, source: RawSource, sink: RawSink) {
     val bufferedSource = source.buffered()
     val bufferedSink = sink.buffered()
 
@@ -54,18 +52,13 @@ internal fun compressStreamGzip(type: GZIP, source: RawSource, sink: RawSink) {
 }
 
 private fun deflateStream(
-    type: GZIP,
+    type: Gzip,
     source: Source,
     sink: Sink,
-    onInput: ((ByteArray) -> Unit)?
+    onInput: (ByteArray) -> Unit,
 ) {
-    val dictionary = type.dictionary
-
     val state = DeflateState(isLastChunk = false)
-    var inputBuffer = dictionary ?: ByteArray(0)
-    if (dictionary != null) {
-        state.waitIndex = dictionary.size
-    }
+    var inputBuffer = ByteArray(0)
 
     val readBuffer = ByteArray(STREAM_CHUNK_SIZE)
     while (true) {
@@ -73,23 +66,16 @@ private fun deflateStream(
         if (read == -1) {
             break
         }
-        if (read == 0) {
-            continue
-        }
         val chunk = readBuffer.copyOfRange(0, read)
-        onInput?.invoke(chunk)
+        onInput(chunk)
         inputBuffer = appendBytes(inputBuffer, chunk, chunk.size)
         state.isLastChunk = false
         val compressed = deflateWithOptions(inputBuffer, type, 0, 0, state)
-        if (compressed.isNotEmpty()) {
-            sink.write(compressed)
-        }
+        sink.write(compressed)
         inputBuffer = trimDeflateInput(inputBuffer, state)
     }
 
     state.isLastChunk = true
     val finalOutput = deflateWithOptions(inputBuffer, type, 0, 0, state)
-    if (finalOutput.isNotEmpty()) {
-        sink.write(finalOutput)
-    }
+    sink.write(finalOutput)
 }

@@ -1,6 +1,5 @@
 package com.rafambn.kflate.compression
 
-import com.rafambn.kflate.RAW
 import com.rafambn.kflate.algorithm.deflateWithOptions
 import com.rafambn.kflate.streaming.DeflateState
 import com.rafambn.kflate.streaming.appendBytes
@@ -11,26 +10,24 @@ import kotlinx.io.RawSource
 import kotlinx.io.Sink
 import kotlinx.io.Source
 import kotlinx.io.buffered
-import kotlinx.io.write
 
-internal fun compressRaw(data: ByteArray, type: RAW): ByteArray {
+internal fun compressRaw(data: ByteArray, type: Raw): ByteArray {
     return deflateWithOptions(data, type, 0, 0)
 }
 
-internal fun compressStreamRaw(type: RAW, source: RawSource, sink: RawSink) {
+internal fun compressStreamRaw(type: Raw, source: RawSource, sink: RawSink) {
     val bufferedSource = source.buffered()
     val bufferedSink = sink.buffered()
 
-    deflateStream(type, bufferedSource, bufferedSink, null)
+    deflateStream(type, bufferedSource, bufferedSink)
 
     bufferedSink.flush()
 }
 
 private fun deflateStream(
-    type: RAW,
+    type: Raw,
     source: Source,
     sink: Sink,
-    onInput: ((ByteArray) -> Unit)?
 ) {
     val dictionary = type.dictionary
 
@@ -46,23 +43,15 @@ private fun deflateStream(
         if (read == -1) {
             break
         }
-        if (read == 0) {
-            continue
-        }
         val chunk = readBuffer.copyOfRange(0, read)
-        onInput?.invoke(chunk)
         inputBuffer = appendBytes(inputBuffer, chunk, chunk.size)
         state.isLastChunk = false
         val compressed = deflateWithOptions(inputBuffer, type, 0, 0, state)
-        if (compressed.isNotEmpty()) {
-            sink.write(compressed)
-        }
+        sink.write(compressed)
         inputBuffer = trimDeflateInput(inputBuffer, state)
     }
 
     state.isLastChunk = true
     val finalOutput = deflateWithOptions(inputBuffer, type, 0, 0, state)
-    if (finalOutput.isNotEmpty()) {
-        sink.write(finalOutput)
-    }
+    sink.write(finalOutput)
 }

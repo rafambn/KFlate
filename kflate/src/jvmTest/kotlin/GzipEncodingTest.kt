@@ -1,5 +1,6 @@
 package com.rafambn.kflate
 
+import com.rafambn.kflate.compression.Gzip
 import com.rafambn.kflate.format.getGzipHeaderSize
 import com.rafambn.kflate.format.writeGzipHeader
 import kotlin.test.Test
@@ -10,7 +11,7 @@ class GzipEncodingTest {
 
     @Test
     fun testValidAscii() {
-        val gzip = GZIP(filename = "test.txt", comment = "Just a test")
+        val gzip = Gzip(filename = "test.txt", comment = "Just a test")
         assertEquals("test.txt", gzip.filename)
         assertEquals("Just a test", gzip.comment)
     }
@@ -20,7 +21,7 @@ class GzipEncodingTest {
         // \u00E9 is 'é' (233), \u00F1 is 'ñ' (241)
         val filename = "t\u00E9st.txt"
         val comment = "Se\u00F1or"
-        val gzip = GZIP(filename = filename, comment = comment)
+        val gzip = Gzip(filename = filename, comment = comment)
         assertEquals(filename, gzip.filename)
         assertEquals(comment, gzip.comment)
     }
@@ -29,7 +30,7 @@ class GzipEncodingTest {
     fun testInvalidFilename() {
         // \u0100 is 256, just outside ISO-8859-1
         assertFailsWith<IllegalArgumentException> {
-            GZIP(filename = "test\u0100.txt")
+            Gzip(filename = "test\u0100.txt")
         }
     }
 
@@ -37,7 +38,7 @@ class GzipEncodingTest {
     fun testInvalidComment() {
         // \u2603 is Snowman
         assertFailsWith<IllegalArgumentException> {
-            GZIP(comment = "Snowman \u2603")
+            Gzip(comment = "Snowman \u2603")
         }
     }
 
@@ -45,7 +46,7 @@ class GzipEncodingTest {
     @Test
     fun testHeaderGenerationWithIso() {
         val filename = "caf\u00E9.txt" // café.txt
-        val gzip = GZIP(filename = filename)
+        val gzip = Gzip(filename = filename)
 
         // Calculate expected size
         // 10 bytes header

@@ -2,17 +2,15 @@
 
 package com.rafambn.kflate.format
 
-import com.rafambn.kflate.GZIP
+import com.rafambn.kflate.compression.Gzip
 import com.rafambn.kflate.algorithm.inflate
-import com.rafambn.kflate.checksum.CRC32_TABLE
 import com.rafambn.kflate.checksum.Crc32Checksum
 import com.rafambn.kflate.error.FlateErrorCode
-import com.rafambn.kflate.error.createFlateError
+import com.rafambn.kflate.error.FlateError
 import com.rafambn.kflate.streaming.InflateState
 import com.rafambn.kflate.util.readFourBytes
 import com.rafambn.kflate.util.toIsoStringBytes
 import com.rafambn.kflate.util.writeBytes
-import kotlin.math.floor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -24,21 +22,14 @@ internal fun computeGzipHeaderCrc16(data: ByteArray, start: Int, end: Int): Int 
 }
 
 internal fun buildExtraFields(extraFields: Map<String, ByteArray>): ByteArray {
-    // Each subfield: SI1 (1 byte) + SI2 (1 byte) + LEN (2 bytes LE) + data
-    val totalSize = extraFields.values.sumOf { it.size + 4 }
-    // RFC 1952: XLEN is a 2-byte little-endian value, so total extra field size must fit in 16 bits
-    require(totalSize <= 65535) {
-        "Total extra field size ($totalSize bytes) exceeds maximum XLEN of 65535 bytes"
-    }
+    val totalSize = getGzipExtraFieldsSize(extraFields)
     val output = ByteArray(totalSize)
     var offset = 0
 
     for ((key, data) in extraFields) {
-        require(key.length == 2) { "Extra field ID must be exactly 2 bytes, got: '$key'" }
-        require(data.size <= 65535) { "Extra field data cannot exceed 65535 bytes" }
-
-        output[offset] = key[0].code.toByte()  // SI1
-        output[offset + 1] = key[1].code.toByte()  // SI2
+        val keyBytes = key.toIsoStringBytes()
+        output[offset] = keyBytes[0]  // SI1
+        output[offset + 1] = keyBytes[1]  // SI2
         output[offset + 2] = (data.size and 0xFF).toByte()  // LEN low byte
         output[offset + 3] = (data.size shr 8).toByte()     // LEN high byte
         data.copyInto(output, offset + 4)
@@ -48,7 +39,24 @@ internal fun buildExtraFields(extraFields: Map<String, ByteArray>): ByteArray {
     return output
 }
 
-internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
+private fun getGzipExtraFieldsSize(extraFields: Map<String, ByteArray>): Int {
+    var totalSize = 0L
+    for ((key, data) in extraFields) {
+        val keyBytes = key.toIsoStringBytes()
+        require(keyBytes.size == 2) { "Extra field ID must be exactly 2 bytes, got: '$key'" }
+        require(keyBytes[1] != 0.toByte()) {
+            "Extra field ID second byte is reserved and cannot be zero"
+        }
+        require(data.size <= 65_535) { "Extra field data cannot exceed 65535 bytes" }
+        totalSize += 4 + data.size
+        require(totalSize <= 65_535) {
+            "Total extra field size ($totalSize bytes) exceeds maximum XLEN of 65535 bytes"
+        }
+    }
+    return totalSize.toInt()
+}
+
+internal fun writeGzipHeader(output: ByteArray, options: Gzip) {
     output[0] = 31
     output[1] = -117 // 139 as signed byte
     output[2] = 8
@@ -68,15 +76,10 @@ internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
     }.toByte()
     output[9] = -1 // 255 as signed byte
 
-    val mtime = options.mtime
-    val timeInMillis = when (mtime) {
-        is Number -> mtime.toLong()
-        is String -> mtime.toLongOrNull() ?: Clock.System.now().toEpochMilliseconds()
-        else -> Clock.System.now().toEpochMilliseconds()
+    val timestamp = options.mtime?.epochSeconds ?: Clock.System.now().epochSeconds
+    if (timestamp != 0L) {
+        writeBytes(output, 4, timestamp)
     }
-
-    if (timeInMillis != 0L)
-        writeBytes(output, 4, floor(timeInMillis / 1000.0).toLong())
 
     var headerOffset = 10
 
@@ -116,34 +119,30 @@ internal fun writeGzipHeader(output: ByteArray, options: GZIP) {
         headerOffset += 2
     }
 
-    val calculatedSize = getGzipHeaderSize(options)
-    require(headerOffset <= calculatedSize) {
-        "Header size mismatch: calculated=$calculatedSize, actual=$headerOffset"
-    }
 }
 
 internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {
     if (startOffset + 10 > data.size) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
     if ((data[startOffset].toInt() and 0xFF) != 31 || (data[startOffset + 1].toInt() and 0xFF) != 139 || (data[startOffset + 2].toInt() and 0xFF) != 8) {
-        createFlateError(FlateErrorCode.INVALID_HEADER)
+        throw FlateError(FlateErrorCode.INVALID_HEADER)
     }
     val flags = data[startOffset + 3].toInt() and 0xFF
     if ((flags and 0xE0) != 0) { // Check reserved bits 5, 6, 7
-        createFlateError(FlateErrorCode.INVALID_HEADER)
+        throw FlateError(FlateErrorCode.INVALID_HEADER)
     }
 
     var headerSize = 10
     // FEXTRA
     if ((flags and 4) != 0) {
         if (startOffset + headerSize + 2 > data.size) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         val xlen = (data[startOffset + headerSize].toInt() and 0xFF) or ((data[startOffset + headerSize + 1].toInt() and 0xFF) shl 8)
         headerSize += 2
         if (startOffset + headerSize + xlen > data.size) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         headerSize += xlen
     }
@@ -152,7 +151,7 @@ internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {
     if ((flags and 8) != 0) {
         while (true) {
             if (startOffset + headerSize >= data.size) {
-                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
             if (data[startOffset + headerSize++].toInt() == 0) {
                 break
@@ -164,7 +163,7 @@ internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {
     if ((flags and 16) != 0) {
         while (true) {
             if (startOffset + headerSize >= data.size) {
-                createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+                throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
             }
             if (data[startOffset + headerSize++].toInt() == 0) {
                 break
@@ -175,12 +174,12 @@ internal fun writeGzipStart(data: ByteArray, startOffset: Int = 0): Int {
     // FHCRC
     if ((flags and 2) != 0) {
         if (startOffset + headerSize + 2 > data.size) {
-            createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+            throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
         }
         val computedCrc = computeGzipHeaderCrc16(data, startOffset, startOffset + headerSize)
         val storedCrc = (data[startOffset + headerSize].toInt() and 0xFF) or ((data[startOffset + headerSize + 1].toInt() and 0xFF) shl 8)
         if (computedCrc != storedCrc) {
-            createFlateError(FlateErrorCode.INVALID_HEADER)
+            throw FlateError(FlateErrorCode.INVALID_HEADER)
         }
         headerSize += 2
     }
@@ -192,14 +191,11 @@ internal fun getGzipUncompressedSize(data: ByteArray): Long {
     return readFourBytes(data, length - 4)
 }
 
-internal fun getGzipHeaderSize(options: GZIP): Int {
+internal fun getGzipHeaderSize(options: Gzip): Int {
     var size = 10
 
     options.extraFields?.let { fields ->
-        size += 2
-        for ((_, data) in fields) {
-            size += 4 + data.size
-        }
+        size += 2 + getGzipExtraFieldsSize(fields)
     }
 
     options.filename?.let {
@@ -217,30 +213,14 @@ internal fun getGzipHeaderSize(options: GZIP): Int {
     return size
 }
 
-internal data class GzipMemberResult(
-    val decompressed: ByteArray,
-    val bytesConsumed: Int
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is GzipMemberResult) return false
-        if (!decompressed.contentEquals(other.decompressed)) return false
-        return bytesConsumed == other.bytesConsumed
-    }
-
-    override fun hashCode(): Int {
-        return 31 * decompressed.contentHashCode() + bytesConsumed
-    }
-}
-
 internal fun processSingleGzipMember(
     data: ByteArray,
     startOffset: Int,
-    dictionary: ByteArray? = null
+    maxOutputSize: Int? = null,
 ): GzipMemberResult {
     // Validate minimum size: 10 bytes header + at least 2 bytes compressed data + 8 bytes trailer (CRC32 + ISIZE)
     if (startOffset + 20 > data.size) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
 
     // Parse header
@@ -250,7 +230,7 @@ internal fun processSingleGzipMember(
     // Inflate with state tracking
     val inflateState = InflateState(validationMode = 2)
     inflateState.inputBitPosition = compressedDataStart * 8
-    val decompressed = inflate(data, inflateState, null, dictionary)
+    val decompressed = inflate(data, inflateState, maxOutputSize = maxOutputSize)
 
     // Calculate bytes consumed by inflate
     val bitsConsumed = inflateState.inputBitPosition - (compressedDataStart * 8)
@@ -259,7 +239,7 @@ internal fun processSingleGzipMember(
     // Validate trailer
     val trailerStart = compressedDataStart + bytesConsumedByInflate
     if (trailerStart + 8 > data.size) {
-        createFlateError(FlateErrorCode.UNEXPECTED_EOF)
+        throw FlateError(FlateErrorCode.UNEXPECTED_EOF)
     }
 
     // Validate CRC32
@@ -267,13 +247,13 @@ internal fun processSingleGzipMember(
     val crc = Crc32Checksum()
     crc.update(decompressed)
     if (crc.getChecksum() != storedCrc32) {
-        createFlateError(FlateErrorCode.CRC_MISMATCH)
+        throw FlateError(FlateErrorCode.CRC_MISMATCH)
     }
 
     // Validate ISIZE
     val storedISize = readFourBytes(data, trailerStart + 4)
     if ((decompressed.size.toLong() and 0xFFFFFFFFL) != storedISize) {
-        createFlateError(FlateErrorCode.ISIZE_MISMATCH)
+        throw FlateError(FlateErrorCode.ISIZE_MISMATCH)
     }
 
     val totalBytesConsumed = trailerStart + 8 - startOffset
