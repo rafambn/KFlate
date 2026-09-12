@@ -11,7 +11,6 @@ plugins {
     alias(libs.plugins.multiplatform)
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.maven.publish)
-    alias(libs.plugins.benchmark)
     alias(libs.plugins.kover)
 }
 
@@ -27,12 +26,7 @@ kotlin {
         minSdk = 24
         withHostTest {}
     }
-    jvm {
-        val mainCompilation = compilations.getByName("main")
-        compilations.create("benchmark") {
-            associateWith(mainCompilation)
-        }
-    }
+    jvm()
     js(IR) {
         useEsModules()
         browser {
@@ -46,10 +40,6 @@ kotlin {
     }
     wasmJs {
         useEsModules()
-        val mainCompilation = compilations.getByName("main")
-        compilations.create("benchmark") {
-            associateWith(mainCompilation)
-        }
         browser {
             testTask {
                 useKarma {
@@ -64,10 +54,6 @@ kotlin {
     iosSimulatorArm64()
     mingwX64()
     linuxX64 {
-        val mainCompilation = compilations.getByName("main")
-        compilations.create("benchmark") {
-            associateWith(mainCompilation)
-        }
         binaries.test("release") {
             optimized = true
             debuggable = false
@@ -86,25 +72,6 @@ kotlin {
     watchosSimulatorArm64()
 
     sourceSets {
-        val commonBenchmark by creating {
-            dependencies {
-                implementation(libs.kotlinx.benchmark.runtime)
-                implementation(libs.kompress.core)
-            }
-        }
-        val jvmBenchmark by getting {
-            dependsOn(commonBenchmark)
-        }
-        val linuxX64Benchmark by getting {
-            dependsOn(commonBenchmark)
-        }
-        val wasmJsBenchmark by getting {
-            dependsOn(commonBenchmark)
-            dependencies {
-                implementation(npm("fflate", "0.8.2"))
-            }
-        }
-
         commonMain.dependencies {
             implementation(libs.kotlinx.io)
         }
@@ -115,45 +82,8 @@ kotlin {
     }
 }
 
-benchmark {
-    targets {
-        register("jvmBenchmark")
-        register("linuxX64Benchmark")
-        register("wasmJsBenchmark")
-    }
-
-    configurations {
-        named("main") {
-            include(".*\\.KompressBenchmarks\\..*")
-            warmups = 8
-            iterations = 15
-            iterationTime = 1
-            iterationTimeUnit = "s"
-            reportFormat = "json"
-            advanced("jvmForks", 3)
-        }
-        register("smoke") {
-            include(".*\\.KompressBenchmarks\\..*")
-            warmups = 1
-            iterations = 1
-            iterationTime = 1
-            iterationTimeUnit = "ms"
-            param("corpus", "simpleText")
-            param("level", "6")
-            reportFormat = "json"
-            advanced("jvmForks", 1)
-        }
-    }
-}
-
 kover {
     reports {
-        filters {
-            excludes {
-                classes("com.rafambn.kflate.benchmark.*")
-            }
-        }
-
         verify {
             rule {
                 minBound(100, CoverageUnit.INSTRUCTION)
@@ -161,26 +91,6 @@ kover {
             }
         }
     }
-}
-
-val benchmarkTaskNames = listOf(
-    "jvmBenchmarkBenchmark",
-    "linuxX64BenchmarkBenchmark",
-    "wasmJsBenchmarkBenchmark",
-)
-val benchmarkTasks = tasks.matching { it.name in benchmarkTaskNames }
-
-tasks.configureEach {
-    val currentIndex = benchmarkTaskNames.indexOf(name)
-    if (currentIndex > 0) {
-        mustRunAfter(benchmarkTaskNames[currentIndex - 1])
-    }
-}
-
-tasks.register("benchmarkAll") {
-    group = "benchmark"
-    description = "Run the Kompress benchmark on every platform"
-    dependsOn(benchmarkTasks)
 }
 
 tasks.withType<AbstractArchiveTask>().configureEach {
