@@ -147,9 +147,19 @@ try {
 }
 ```
 
-## Benchmarks
+## Tests and coverage
 
-Correctness tests are separate from the `kotlinx-benchmark` suite. See [BENCHMARKING.md](BENCHMARKING.md) for JVM, Linux Native, and Wasm commands, corpus definitions, and result interpretation.
+Run unit tests and verify 100% instruction and branch coverage:
+
+```sh
+./gradlew :kflate:jvmTest :kflate:koverVerifyJvm
+```
+
+Generate the HTML coverage report:
+
+```sh
+./gradlew :kflate:koverHtmlReportJvm
+```
 
 ## License
 
