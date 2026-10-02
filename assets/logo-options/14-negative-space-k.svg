@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="negative-k-title">
+  <title id="negative-k-title">KFlate negative space K logo</title>
+  <defs>
+    <linearGradient id="negative-k-color" x1="144" y1="88" x2="368" y2="424" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00e676"/>
+      <stop offset="0.5" stop-color="#00cbbd"/>
+      <stop offset="1" stop-color="#1e88e5"/>
+    </linearGradient>
+    <mask id="negative-k-cutout" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="white"/>
+      <g fill="none" stroke="black" stroke-width="44" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M190 148V356"/>
+        <path d="M190 256C268 256 262 160 340 160"/>
+        <path d="M190 256C268 256 262 352 340 352"/>
+      </g>
+    </mask>
+  </defs>
+  <path d="M244 64C264 56 288 58 306 74L430 198C452 220 454 252 436 278L312 426C292 450 264 458 238 444L86 298C60 268 60 250 84 226L208 82C218 74 232 68 244 64Z" fill="url(#negative-k-color)" mask="url(#negative-k-cutout)"/>
+</svg>

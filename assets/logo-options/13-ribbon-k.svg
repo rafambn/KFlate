@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="ribbon-k-title">
+  <title id="ribbon-k-title">KFlate folded ribbon K logo</title>
+  <defs>
+    <linearGradient id="ribbon-k-stem" x1="124" y1="80" x2="124" y2="432" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00e676"/>
+      <stop offset="0.5" stop-color="#00cbbd"/>
+      <stop offset="1" stop-color="#1e88e5"/>
+    </linearGradient>
+    <linearGradient id="ribbon-k-upper" x1="152" y1="248" x2="416" y2="104" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00cbbd"/>
+      <stop offset="1" stop-color="#00e676"/>
+    </linearGradient>
+    <linearGradient id="ribbon-k-lower" x1="152" y1="240" x2="404" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00cbbd"/>
+      <stop offset="1" stop-color="#1e88e5"/>
+    </linearGradient>
+  </defs>
+  <path d="M152 240C248 240 280 328 388 356C424 366 432 402 404 420C376 438 336 416 312 398C242 346 216 306 152 304Z" fill="url(#ribbon-k-lower)"/>
+  <path d="M152 248C216 232 250 132 332 100C368 84 400 84 416 104C432 124 412 148 388 156C304 180 278 276 204 296L152 296Z" fill="url(#ribbon-k-upper)"/>
+  <path d="M152 248L204 296H152Z" fill="#004080" opacity="0.25"/>
+  <rect x="88" y="80" width="72" height="352" rx="36" fill="url(#ribbon-k-stem)"/>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="continuous-k-title">
+  <title id="continuous-k-title">KFlate continuous curved K logo</title>
+  <defs>
+    <linearGradient id="continuous-k-color" x1="160" y1="104" x2="408" y2="408" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00e676"/>
+      <stop offset="0.5" stop-color="#00cbbd"/>
+      <stop offset="1" stop-color="#1e88e5"/>
+    </linearGradient>
+  </defs>
+  <path d="M160 104C104 136 104 376 160 408C132 392 118 316 118 256C240 256 264 104 408 104C264 104 240 256 118 256C240 256 264 408 408 408" fill="none" stroke="url(#continuous-k-color)" stroke-width="52" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
