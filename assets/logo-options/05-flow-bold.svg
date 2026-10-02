@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="bold-flow-title">
+  <title id="bold-flow-title">KFlate bold compression flow logo</title>
+  <defs>
+    <linearGradient id="bold-flow-color" x1="64" y1="112" x2="448" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00e676"/>
+      <stop offset="0.5" stop-color="#00cbbd"/>
+      <stop offset="1" stop-color="#1e88e5"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#bold-flow-color)" stroke-width="24" stroke-linecap="round">
+    <path d="M64 112C232 112 208 202 352 202H448"/>
+    <path d="M64 208C224 208 224 238 352 238H448"/>
+    <path d="M64 304C224 304 224 274 352 274H448"/>
+    <path d="M64 400C232 400 208 310 352 310H448"/>
+  </g>
+</svg>

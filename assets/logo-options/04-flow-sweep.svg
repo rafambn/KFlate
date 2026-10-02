@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="sweep-title">
+  <title id="sweep-title">KFlate sweeping compression flow logo</title>
+  <defs>
+    <linearGradient id="sweep-color" x1="64" y1="88" x2="448" y2="388" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00e676"/>
+      <stop offset="0.5" stop-color="#00cbbd"/>
+      <stop offset="1" stop-color="#1e88e5"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#sweep-color)" stroke-width="14" stroke-linecap="round">
+    <path d="M64 88C224 88 208 268 352 268H448"/>
+    <path d="M64 140C216 140 220 292 352 292H448"/>
+    <path d="M64 192C208 192 232 316 352 316H448"/>
+    <path d="M64 244C200 244 244 340 352 340H448"/>
+    <path d="M64 296C192 296 256 364 352 364H448"/>
+    <path d="M64 348C184 348 268 388 352 388H448"/>
+  </g>
+</svg>

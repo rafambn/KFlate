@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="twin-k-title">
+  <title id="twin-k-title">KFlate twin flow curved K logo</title>
+  <defs>
+    <linearGradient id="twin-k-color" x1="120" y1="104" x2="416" y2="408" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00e676"/>
+      <stop offset="0.5" stop-color="#00b4db"/>
+      <stop offset="1" stop-color="#1e88e5"/>
+    </linearGradient>
+  </defs>
+  <path d="M120 104V408" fill="none" stroke="url(#twin-k-color)" stroke-width="40" stroke-linecap="round"/>
+  <g fill="none" stroke="url(#twin-k-color)" stroke-width="24" stroke-linecap="round">
+    <path d="M164 216C276 216 268 112 416 112"/>
+    <path d="M164 256C276 256 284 152 416 152"/>
+    <path d="M164 276C276 276 268 360 416 360"/>
+    <path d="M164 316C276 316 284 400 416 400"/>
+  </g>
+</svg>
