@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="knot-title">
+  <title id="knot-title">KFlate compression knot logo</title>
+  <defs>
+    <linearGradient id="knot-color" x1="80" y1="128" x2="432" y2="344" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00e676"/>
+      <stop offset="0.5" stop-color="#00cbbd"/>
+      <stop offset="1" stop-color="#1e88e5"/>
+    </linearGradient>
+  </defs>
+  <g transform="rotate(-24 256 256)" fill="none" stroke="url(#knot-color)" stroke-width="56" stroke-linecap="round">
+    <path d="M203.84 182.70C144.69 126.16 80 138.56 80 248C80 392 188 384 256 256C312 164 432 168 432 256C432 322.88 365 343.55 306.50 307.48"/>
+  </g>
+</svg>
