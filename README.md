@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  KFlate is an independently written Kotlin implementation based on the design and API ideas of the npm <a href="https://github.com/101arrowz/fflate"><code>fflate</code></a> library.
+  KFlate is an experimental and independently written Kotlin implementation based on the design and API ideas of the npm <a href="https://github.com/101arrowz/fflate"><code>fflate</code></a> library.
 </p>
 
 <table align="center">

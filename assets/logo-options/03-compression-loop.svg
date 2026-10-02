@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="loop-title">
+  <title id="loop-title">KFlate compression loop logo</title>
+  <defs>
+    <linearGradient id="loop-color" x1="80" y1="120" x2="448" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00e676"/>
+      <stop offset="0.5" stop-color="#00cbbd"/>
+      <stop offset="1" stop-color="#1e88e5"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#loop-color)" stroke-width="16" stroke-linecap="round">
+    <path d="M448 208H344C254 208 270 88 172 88C28 88 28 424 172 424C270 424 254 304 344 304H448"/>
+    <path d="M448 232H340C248 232 250 128 172 128C80 128 80 384 172 384C250 384 248 280 340 280H448"/>
+    <path d="M448 256H332C244 256 232 168 172 168C132 168 132 344 172 344C232 344 244 256 332 256H448"/>
+  </g>
+</svg>
