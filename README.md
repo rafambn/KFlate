@@ -7,13 +7,13 @@
 </p>
 
 <p align="center">
-  <a href="https://central.sonatype.com/artifact/com.rafambn/KFlate">
-    <img alt="Maven Central" src="https://img.shields.io/maven-central/v/com.rafambn/KFlate?label=Maven%20Central">
-  </a>
-  <a href="LICENSE">
-    <img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg">
-  </a>
-  <img alt="Platform targets" src="https://img.shields.io/badge/targets-android%20%7C%20jvm%20%7C%20js%20%7C%20wasm%20%7C%20ios%20%7C%20macos%20%7C%20linux%20%7C%20windows-0A7EA4">
+  <a href="https://central.sonatype.com/artifact/com.rafambn/KFlate"><img alt="Maven Central" src="https://img.shields.io/maven-central/v/com.rafambn/KFlate?label=Maven%20Central"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg"></a>
+  <img alt="All KMP targets" src="https://img.shields.io/badge/KMP-all%20targets-0A7EA4">
+</p>
+
+<p align="center">
+  <img alt="Repository views" src="https://profile.rafambn.com/badge/rafambn/KFlate.svg">
 </p>
 
 <p align="center">
